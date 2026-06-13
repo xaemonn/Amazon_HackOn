@@ -1,0 +1,90 @@
+# =========================================================================
+# Project Specific (from image_d2bab9.png)
+# =========================================================================
+# Ignore Word Documents to prevent tracking large binaries
+*.docx
+*.doc
+
+# Local configuration files 
+# (Uncomment the line below if '.config.kiro' contains local environment paths or secrets)
+# .kiro/specs/zero-touch-returns/.config.kiro
+
+# =========================================================================
+# Operating Systems
+# =========================================================================
+# Linux / Ubuntu
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# =========================================================================
+# IDEs and Editors
+# =========================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.vim/
+
+# =========================================================================
+# Node.js / Full-Stack (React, Express, etc.)
+# =========================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+
+# =========================================================================
+# Python / Data & Modeling
+# =========================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# =========================================================================
+# Web3 / Hardhat
+# =========================================================================
+artifacts/
+cache/
+typechain/
+typechain-types/
+coverage/
+coverage.json
+
+# =========================================================================
+# Environment Variables & Secrets
+# =========================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
