@@ -1,13 +1,16 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import './OrderDetail.css';
 
-// Seeded demo data
+// Seeded demo data — dates computed dynamically to stay consistent with seed data
+const _fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+const _tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+
 const DEMO_ORDER = {
   orderId: 'order-item-001',
   customerId: 'customer-001',
   productName: 'Premium Wireless Headphones',
-  orderDate: '2025-01-15',
-  deliveryDate: '2025-01-18',
+  orderDate: _tenDaysAgo.toISOString().split('T')[0],
+  deliveryDate: _fiveDaysAgo.toISOString().split('T')[0],
   price: '₹1,299',
   status: 'Delivered',
 };

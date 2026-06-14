@@ -1,75 +1,73 @@
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Amazon Ember", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1a1a2e;
-  background-color: #fafafa;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --color-primary: #0f3460;
-  --color-primary-hover: #1a4a7a;
-  --color-accent: #e94560;
-  --color-accent-hover: #d63b54;
-  --color-text: #1a1a2e;
-  --color-text-muted: #555;
-  --color-bg: #fafafa;
-  --color-bg-white: #ffffff;
-  --color-border: #e0e0e0;
-  --color-success: #2e7d32;
-  --color-warning: #f57c00;
-  --color-error: #c62828;
-  --focus-ring: 0 0 0 3px rgba(15, 52, 96, 0.4);
-  --radius: 8px;
-  --max-width: 1024px;
+  /* ── Amazon-like palette ── */
+  --color-amazon-dark:        #131921; /* header */
+  --color-amazon-nav:         #232F3E; /* nav bar */
+  --color-amazon-nav-hover:   #37475A;
+  --color-amazon-orange:      #FF9900;
+  --color-amazon-orange-dark: #E47911;
+  --color-amazon-yellow:      #FFD814; /* "Add to Cart" button */
+  --color-amazon-yellow-hover:#F7CA00;
+  --color-amazon-link:        #007185; /* Amazon teal */
+  --color-amazon-link-hover:  #C7511F;
+
+  /* ── Semantic aliases (used across components) ── */
+  --color-primary:       #131921;
+  --color-primary-hover: #37475A;
+  --color-accent:        #FF9900;
+  --color-accent-hover:  #E47911;
+  --color-cta:           #FFD814;  /* primary action buttons */
+  --color-cta-hover:     #F7CA00;
+  --color-link:          #007185;
+  --color-link-hover:    #C7511F;
+  --color-text:          #0F1111;
+  --color-text-muted:    #565959;
+  --color-bg:            #EAEDED;  /* page background */
+  --color-bg-white:      #FFFFFF;
+  --color-border:        #D5D9D9;
+  --color-success:       #067D62;
+  --color-warning:       #F57C00;
+  --color-error:         #CC0C39;
+  --focus-ring:          0 0 0 3px rgba(228, 121, 17, 0.5);
+  --radius:              8px;
+  --max-width:           1280px;
+  --header-height:       60px;
 }
 
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
-/* Skip-to-content link for accessibility */
-.skip-to-content {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary);
-  color: #fff;
-  padding: 0.5rem 1rem;
-  z-index: 1000;
-  font-size: 0.875rem;
-  text-decoration: none;
-  border-radius: 0 0 var(--radius) 0;
-  transition: top 0.2s;
-}
+img, video { max-width: 100%; }
 
-.skip-to-content:focus {
-  top: 0;
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-/* Focus states for all interactive elements */
+/* ── Focus states ── */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Screen-reader only — visually hidden, accessible to assistive tech */
+/* ── Screen-reader only ── */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -77,7 +75,68 @@ textarea:focus-visible {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0,0,0,0);
   white-space: nowrap;
   border: 0;
 }
+
+/* ── Global button reset ── */
+button { font-family: inherit; }
+
+/* ── Shared utility buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--color-cta);
+  color: var(--color-text);
+  border: 1px solid #C7A600;
+}
+.btn-primary:hover:not(:disabled) { background: var(--color-cta-hover); }
+
+.btn-accent {
+  background: var(--color-accent);
+  color: #fff;
+  border: 1px solid var(--color-accent-hover);
+}
+.btn-accent:hover:not(:disabled) { background: var(--color-accent-hover); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid #D5D9D9;
+}
+.btn-outline:hover:not(:disabled) { background: #F7F8F8; border-color: #999; }
+
+.btn-secondary {
+  background: #F0F2F2;
+  color: var(--color-text);
+  border: 1px solid #D5D9D9;
+}
+.btn-secondary:hover:not(:disabled) { background: #E3E6E6; }
+
+.btn-retry {
+  background: #F0F2F2;
+  color: var(--color-text);
+  border: 1px solid #D5D9D9;
+}
+.btn-retry:hover:not(:disabled) { background: #E3E6E6; }
+
+/* ── Link defaults ── */
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--color-link-hover); }

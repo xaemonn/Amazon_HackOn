@@ -177,16 +177,11 @@ export function GradingProgress() {
     return () => clearInterval(checkDelay);
   }, [isComplete, showDelay]);
 
-  // Handle retry
+  // Handle retry — just reset the delay timer and continue polling
   const handleRetry = () => {
     setShowDelay(false);
     lastAdvanceRef.current = Date.now();
     setError(null);
-    // Re-trigger grading by calling complete-capture again
-    if (returnId) {
-      fetch(`/api/returns/${returnId}/complete-capture`, { method: 'POST' })
-        .catch(() => {});
-    }
   };
 
   // Navigate to result
