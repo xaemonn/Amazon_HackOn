@@ -1,0 +1,219 @@
+.reason-picker {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+  text-align: left;
+}
+
+.reason-picker h1 {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.reason-picker-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Radio group (fieldset) */
+.reason-picker-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reason-picker-legend {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+}
+
+/* Individual reason option */
+.reason-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-white);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.reason-option:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(15, 52, 96, 0.03);
+}
+
+.reason-option--selected {
+  border-color: var(--color-primary);
+  background-color: rgba(15, 52, 96, 0.06);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.reason-option input[type="radio"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--color-primary);
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.reason-option-label {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Free-text details section */
+.reason-details-section {
+  margin-top: 1.25rem;
+  animation: fadeSlideIn 0.25s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reason-details-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.reason-details-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg-white);
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+.reason-details-textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.reason-details-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.reason-details-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.reason-details-charcount--warning {
+  color: var(--color-warning);
+}
+
+.reason-details-charcount--error {
+  color: var(--color-error);
+}
+
+/* Validation message */
+.reason-picker-validation {
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background-color: rgba(198, 40, 40, 0.06);
+  color: var(--color-error);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Navigation buttons */
+.reason-picker-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 1rem;
+}
+
+.reason-picker-btn {
+  padding: 0.7rem 1.5rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+  border: none;
+}
+
+.reason-picker-btn--back {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+}
+
+.reason-picker-btn--back:hover {
+  background: rgba(15, 52, 96, 0.05);
+}
+
+.reason-picker-btn--next {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.reason-picker-btn--next:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.reason-picker-btn--next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .reason-picker {
+    padding: 1rem 0.75rem 1.5rem;
+  }
+
+  .reason-picker h1 {
+    font-size: 1.25rem;
+  }
+
+  .reason-picker-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+
+  .reason-picker-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,0 +1,295 @@
+/* GradingProgress.css — Progress-specific styles for the AI grading screen */
+
+.grading-progress {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.grading-progress__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.grading-progress__title {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.grading-progress__subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Step list */
+.grading-progress__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+
+.grading-progress__step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.grading-progress__step--completed {
+  background: #e8f5e9;
+  border-color: var(--color-success);
+}
+
+.grading-progress__step--active {
+  background: #e3f2fd;
+  border-color: var(--color-primary);
+}
+
+.grading-progress__step--pending {
+  opacity: 0.5;
+}
+
+/* Step indicator icons */
+.grading-progress__icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.grading-progress__icon--completed {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.grading-progress__icon--active {
+  background: var(--color-primary);
+  color: #fff;
+  animation: pulse 1.2s infinite;
+}
+
+.grading-progress__icon--pending {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+/* Spinner for active step */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.grading-progress__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.grading-progress__step-label {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+/* Progress bar */
+.grading-progress__bar-container {
+  background: var(--color-border);
+  border-radius: 4px;
+  height: 6px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.grading-progress__bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.grading-progress__step-counter {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* Delay message */
+.grading-progress__delay-message {
+  background: #fff3e0;
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.grading-progress__delay-text {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin: 0 0 0.75rem;
+}
+
+.grading-progress__delay-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.grading-progress__btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.grading-progress__btn:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.grading-progress__btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.grading-progress__btn--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.grading-progress__btn--secondary {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.grading-progress__btn--secondary:hover {
+  background: rgba(15, 52, 96, 0.05);
+}
+
+/* Result card */
+.grading-progress__result {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.grading-progress__result-title {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin: 0 0 1rem;
+}
+
+.grading-progress__grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.grading-progress__grade-badge--A {
+  background: var(--color-success);
+}
+
+.grading-progress__grade-badge--B {
+  background: #1976d2;
+}
+
+.grading-progress__grade-badge--C {
+  background: var(--color-warning);
+}
+
+.grading-progress__grade-badge--D {
+  background: var(--color-error);
+}
+
+.grading-progress__result-details {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 1.25rem;
+  text-align: left;
+}
+
+.grading-progress__result-details li {
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.grading-progress__result-details li:last-child {
+  border-bottom: none;
+}
+
+/* Failure card */
+.grading-progress__failure {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+.grading-progress__failure-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.grading-progress__failure-title {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.grading-progress__failure-text {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1.25rem;
+}
+
+/* Responsive: mobile-first is already default, wider tweaks */
+@media (min-width: 480px) {
+  .grading-progress {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .grading-progress__step {
+    padding: 0.85rem 1.25rem;
+  }
+}

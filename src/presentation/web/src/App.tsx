@@ -1,16 +1,29 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { Home } from './pages/Home';
+import { OrderDetail } from './pages/OrderDetail';
+import { Eligibility } from './pages/returns/Eligibility';
+import { ReasonPicker } from './pages/returns/ReasonPicker';
+import { MediaCapture } from './pages/returns/MediaCapture';
+import { GradingProgress } from './pages/returns/GradingProgress';
+import { DispositionResult } from './pages/returns/DispositionResult';
 import './App.css';
 
 function App() {
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Second Life Commerce</h1>
-        <p>Zero-Touch Returns Platform</p>
-      </header>
-      <main>
-        <p>Welcome to Second Life Commerce.</p>
-      </main>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/orders/:orderId" element={<OrderDetail />} />
+          <Route path="/returns/eligibility" element={<Eligibility />} />
+          <Route path="/returns/reason" element={<ReasonPicker />} />
+          <Route path="/returns/media" element={<MediaCapture />} />
+          <Route path="/returns/grading" element={<GradingProgress />} />
+          <Route path="/returns/result" element={<DispositionResult />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

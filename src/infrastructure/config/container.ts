@@ -249,6 +249,7 @@ export function createContainer(): Container {
     container.getRequired('fraudScoreCalculator'),
     container.getRequired('eventBus'),
     config,
+    container.getRequired('conditionAssessmentRepository'),
   );
   container.register('gradingOrchestrator', gradingOrchestrator);
 

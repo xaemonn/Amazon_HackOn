@@ -1,0 +1,79 @@
+.home-page {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.home-page h1 {
+  font-size: 1.75rem;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.home-subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.demo-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.demo-card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.demo-card p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Shared button styles */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-accent {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.btn-accent:hover {
+  background: var(--color-accent-hover);
+}
+
+@media (min-width: 768px) {
+  .home-page h1 {
+    font-size: 2.25rem;
+  }
+}

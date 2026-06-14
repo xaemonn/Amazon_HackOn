@@ -12,4 +12,12 @@ export default defineConfig({
       '@presentation': path.resolve(__dirname, '../../../src/presentation'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
 });
