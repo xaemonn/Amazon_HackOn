@@ -127,12 +127,18 @@ export function Eligibility() {
       {screenState === 'result' && eligibility && (
         <>
           <div className="eligibility-product-card">
-            <div
-              className="eligibility-product-image"
-              role="img"
-              aria-label={eligibility.productName}
-            >
-              {eligibility.productImage || '📦'}
+            <div className="eligibility-product-image" aria-hidden="true">
+              {eligibility.productImage ? (
+                <img
+                  src={eligibility.productImage}
+                  alt={eligibility.productName}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <span>📦</span>
+              )}
             </div>
             <div className="eligibility-product-info">
               <p className="eligibility-product-name">

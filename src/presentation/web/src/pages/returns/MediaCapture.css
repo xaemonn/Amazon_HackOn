@@ -309,6 +309,15 @@
 }
 .capture-error-icon { color: var(--color-error); font-size: 1.1rem; flex-shrink: 0; }
 .capture-error-text { color: var(--color-error); font-size: 0.85rem; flex: 1; }
+.capture-error--duplicate {
+  background: #fff3e0;
+  border-color: #fb8c00;
+}
+.capture-error--duplicate .capture-error-icon,
+.capture-error--duplicate .capture-error-text {
+  color: #e65100;
+}
+
 .capture-error-retry {
   background: var(--color-error);
   color: #fff;

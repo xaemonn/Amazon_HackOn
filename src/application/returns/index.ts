@@ -28,7 +28,7 @@ import type { EligibilityResult } from '../../domain/returns/ReturnEligibilitySe
 import type { AppConfig } from '../../infrastructure/config/index.js';
 import type { ConditionAssessment } from '../../domain/grading/index.js';
 import type { DispositionDecision } from '../../domain/disposition/index.js';
-import type { IConditionAssessmentRepository } from '../../domain/disposition/index.js';
+import type { IConditionAssessmentRepository, IDispositionDecisionRepository } from '../../domain/disposition/index.js';
 import type { GradingInput } from '../../application/grading/GradingOrchestrator.js';
 import { GradingOrchestrator } from '../../application/grading/GradingOrchestrator.js';
 
@@ -156,6 +156,7 @@ export class ReturnsFacade implements IReturnsFacade {
     private readonly gradingOrchestrator: GradingOrchestrator,
     private readonly conditionAssessmentRepository: IConditionAssessmentRepository,
     private readonly auditLogRepository?: IAuditLogRepository,
+    private readonly dispositionDecisionRepository?: IDispositionDecisionRepository,
   ) {
     this.eligibilityService = new ReturnEligibilityService();
     this.stateMachine = new ReturnStateMachine(auditLogRepository);
@@ -358,12 +359,16 @@ export class ReturnsFacade implements IReturnsFacade {
     // Persist the final state
     await this.returnRequestRepository.save(transitioned);
 
+    // Resolve the catalog image reference from the order item
+    const orderItem = await this.authService.getOrderItem(transitioned.orderItemId);
+    const catalogImageRef = orderItem?.catalogImageRef ?? `catalog/${transitioned.productId}.jpg`;
+
     // Fire grading asynchronously (fire-and-forget)
     const gradingInput: GradingInput = {
       returnRequestId: transitioned.id,
       productId: transitioned.productId,
       mediaReferences: transitioned.media,
-      catalogImageRef: transitioned.productId, // use productId as catalog image ref
+      catalogImageRef,
       reasonText: transitioned.reasonDetails,
       customerId: transitioned.customerId,
       returnHistoryCount90Days: await this.returnRequestRepository.countByCustomerInDays(
@@ -373,13 +378,15 @@ export class ReturnsFacade implements IReturnsFacade {
     };
 
     // Fire and forget — don't await
+    console.log('[ReturnsFacade] Dispatching grading', { returnRequestId: transitioned.id, productId: transitioned.productId, catalogImageRef, mediaCount: transitioned.media.length });
     void this.gradingOrchestrator.grade(gradingInput).then(async (assessment) => {
       // Persist the condition assessment
       await this.conditionAssessmentRepository.save(assessment);
+      console.log('[ReturnsFacade] Grading persisted', { returnRequestId: transitioned.id, grade: assessment.grade });
     }).catch((err: unknown) => {
       console.error('[ReturnsFacade] Grading failed for return request', {
         returnRequestId,
-        error: err,
+        error: err instanceof Error ? err.stack : err,
       });
     });
 
@@ -393,7 +400,43 @@ export class ReturnsFacade implements IReturnsFacade {
     if (!returnRequest) {
       return null;
     }
-    return this.toProjection(returnRequest);
+
+    // Look up grading and disposition data from their dedicated repositories
+    // (the entity itself stores null; the results are in separate stores)
+    const conditionAssessment =
+      returnRequest.conditionAssessment ??
+      (await this.conditionAssessmentRepository.findByReturnRequestId(returnRequestId)) ??
+      null;
+
+    const dispositionDecision =
+      returnRequest.dispositionDecision ??
+      (this.dispositionDecisionRepository
+        ? await this.dispositionDecisionRepository.findByReturnRequestId(returnRequestId)
+        : null) ??
+      null;
+
+    return this.toProjection(returnRequest, conditionAssessment, dispositionDecision);
+  }
+
+  // ── Dev helpers (testing only) ──────────────────────────────────────────────
+
+  /**
+   * DEV ONLY: Clear all return requests, assessments, and disposition decisions
+   * from the in-memory stores so the same order item can be returned again
+   * without restarting the server. No-op for repositories that don't support clear().
+   */
+  async devClearAllReturns(): Promise<{ cleared: string[] }> {
+    const cleared: string[] = [];
+    const tryClear = (repo: unknown, label: string): void => {
+      if (repo && typeof (repo as { clear?: unknown }).clear === 'function') {
+        (repo as { clear: () => void }).clear();
+        cleared.push(label);
+      }
+    };
+    tryClear(this.returnRequestRepository, 'returnRequests');
+    tryClear(this.conditionAssessmentRepository, 'conditionAssessments');
+    tryClear(this.dispositionDecisionRepository, 'dispositionDecisions');
+    return { cleared };
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
@@ -412,7 +455,11 @@ export class ReturnsFacade implements IReturnsFacade {
   /**
    * Convert a ReturnRequest entity to a read-only projection.
    */
-  private toProjection(request: ReturnRequest): ReturnRequestProjection {
+  private toProjection(
+    request: ReturnRequest,
+    conditionAssessment: ConditionAssessment | null = null,
+    dispositionDecision: DispositionDecision | null = null,
+  ): ReturnRequestProjection {
     return {
       id: request.id,
       customerId: request.customerId,
@@ -423,8 +470,8 @@ export class ReturnsFacade implements IReturnsFacade {
       reason: request.reason,
       reasonDetails: request.reasonDetails,
       media: request.media,
-      conditionAssessment: request.conditionAssessment,
-      dispositionDecision: request.dispositionDecision,
+      conditionAssessment: conditionAssessment ?? request.conditionAssessment,
+      dispositionDecision: dispositionDecision ?? request.dispositionDecision,
       createdAt: request.createdAt,
       updatedAt: request.updatedAt,
     };

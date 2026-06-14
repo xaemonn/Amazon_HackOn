@@ -1,4 +1,7 @@
-import { Router, type Request, type Response } from 'express';
+import express, { Router, type Request, type Response } from 'express';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { existsSync } from 'fs';
 
 // ─── Catalog Data ────────────────────────────────────────────────────────────
 
@@ -213,6 +216,109 @@ export function createCatalogRouter(): Router {
       return;
     }
     res.json(product);
+  });
+
+  // ── Catalog Image Management ────────────────────────────────────────────────
+  //
+  // Catalog images live in  uploads/catalog/<productId>.jpg  (or .png).
+  // These are the "as-new" reference images Bedrock uses for identity check +
+  // condition grading.  Drop images via the PUT endpoint before grading.
+
+  const CATALOG_DIR = path.resolve('./uploads/catalog');
+
+  // GET /catalog/images — list which products have a catalog image uploaded
+  router.get('/images/list', async (_req: Request, res: Response) => {
+    try {
+      await fs.mkdir(CATALOG_DIR, { recursive: true });
+      const files = await fs.readdir(CATALOG_DIR);
+      const images = files
+        .filter((f) => /\.(jpe?g|png)$/i.test(f))
+        .map((f) => ({
+          productId: f.replace(/\.(jpe?g|png)$/i, ''),
+          filename: f,
+          path: `catalog/${f}`,
+        }));
+
+      const productsWithImages = new Set(images.map((i) => i.productId));
+      const missing = CATALOG_PRODUCTS
+        .filter((p) => p.id.startsWith('item-grade-'))
+        .filter((p) => !productsWithImages.has(p.id))
+        .map((p) => p.id);
+
+      res.json({ images, missing, catalogDir: CATALOG_DIR });
+    } catch (err) {
+      res.status(500).json({ error: 'Could not list catalog images.' });
+    }
+  });
+
+  // PUT /catalog/images/:productId — upload a catalog reference image
+  // Send the raw JPEG or PNG bytes as the request body.
+  // Content-Type must be image/jpeg or image/png.
+  // Example:
+  //   curl -X PUT -H "Content-Type: image/jpeg" --data-binary @headphones.jpg \
+  //        http://localhost:3001/api/catalog/images/item-grade-a
+  router.put(
+    '/images/:productId',
+    express.raw({ type: 'image/*', limit: '20mb' }),
+    async (req: Request, res: Response) => {
+      const productId = req.params['productId'] as string;
+      if (!productId || !/^[\w-]+$/.test(productId)) {
+        res.status(400).json({ error: 'Invalid productId.' });
+        return;
+      }
+
+      const ct = req.headers['content-type'] ?? 'image/jpeg';
+      const ext = ct.includes('png') ? 'png' : 'jpg';
+      const filename = `${productId}.${ext}`;
+      const dest = path.join(CATALOG_DIR, filename);
+
+      try {
+        await fs.mkdir(CATALOG_DIR, { recursive: true });
+
+        const body = req.body as Buffer | string;
+        if (!body || (Buffer.isBuffer(body) && body.length === 0)) {
+          res.status(400).json({ error: 'Request body is empty. Send raw image bytes.' });
+          return;
+        }
+
+        const imageBytes = Buffer.isBuffer(body) ? body : Buffer.from(body as string, 'base64');
+        await fs.writeFile(dest, imageBytes);
+
+        res.status(200).json({
+          message: `Catalog image saved for product '${productId}'.`,
+          catalogImageRef: `catalog/${filename}`,
+          path: dest,
+          sizeBytes: imageBytes.length,
+        });
+      } catch (err) {
+        res.status(500).json({ error: `Failed to save catalog image: ${err instanceof Error ? err.message : err}` });
+      }
+    }
+  );
+
+  // GET /catalog/images/:productId — check if a catalog image exists and serve it
+  router.get('/images/:productId', async (req: Request, res: Response) => {
+    const productId = req.params['productId'] as string;
+    if (!productId || !/^[\w-]+$/.test(productId)) {
+      res.status(400).json({ error: 'Invalid productId.' });
+      return;
+    }
+
+    // Try both .jpg and .png
+    for (const ext of ['jpg', 'jpeg', 'png']) {
+      const filePath = path.join(CATALOG_DIR, `${productId}.${ext}`);
+      if (existsSync(filePath)) {
+        const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+        res.setHeader('Content-Type', mime);
+        res.sendFile(filePath);
+        return;
+      }
+    }
+
+    res.status(404).json({
+      error: `No catalog image found for product '${productId}'.`,
+      hint: `Upload one via: PUT /api/catalog/images/${productId} with Content-Type: image/jpeg`,
+    });
   });
 
   return router;

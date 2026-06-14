@@ -19,6 +19,11 @@ interface ConditionAssessment {
   defects: Array<{ location: string; severity: string; description: string }>;
   reasoning: string;
   requiresManualReview: boolean;
+  authenticity?: {
+    aiGenerated: boolean;
+    confidence: number;
+    note: string;
+  };
 }
 
 interface DispositionDecision {
@@ -125,15 +130,11 @@ export function GradingProgress() {
         setIsComplete(true);
         setResult(data.result);
 
-        // Determine if this is a failure (manual review / null grade)
+        // Failure only when condition grading truly failed (grade is null)
         const assessment = data.result.conditionAssessment;
-        if (
-          !assessment ||
-          assessment.grade === null ||
-          assessment.requiresManualReview
-        ) {
+        if (!assessment || assessment.grade === null) {
           setIsFailure(true);
-          setAnnouncement('Grading complete. Your return has been submitted for manual review.');
+          setAnnouncement('Grading could not be completed. Your return has been submitted for manual review.');
         } else {
           setIsFailure(false);
           setAnnouncement(
@@ -227,11 +228,11 @@ export function GradingProgress() {
             📋
           </div>
           <h2 className="grading-progress__failure-title">
-            Return Submitted
+            Manual Review Required
           </h2>
           <p className="grading-progress__failure-text">
-            Your return has been submitted, we'll review within 24h.
-            You'll receive an update once the review is complete.
+            Our AI couldn't complete grading automatically. A specialist will
+            review your return and you'll hear back within 2 business days.
           </p>
           <button
             className="grading-progress__btn grading-progress__btn--primary"
@@ -250,6 +251,13 @@ export function GradingProgress() {
     const assessment = result.conditionAssessment!;
     const disposition = result.dispositionDecision;
 
+    const gradeLabels: Record<string, string> = {
+      A: 'Like New',
+      B: 'Good',
+      C: 'Fair',
+      D: 'Poor',
+    };
+
     return (
       <section className="grading-progress" aria-labelledby="grading-title">
         <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -257,7 +265,7 @@ export function GradingProgress() {
         </div>
         <div className="grading-progress__result">
           <h2 className="grading-progress__result-title">
-            Grading Complete
+            AI Grading Complete ✓
           </h2>
           <div
             className={`grading-progress__grade-badge grading-progress__grade-badge--${assessment.grade}`}
@@ -268,25 +276,22 @@ export function GradingProgress() {
           <ul className="grading-progress__result-details">
             <li>
               <strong>Condition:</strong> Grade {assessment.grade}
-              {assessment.grade === 'A' && ' — Like New'}
-              {assessment.grade === 'B' && ' — Good'}
-              {assessment.grade === 'C' && ' — Fair'}
-              {assessment.grade === 'D' && ' — Poor'}
+              {assessment.grade && ` — ${gradeLabels[assessment.grade]}`}
             </li>
             <li>
               <strong>Identity:</strong>{' '}
               {assessment.identityVerdict === 'genuine'
                 ? '✓ Verified genuine'
                 : assessment.identityVerdict === 'mismatch'
-                  ? '✗ Mismatch detected'
-                  : '— Inconclusive'}
+                  ? '✗ Item mismatch detected'
+                  : '~ Under review'}
             </li>
             {disposition && (
               <li>
                 <strong>Refund Estimate:</strong>{' '}
                 {disposition.refundEstimate.currency === 'INR' ? '₹' : '$'}
-                {disposition.refundEstimate.amount.toLocaleString()}
-                {disposition.refundEstimate.isMinimumGuarantee && ' (minimum)'}
+                {disposition.refundEstimate.amount.toLocaleString('en-IN')}
+                {disposition.refundEstimate.isMinimumGuarantee && ' (minimum guarantee)'}
               </li>
             )}
             {disposition && (
@@ -295,6 +300,24 @@ export function GradingProgress() {
               </li>
             )}
           </ul>
+          {assessment.reasoning && (
+            <div className="grading-progress__reasoning">
+              <strong>Why this grade?</strong>
+              <p>{assessment.reasoning}</p>
+            </div>
+          )}
+          {assessment.authenticity?.aiGenerated && (
+            <div className="grading-progress__ai-warning" role="alert">
+              🤖 <strong>Possible AI-generated images detected.</strong>{' '}
+              {assessment.authenticity.note || 'Flagged for manual review.'}
+            </div>
+          )}
+          {assessment.requiresManualReview && (
+            <div className="grading-progress__review-notice" role="note">
+              Some details are being reviewed by our team — your refund estimate
+              may be adjusted within 1 business day.
+            </div>
+          )}
           <button
             className="grading-progress__btn grading-progress__btn--primary"
             onClick={handleViewResult}

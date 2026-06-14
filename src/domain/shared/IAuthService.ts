@@ -24,6 +24,10 @@ export interface OrderItem {
   currency: string;
   productName: string;
   productImage: string;
+  /** Storage key of the catalog reference image (item when brand new).
+   *  Used by the AI grader to compare the return against the original product.
+   *  e.g. "catalog/item-grade-a.jpg" */
+  catalogImageRef: string;
 }
 
 export interface IAuthService {

@@ -175,6 +175,7 @@ export class IdentityService implements IIdentityService, IAuthService {
       currency: 'INR',
       productName: item.productName,
       productImage: item.productImage,
+      catalogImageRef: `catalog/${item.productId}.jpg`,
     };
   }
 
@@ -196,6 +197,7 @@ export class IdentityService implements IIdentityService, IAuthService {
         currency: 'INR',
         productName: item.productName,
         productImage: item.productImage,
+        catalogImageRef: `catalog/${item.productId}.jpg`,
       }));
   }
 }

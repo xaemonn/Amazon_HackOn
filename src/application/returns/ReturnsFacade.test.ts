@@ -105,6 +105,7 @@ const sampleAuthOrderItem: AuthOrderItem = {
   currency: 'INR',
   productName: 'Test Widget',
   productImage: 'https://example.com/widget.jpg',
+  catalogImageRef: 'catalog/prod-1.jpg',
 };
 
 function buildCompleteMedia(): MediaReference[] {

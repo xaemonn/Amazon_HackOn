@@ -26,7 +26,7 @@ import type { IdentityVerdict } from '../../domain/shared/types.js';
 export interface BedrockIdentityVerifierConfig {
   /** AWS region for the Bedrock client */
   region?: string;
-  /** Bedrock model ID (e.g., us.anthropic.claude-3-5-sonnet-20241022-v2:0) */
+  /** Bedrock model ID (e.g., anthropic.claude-3-5-sonnet-20241022-v2:0) */
   modelId?: string;
   /** Request timeout in milliseconds (default: 5000 per Requirement 4.6) */
   timeoutMs?: number;
@@ -34,8 +34,8 @@ export interface BedrockIdentityVerifierConfig {
   loadImage: (storageKey: string) => Promise<Uint8Array>;
 }
 
-const DEFAULT_MODEL_ID = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0';
-const DEFAULT_TIMEOUT_MS = 5_000;
+const DEFAULT_MODEL_ID = 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
+const DEFAULT_TIMEOUT_MS = 90_000;
 const DEFAULT_REGION = 'us-east-1';
 
 // ─── Prompt ───────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export class BedrockIdentityVerifier implements IIdentityVerifier {
         requestTimeout: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       } as never,
     });
-    this.modelId = config.modelId ?? DEFAULT_MODEL_ID;
+    this.modelId = config.modelId ?? process.env['ZTR_BEDROCK_MODEL_ID'] ?? DEFAULT_MODEL_ID;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.loadImage = config.loadImage;
   }
@@ -113,10 +113,12 @@ export class BedrockIdentityVerifier implements IIdentityVerifier {
       // Build multimodal content blocks
       const contentBlocks: ContentBlock[] = [];
 
-      // Add catalog image first
+      // Add catalog image first (detect format from the file extension)
+      const catalogExt = catalogImageRef.split('.').pop()?.toLowerCase();
+      const catalogFormat: 'jpeg' | 'png' = catalogExt === 'png' ? 'png' : 'jpeg';
       contentBlocks.push({
         image: {
-          format: 'png',
+          format: catalogFormat,
           source: { bytes: catalogImageBytes },
         },
       });

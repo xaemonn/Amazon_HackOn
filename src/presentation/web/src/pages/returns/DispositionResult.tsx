@@ -19,6 +19,11 @@ interface ConditionAssessment {
   defects: Array<{ location: string; severity: string; description: string }>;
   reasoning: string;
   requiresManualReview: boolean;
+  authenticity?: {
+    aiGenerated: boolean;
+    confidence: number;
+    note: string;
+  };
 }
 
 interface DispositionDecision {
@@ -249,6 +254,46 @@ export function DispositionResult() {
               {getConditionLabel(disposition.refundEstimate.condition)}
             </span>
           </div>
+
+          {/* Why this grade — AI reasoning + detected defects */}
+          {assessment?.reasoning && (
+            <div className="disposition-reasoning">
+              <h2 className="disposition-reasoning-title">Why this grade?</h2>
+              <p className="disposition-reasoning-text">{assessment.reasoning}</p>
+              {assessment.defects && assessment.defects.length > 0 && (
+                <ul className="disposition-defects">
+                  {assessment.defects.map((d, i) => (
+                    <li key={i} className={`disposition-defect disposition-defect--${d.severity}`}>
+                      <span className="disposition-defect-severity">{d.severity}</span>
+                      <span className="disposition-defect-text">
+                        <strong>{d.location}:</strong> {d.description}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {typeof assessment.confidence === 'number' && (
+                <p className="disposition-confidence">
+                  AI confidence: {Math.round(assessment.confidence * 100)}%
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Anti-fraud: AI-generated image warning */}
+          {assessment?.authenticity?.aiGenerated && (
+            <div className="disposition-ai-warning" role="alert">
+              <span className="disposition-ai-warning-icon" aria-hidden="true">🤖</span>
+              <div>
+                <strong>Possible AI-generated images detected</strong>
+                <p>
+                  {assessment.authenticity.note ||
+                    'The submitted photos show signs of being AI-generated or digitally manipulated.'}
+                  {' '}This return has been flagged for manual review.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Plain-language explanation (Requirement 13.3) */}
           <div className="disposition-explanation">

@@ -10,6 +10,7 @@
 
 import type { ConditionGrade, Defect, IdentityVerdict } from '../shared/index.js';
 import type { ReasonReconciliation } from './IReasonParser.js';
+import type { ImageAuthenticity } from './IConditionGrader.js';
 
 export interface ConditionAssessment {
   /** References the ReturnRequest this assessment belongs to. */
@@ -70,6 +71,12 @@ export interface ConditionAssessment {
    * e.g. ["identity inconclusive", "grading timeout", "demand_signal_unavailable"]
    */
   manualReviewReasons: string[];
+
+  /**
+   * Anti-fraud signal: whether the submitted photos appear AI-generated,
+   * rendered, or digitally manipulated rather than genuine camera captures.
+   */
+  authenticity?: ImageAuthenticity;
 
   /** Wall-clock time when the grading run completed (or fallback was produced). */
   gradedAt: Date;

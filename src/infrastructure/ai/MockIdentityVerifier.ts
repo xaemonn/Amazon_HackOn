@@ -33,6 +33,22 @@ const SEEDED_RESULTS: Record<string, SeededResult> = {
     verdict: 'genuine',
     confidence: 0.95,
   },
+  'item-grade-b': {
+    verdict: 'genuine',
+    confidence: 0.88,
+  },
+  'item-grade-c': {
+    verdict: 'genuine',
+    confidence: 0.82,
+  },
+  'item-grade-d': {
+    verdict: 'genuine',
+    confidence: 0.75,
+  },
+  'item-earbuds': {
+    verdict: 'genuine',
+    confidence: 0.91,
+  },
   'item-mismatch': {
     verdict: 'mismatch',
     confidence: 0.95,

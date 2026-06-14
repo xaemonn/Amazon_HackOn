@@ -131,10 +131,10 @@ export const DEFAULT_CONFIG: AppConfig = {
     defaultDays: 10,
   },
   gradingTimeouts: {
-    conditionGraderTimeoutMs: 10_000,
-    identityVerifierTimeoutMs: 5_000,
-    retryDelayMs: 2_000,
-    maxRetries: 1,
+    conditionGraderTimeoutMs: 90_000,
+    identityVerifierTimeoutMs: 90_000,
+    retryDelayMs: 3_000,
+    maxRetries: 0,
   },
   fraud: {
     threshold: 0.7,

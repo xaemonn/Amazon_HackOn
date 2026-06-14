@@ -35,6 +35,7 @@ export class MockAuthService implements IAuthService {
         currency: 'INR',
         productName: 'Premium Wireless Headphones',
         productImage: '/images/headphones.jpg',
+        catalogImageRef: 'catalog/item-grade-a.jpg',
       },
       {
         id: 'order-item-002',
@@ -46,6 +47,7 @@ export class MockAuthService implements IAuthService {
         currency: 'INR',
         productName: 'Bluetooth Speaker',
         productImage: '/images/speaker.jpg',
+        catalogImageRef: 'catalog/item-grade-b.jpg',
       },
       {
         id: 'order-item-003',
@@ -57,6 +59,7 @@ export class MockAuthService implements IAuthService {
         currency: 'INR',
         productName: 'Phone Case',
         productImage: '/images/phone-case.jpg',
+        catalogImageRef: 'catalog/item-grade-c.jpg',
       },
       {
         id: 'order-item-004',
@@ -68,6 +71,19 @@ export class MockAuthService implements IAuthService {
         currency: 'INR',
         productName: 'USB Cable',
         productImage: '/images/usb-cable.jpg',
+        catalogImageRef: 'catalog/item-grade-d.jpg',
+      },
+      {
+        id: 'order-item-005',
+        orderId: 'order-003',
+        productId: 'item-earbuds',
+        customerId: 'customer-001',
+        deliveryDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        price: 2499,
+        currency: 'INR',
+        productName: 'Wireless Earbuds',
+        productImage: '/images/earbuds.jpg',
+        catalogImageRef: 'catalog/item-grade-a.jpg',
       },
     ];
 

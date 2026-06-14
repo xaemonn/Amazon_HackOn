@@ -59,12 +59,16 @@ export class GradingOrchestrator {
   async grade(input: GradingInput): Promise<ConditionAssessment> {
     const { gradingTimeouts, fraud } = this.config;
 
-    // ── Step 1: Identity Verification (5s timeout, 1 retry) ──────────────
+    // ── Steps 1 & 2: Identity Verification + Condition Grading (in parallel) ──
+    // These are independent Bedrock calls; running them concurrently roughly
+    // halves the total grading wall-clock time.
     let identityResult: IdentityVerificationResult | null = null;
     let identityFailed = false;
+    let conditionResult: ConditionGradeResult | null = null;
+    let conditionFailed = false;
 
-    try {
-      identityResult = await this.callWithTimeoutAndRetry(
+    const [identitySettled, conditionSettled] = await Promise.allSettled([
+      this.callWithTimeoutAndRetry(
         () => this.identityVerifier.verifyIdentity(
           input.mediaReferences,
           input.catalogImageRef,
@@ -73,28 +77,30 @@ export class GradingOrchestrator {
         gradingTimeouts.identityVerifierTimeoutMs,
         gradingTimeouts.maxRetries,
         gradingTimeouts.retryDelayMs,
-      );
-    } catch {
-      // Identity verification failed after retry — set inconclusive (Req 9.5)
-      identityFailed = true;
-    }
-
-    // ── Step 2: Condition Grading (10s timeout, 1 retry) ─────────────────
-    let conditionResult: ConditionGradeResult | null = null;
-    let conditionFailed = false;
-
-    try {
-      conditionResult = await this.callWithTimeoutAndRetry(
+      ),
+      this.callWithTimeoutAndRetry(
         () => this.conditionGrader.assessCondition(
           input.mediaReferences,
           input.productId,
+          input.catalogImageRef,
         ),
         gradingTimeouts.conditionGraderTimeoutMs,
         gradingTimeouts.maxRetries,
         gradingTimeouts.retryDelayMs,
-      );
-    } catch {
-      // Condition grading failed after retry (Req 9.1, 9.2)
+      ),
+    ]);
+
+    if (identitySettled.status === 'fulfilled') {
+      identityResult = identitySettled.value;
+    } else {
+      console.error('[GradingOrchestrator] Identity verification failed:', identitySettled.reason instanceof Error ? identitySettled.reason.message : identitySettled.reason);
+      identityFailed = true;
+    }
+
+    if (conditionSettled.status === 'fulfilled') {
+      conditionResult = conditionSettled.value;
+    } else {
+      console.error('[GradingOrchestrator] Condition grading failed:', conditionSettled.reason instanceof Error ? conditionSettled.reason.message : conditionSettled.reason);
       conditionFailed = true;
     }
 
@@ -134,6 +140,14 @@ export class GradingOrchestrator {
       manualReviewReasons.push('reason_unparseable');
     }
 
+    // Anti-fraud: flag suspected AI-generated / manipulated photos for review
+    const authenticity = conditionResult?.authenticity;
+    const suspectedAiImages =
+      authenticity?.aiGenerated === true && authenticity.confidence >= 0.5;
+    if (suspectedAiImages) {
+      manualReviewReasons.push('suspected_ai_generated_images');
+    }
+
     // ── Step 5: Compute Fraud Score ──────────────────────────────────────
 
     const unsupportedClaimCount = reconciliation.claims.filter(
@@ -164,6 +178,7 @@ export class GradingOrchestrator {
       identityFailed ||
       identityVerdict === 'inconclusive' ||
       fraudResult.requiresManualReview ||
+      suspectedAiImages ||
       manualReviewReasons.length > 0;
 
     // If identity verdict is 'inconclusive' from a successful call, add the reason
@@ -187,6 +202,7 @@ export class GradingOrchestrator {
           reconciliation,
           requiresManualReview: true,
           manualReviewReasons,
+          authenticity,
           gradedAt: new Date(),
         }
       : {
@@ -201,6 +217,7 @@ export class GradingOrchestrator {
           reconciliation,
           requiresManualReview,
           manualReviewReasons,
+          authenticity,
           gradedAt: new Date(),
         };
 

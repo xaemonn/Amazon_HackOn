@@ -17,6 +17,8 @@
 
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { createContainer } from '../../infrastructure/config/container.js';
 import { initializeHeroPathWiring } from '../../application/hero-path-wiring.js';
 import { createReturnsRouter } from './returnsRoutes.js';
@@ -94,6 +96,34 @@ export function createApp() {
   app.use('/api/auth', createAuthRouter(authService));
   app.use('/api/orders', createOrdersRouter(orderRepo));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
+
+  // ── Media upload: PUT /api/media/:returnId/:filename ───────────────────────
+  // Accepts raw image/video bytes and saves them to ./uploads/{returnId}/{filename}
+  // so BedrockConditionGrader can read the actual bytes during grading.
+  app.put(
+    '/api/media/:returnId/:filename',
+    express.raw({ type: ['image/*', 'video/*'], limit: '50mb' }),
+    async (req: Request, res: Response) => {
+      const { returnId, filename } = req.params as { returnId: string; filename: string };
+
+      if (!/^[\w-]+$/.test(returnId) || !/^[\w.-]+$/.test(filename)) {
+        res.status(400).json({ error: 'Invalid returnId or filename.' });
+        return;
+      }
+
+      const body = req.body as Buffer;
+      if (!Buffer.isBuffer(body) || body.length === 0) {
+        res.status(400).json({ error: 'Empty body. Send raw image/video bytes.' });
+        return;
+      }
+
+      const dir = path.resolve('./uploads', returnId);
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, filename), body);
+
+      res.status(200).json({ storageKey: `${returnId}/${filename}` });
+    },
+  );
 
   // ── 404 Handler ────────────────────────────────────────────────────────────
 

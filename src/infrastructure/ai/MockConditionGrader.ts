@@ -102,6 +102,22 @@ const SEEDED_RESULTS: Record<string, SeededResult> = {
       },
     ],
   },
+
+  'item-earbuds': {
+    grade: 'B',
+    confidence: 0.91,
+    reasoning:
+      'Wireless earbuds show light signs of use. ' +
+      'Minor smudges on the charging case exterior. ' +
+      'Both earbuds and charging case are functional; tips are intact.',
+    defects: [
+      {
+        location: 'charging case exterior',
+        severity: 'minor',
+        description: 'Light smudges and fingerprints on the glossy surface.',
+      },
+    ],
+  },
 };
 
 // ─── Default fallback (unknown productId) ────────────────────────────────────
@@ -128,12 +144,14 @@ export class MockConditionGrader implements IConditionGrader {
   /**
    * Assess the condition of a returned item using the seeded deterministic map.
    *
-   * @param _mediaReferences - Ignored in mock; real media not required for demo.
-   * @param productId        - Drives the seeded result lookup.
+   * @param _mediaReferences  - Ignored in mock; real media not required for demo.
+   * @param productId         - Drives the seeded result lookup.
+   * @param _catalogImageRef  - Ignored in mock (real comparison requires Bedrock).
    */
   async assessCondition(
     _mediaReferences: MediaReference[],
-    productId: string
+    productId: string,
+    _catalogImageRef: string
   ): Promise<ConditionGradeResult> {
     const seed = SEEDED_RESULTS[productId] ?? DEFAULT_RESULT;
 
@@ -143,6 +161,11 @@ export class MockConditionGrader implements IConditionGrader {
       confidence: seed.confidence,
       reasoning: seed.reasoning,
       defects: seed.defects.map((d) => ({ ...d })),
+      authenticity: {
+        aiGenerated: false,
+        confidence: 0.9,
+        note: 'Mock grader does not analyze image authenticity.',
+      },
     };
   }
 }

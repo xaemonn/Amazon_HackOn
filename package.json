@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
-    "dev": "tsx watch src/index.ts",
-    "dev:api": "tsx watch src/presentation/api/server.ts",
-    "start": "tsx src/index.ts",
-    "start:api": "tsx src/presentation/api/server.ts",
+    "dev": "tsx --env-file=.env --watch src/index.ts",
+    "dev:api": "tsx --env-file=.env --watch src/presentation/api/server.ts",
+    "start": "tsx --env-file=.env src/index.ts",
+    "start:api": "tsx --env-file=.env src/presentation/api/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/"
@@ -29,6 +29,7 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1068.0",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "sharp": "^0.35.1"
   }
 }

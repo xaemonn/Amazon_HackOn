@@ -194,21 +194,51 @@ class ReturnHistoryProviderAdapter implements IReturnHistoryProvider {
 
 // ─── Media Loader Helper ─────────────────────────────────────────────────────
 
+/** Longest-edge (px) images are downscaled to before sending to Bedrock. */
+const BEDROCK_IMAGE_MAX_EDGE = 768;
+
 /**
- * Creates a function that loads media bytes from the local uploads directory.
- * Used by Bedrock adapters to read uploaded photos/videos for AI analysis.
- * Returns an empty buffer if the file does not exist (graceful fallback).
+ * Creates a function that loads media bytes from the local uploads directory
+ * and downscales images so Bedrock vision calls are fast (large photos add
+ * many seconds of latency). Non-image / unreadable files fall back gracefully.
+ *
+ * Returns an empty buffer if the file does not exist.
  */
 function createMediaLoader(basePath: string = './uploads'): (storageKey: string) => Promise<Buffer> {
   return async (storageKey: string): Promise<Buffer> => {
     const filePath = path.resolve(basePath, storageKey);
+    let raw: Buffer;
     try {
-      return await fs.readFile(filePath);
+      raw = await fs.readFile(filePath);
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
         return Buffer.alloc(0);
       }
       throw err;
+    }
+
+    // Only resize raster images; leave videos / unknown formats untouched.
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png') {
+      return raw;
+    }
+
+    try {
+      const sharp = (await import('sharp')).default;
+      let pipeline = sharp(raw)
+        .rotate() // honor EXIF orientation
+        .resize(BEDROCK_IMAGE_MAX_EDGE, BEDROCK_IMAGE_MAX_EDGE, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+      // Preserve the original format so the format label still matches the bytes.
+      pipeline = ext === '.png'
+        ? pipeline.png({ compressionLevel: 8 })
+        : pipeline.jpeg({ quality: 80 });
+      return await pipeline.toBuffer();
+    } catch {
+      // If resizing fails for any reason, fall back to the original bytes.
+      return raw;
     }
   };
 }
@@ -247,7 +277,7 @@ export function createContainer(): Container {
   // ── AI Adapters: conditional on ZTR_BEDROCK_ENABLED ──────────────────────────
 
   if (container.bedrockEnabled) {
-    // Live Bedrock adapters — require AWS credentials at runtime.
+    console.log('[Container] AI mode: BEDROCK (live AWS Bedrock grading)');
     const mediaLoader = createMediaLoader();
 
     container.register('conditionGrader', new BedrockConditionGrader({
@@ -260,7 +290,7 @@ export function createContainer(): Container {
 
     container.register('reasonParser', new BedrockReasonParser());
   } else {
-    // Deterministic mock adapters for dev/demo mode (no AWS credentials needed).
+    console.log('[Container] AI mode: MOCK (set ZTR_BEDROCK_ENABLED=true to use live Bedrock)');
     container.register('conditionGrader', new MockConditionGrader());
     container.register('identityVerifier', new MockIdentityVerifier());
     container.register('reasonParser', new MockReasonParser());
@@ -298,6 +328,7 @@ export function createContainer(): Container {
     gradingOrchestrator,
     container.getRequired('conditionAssessmentRepository'),
     container.getRequired('auditLogRepository'),
+    container.getRequired('dispositionDecisionRepository'),
   );
   container.register('returnsFacade', returnsFacade);
 

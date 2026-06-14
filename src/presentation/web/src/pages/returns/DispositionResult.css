@@ -223,3 +223,94 @@
     min-width: 180px;
   }
 }
+
+/* ── Why this grade — AI reasoning + defects ───────────────────────────────── */
+.disposition-reasoning {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.disposition-reasoning-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #1e293b;
+}
+
+.disposition-reasoning-text {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.disposition-defects {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.disposition-defect {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.disposition-defect-severity {
+  flex-shrink: 0;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.disposition-defect--minor .disposition-defect-severity { background: #64748b; }
+.disposition-defect--moderate .disposition-defect-severity { background: #d97706; }
+.disposition-defect--severe .disposition-defect-severity { background: #dc2626; }
+
+.disposition-confidence {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* ── AI-generated image warning ────────────────────────────────────────────── */
+.disposition-ai-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  text-align: left;
+  color: #7f1d1d;
+}
+
+.disposition-ai-warning-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.disposition-ai-warning strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.disposition-ai-warning p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

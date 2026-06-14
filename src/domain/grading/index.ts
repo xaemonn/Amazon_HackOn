@@ -22,6 +22,15 @@ import type {
  * Confidence ranges from 0.0 to 1.0; reasoning is capped at 500 characters;
  * defects list is capped at 10 items.
  */
+export interface ImageAuthenticity {
+  /** True when the photos appear AI-generated, CGI/rendered, or manipulated. */
+  aiGenerated: boolean;
+  /** Certainty of the aiGenerated verdict, 0.0–1.0. */
+  confidence: number;
+  /** Brief explanation of the indicators observed (max 300 chars). */
+  note: string;
+}
+
 export interface ConditionGradeResult {
   /** Assigned condition grade (A–D). */
   grade: ConditionGrade;
@@ -31,6 +40,8 @@ export interface ConditionGradeResult {
   defects: Defect[];
   /** Model confidence in the grade (0.0–1.0). */
   confidence: number;
+  /** Anti-fraud signal: whether the photos appear AI-generated/manipulated. */
+  authenticity?: ImageAuthenticity;
 }
 
 /**
@@ -46,7 +57,8 @@ export interface IConditionGrader {
    */
   assessCondition(
     mediaReferences: MediaReference[],
-    productId: string
+    productId: string,
+    catalogImageRef: string
   ): Promise<ConditionGradeResult>;
 }
 
@@ -177,6 +189,8 @@ export interface ConditionAssessment {
   requiresManualReview: boolean;
   /** Reasons manual review was triggered (empty if not required). */
   manualReviewReasons: string[];
+  /** Anti-fraud signal: whether submitted photos appear AI-generated/manipulated. */
+  authenticity?: ImageAuthenticity;
   /** Timestamp when grading completed. */
   gradedAt: Date;
 }

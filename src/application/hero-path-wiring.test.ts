@@ -134,6 +134,7 @@ describe('Hero Path Wiring — End-to-End', () => {
       currency: 'INR',
       productName: 'Premium Wireless Headphones (Grade A)',
       productImage: '/images/headphones-a.jpg',
+      catalogImageRef: 'catalog/item-grade-a.jpg',
     });
 
     authService.addOrderItem({
@@ -146,6 +147,7 @@ describe('Hero Path Wiring — End-to-End', () => {
       currency: 'INR',
       productName: 'Phone Case (Grade C)',
       productImage: '/images/case-c.jpg',
+      catalogImageRef: 'catalog/item-grade-c.jpg',
     });
 
     // Build the GradingOrchestrator with mock AI adapters

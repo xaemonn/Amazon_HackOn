@@ -103,7 +103,7 @@ export interface MediaCompletenessResult {
 
 /**
  * Check whether a collection of media references satisfies the guided-capture
- * requirements (3 photos + 1 video, each valid format and size).
+ * requirements (3 photos: front, back, close-up — each valid format and size).
  *
  * A slot is considered "missing" if zero items occupy it, and "duplicate" if
  * more than one item claims the same type — both are reported in missingSlots
@@ -126,14 +126,6 @@ export function checkMediaCompleteness(media: MediaReference[]): MediaCompletene
     } else if (matches.length > 1) {
       missingSlots.push(`${photoTypeLabel(photoType as MediaReference['type'])}: duplicate (expected exactly 1)`);
     }
-  }
-
-  // ── Check video slot ─────────────────────────────────────────────────────────
-  const videos = media.filter((m) => m.type === 'video');
-  if (videos.length === 0) {
-    missingSlots.push('Video: missing');
-  } else if (videos.length > 1) {
-    missingSlots.push('Video: duplicate (expected exactly 1)');
   }
 
   // ── Validate each media item ─────────────────────────────────────────────────

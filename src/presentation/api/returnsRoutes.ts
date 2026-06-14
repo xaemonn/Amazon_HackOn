@@ -121,6 +121,18 @@ function getIdParam(req: Request): string {
 export function createReturnsRouter(returnsFacade: ReturnsFacade): Router {
   const router = Router();
 
+  // ── DELETE /returns/dev/clear — DEV ONLY: wipe all return data ───────────
+  // Lets you re-test the same order item without restarting the server.
+  router.delete('/dev/clear', async (_req: Request, res: Response) => {
+    try {
+      const result = await returnsFacade.devClearAllReturns();
+      gradingStartTimes.clear();
+      res.json({ message: 'All return data cleared.', ...result });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
   // ── GET /returns/eligibility — Check return eligibility ──────────────────
 
   router.get('/eligibility', async (req: Request, res: Response) => {

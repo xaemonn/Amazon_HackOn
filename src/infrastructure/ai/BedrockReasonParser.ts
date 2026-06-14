@@ -67,7 +67,7 @@ export class BedrockReasonParser implements IReasonParserBarrel, IReasonParserDe
     this.modelId =
       options?.modelId ??
       process.env.ZTR_BEDROCK_MODEL_ID ??
-      'us.anthropic.claude-3-5-sonnet-20241022-v2:0';
+      'us.anthropic.claude-haiku-4-5-20251001-v1:0';
   }
 
   /**

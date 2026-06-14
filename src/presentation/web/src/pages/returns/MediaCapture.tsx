@@ -5,7 +5,7 @@ import './MediaCapture.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SlotType = 'photo_front' | 'photo_back' | 'photo_closeup' | 'video';
+type SlotType = 'photo_front' | 'photo_back' | 'photo_closeup';
 
 interface CaptureSlot {
   type: SlotType;
@@ -24,6 +24,7 @@ interface CapturedMedia {
   uploadStatus: 'pending' | 'uploading' | 'uploaded' | 'error';
   errorMessage?: string;
   qualityWarning?: string;
+  phash?: number[];
 }
 
 // ─── Slot config ──────────────────────────────────────────────────────────────
@@ -59,17 +60,50 @@ const CAPTURE_SLOTS: CaptureSlot[] = [
     isVideo: false,
     angleHint: 'Macro shot — get within 10–20 cm of the surface',
   },
-  {
-    type: 'video',
-    label: 'Short Video',
-    instruction: 'Record a 5–30 second video rotating the item slowly',
-    framingHint: 'Slowly rotate the item to show all sides',
-    accept: 'video/mp4,video/quicktime',
-    maxSizeMB: 50,
-    isVideo: true,
-    angleHint: 'Hold camera steady and rotate the item 360°',
-  },
 ];
+
+// ─── Perceptual hash (dHash 8×8) for duplicate / similar-angle detection ──────
+
+/**
+ * Compute a 64-bit difference-hash for an image already drawn on a canvas.
+ * Downscales to 9×8, converts to grayscale, then builds a 64-bit hash where
+ * each bit = left pixel > right pixel in that row.
+ */
+function computeDHash(sourceCanvas: HTMLCanvasElement | HTMLImageElement): number[] {
+  const SIZE = 8;
+  const tmp = document.createElement('canvas');
+  tmp.width = SIZE + 1; // 9 columns for 8 differences
+  tmp.height = SIZE;
+  const ctx = tmp.getContext('2d');
+  if (!ctx) return [];
+  ctx.drawImage(sourceCanvas, 0, 0, SIZE + 1, SIZE);
+  const { data } = ctx.getImageData(0, 0, SIZE + 1, SIZE);
+
+  const bits: number[] = [];
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      const idx = (row * (SIZE + 1) + col) * 4;
+      const idxR = idx + 4; // pixel to the right
+      const grayL = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+      const grayR = 0.299 * data[idxR] + 0.587 * data[idxR + 1] + 0.114 * data[idxR + 2];
+      bits.push(grayL > grayR ? 1 : 0);
+    }
+  }
+  return bits;
+}
+
+/** Hamming distance between two 64-bit hashes (as bit arrays). */
+function hammingDistance(a: number[], b: number[]): number {
+  if (a.length !== b.length || a.length === 0) return 64;
+  let dist = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) dist++;
+  }
+  return dist;
+}
+
+const DUPLICATE_THRESHOLD = 5;   // ≤5 bits different → exact duplicate
+const SIMILAR_THRESHOLD = 14;    // ≤14 bits different → same angle
 
 // ─── Image quality analysis (canvas-based) ────────────────────────────────────
 
@@ -143,7 +177,6 @@ export function MediaCapture() {
     photo_front: null,
     photo_back: null,
     photo_closeup: null,
-    video: null,
   });
   const [validationError, setValidationError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -190,8 +223,33 @@ export function MediaCapture() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    // Fully release the video element so the camera indicator turns off
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setCameraActive(false);
   };
+
+  // ── Similarity check against other captured slots ────────────────────────────
+
+  const checkSimilarity = useCallback(
+    (newHash: number[], excludeType: SlotType): string | null => {
+      for (const slot of CAPTURE_SLOTS) {
+        if (slot.isVideo || slot.type === excludeType) continue;
+        const existing = captures[slot.type];
+        if (!existing?.phash) continue;
+        const dist = hammingDistance(newHash, existing.phash);
+        if (dist <= DUPLICATE_THRESHOLD) {
+          return `This photo looks identical to your ${slot.label}. Please take a different photo.`;
+        }
+        if (dist <= SIMILAR_THRESHOLD) {
+          return `This photo looks very similar to your ${slot.label}. Each photo must show a clearly different angle.`;
+        }
+      }
+      return null;
+    },
+    [captures],
+  );
 
   // ── Open webcam ──────────────────────────────────────────────────────────────
 
@@ -256,12 +314,21 @@ export function MediaCapture() {
 
     // Quality check
     const quality = analyzeImageQuality(ctx, w, h);
+    const phash = computeDHash(canvas);
+    const similarityError = checkSimilarity(phash, currentSlot.type);
+
+    // Frame is already captured to the canvas — shut the camera off immediately.
+    stopCamera();
 
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
         const file = new File([blob], `${currentSlot.type}_${Date.now()}.jpeg`, { type: 'image/jpeg' });
-        stopCamera();
+
+        if (similarityError) {
+          setValidationError(similarityError);
+          return;
+        }
 
         const previewUrl = URL.createObjectURL(file);
         setCaptures((prev) => ({
@@ -271,6 +338,7 @@ export function MediaCapture() {
             previewUrl,
             uploadStatus: 'pending' as const,
             qualityWarning: quality.warning ?? undefined,
+            phash,
           },
         }));
         setValidationError(null);
@@ -278,7 +346,7 @@ export function MediaCapture() {
       'image/jpeg',
       0.92,
     );
-  }, [currentSlot]);
+  }, [currentSlot, checkSimilarity]);
 
   // ── Handle file upload ───────────────────────────────────────────────────────
 
@@ -291,7 +359,7 @@ export function MediaCapture() {
       if (error) { setValidationError(error); return; }
 
       if (!currentSlot.isVideo) {
-        // Run quality check on uploaded images via canvas
+        // Run quality check and perceptual hash on uploaded images via canvas
         const img = new Image();
         const objUrl = URL.createObjectURL(file);
         img.onload = () => {
@@ -300,14 +368,24 @@ export function MediaCapture() {
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext('2d');
           let qualityWarning: string | undefined;
+          let phash: number[] = [];
           if (ctx) {
             ctx.drawImage(img, 0, 0);
             const quality = analyzeImageQuality(ctx, canvas.width, canvas.height);
             qualityWarning = quality.warning ?? undefined;
+            phash = computeDHash(canvas);
           }
+
+          const similarityError = checkSimilarity(phash, currentSlot.type);
+          if (similarityError) {
+            setValidationError(similarityError);
+            URL.revokeObjectURL(objUrl);
+            return;
+          }
+
           setCaptures((prev) => ({
             ...prev,
-            [currentSlot.type]: { file, previewUrl: objUrl, uploadStatus: 'pending', qualityWarning },
+            [currentSlot.type]: { file, previewUrl: objUrl, uploadStatus: 'pending', qualityWarning, phash },
           }));
         };
         img.src = objUrl;
@@ -319,7 +397,7 @@ export function MediaCapture() {
         }));
       }
     },
-    [currentSlot],
+    [currentSlot, checkSimilarity],
   );
 
   const onFileChange = useCallback(
@@ -389,21 +467,34 @@ export function MediaCapture() {
       const returnData = await initiateRes.json();
       const returnId = returnData.id;
 
-      const mediaRefs = CAPTURE_SLOTS.map((slot) => {
+      // Upload each captured file's bytes to the server so Bedrock can read them.
+      const mediaRefs = await Promise.all(CAPTURE_SLOTS.map(async (slot) => {
         const captured = captures[slot.type];
-        const fileExt = slot.isVideo ? 'mp4' : 'jpeg';
-        const format = slot.isVideo
+        const fileExt = slot.isVideo
           ? (captured?.file.type === 'video/quicktime' ? 'mov' : 'mp4')
           : (captured?.file.type === 'image/png' ? 'png' : 'jpeg');
+        const format = fileExt as 'jpeg' | 'png' | 'mp4' | 'mov';
+        const filename = `${slot.type}_${Date.now()}.${fileExt}`;
+        const storageKey = `${returnId}/${filename}`;
+
+        if (captured?.file) {
+          const contentType = captured.file.type || (slot.isVideo ? 'video/mp4' : 'image/jpeg');
+          await fetch(`/api/media/${returnId}/${filename}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': contentType },
+            body: captured.file,
+          });
+        }
+
         return {
           id: `${slot.type}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           type: slot.type,
-          storageKey: `uploads/${returnId}/${slot.type}_${Date.now()}.${fileExt}`,
+          storageKey,
           format,
           sizeBytes: captured?.file.size ?? 1024,
           capturedAt: new Date().toISOString(),
         };
-      });
+      }));
 
       const mediaRes = await fetch(`/api/returns/${returnId}/media`, {
         method: 'POST',
@@ -537,8 +628,13 @@ export function MediaCapture() {
 
         {/* Validation error */}
         {validationError && (
-          <div className="capture-error" role="alert">
-            <span className="capture-error-icon" aria-hidden="true">⚠️</span>
+          <div
+            className={`capture-error ${validationError.includes('identical') || validationError.includes('similar') ? 'capture-error--duplicate' : ''}`}
+            role="alert"
+          >
+            <span className="capture-error-icon" aria-hidden="true">
+              {validationError.includes('identical') || validationError.includes('similar') ? '🔄' : '⚠️'}
+            </span>
             <span className="capture-error-text">{validationError}</span>
           </div>
         )}
@@ -560,8 +656,8 @@ export function MediaCapture() {
                 {currentSlot.isVideo ? 'Record Video' : 'Use Camera'}
               </button>
             )}
-            <button type="button" className="capture-btn capture-btn-gallery" onClick={handleGalleryUpload} aria-label="Upload from gallery">
-              <span aria-hidden="true">📁</span> Upload Photo
+            <button type="button" className="capture-btn capture-btn-gallery" onClick={handleGalleryUpload} aria-label={currentSlot.isVideo ? 'Upload video from gallery' : 'Upload photo from gallery'}>
+              <span aria-hidden="true">📁</span> {currentSlot.isVideo ? 'Upload Video' : 'Upload Photo'}
             </button>
           </div>
         )}
