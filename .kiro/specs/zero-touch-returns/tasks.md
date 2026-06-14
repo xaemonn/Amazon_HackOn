@@ -74,7 +74,7 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Register into DI composition root
     - _Requirements: 15.9, 15.10, 15.11_
 
-- [ ] 4. Grading Module — mock adapters and fraud scoring
+- [x] 4. Grading Module — mock adapters and fraud scoring
   - [x] 4.1 Implement MockConditionGrader (deterministic, seeded)
     - Return predictable grades based on seeded item identifiers (item-grade-a → A/0.95, item-grade-b → B/0.90, etc.)
     - Unknown items → Grade B, confidence 0.70 as default fallback
@@ -82,20 +82,20 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Register into DI composition root
     - _Requirements: 5.4, 16.3, 16.6_
 q
-  - [ ] 4.2 Implement MockIdentityVerifier (deterministic, seeded)
+  - [x] 4.2 Implement MockIdentityVerifier (deterministic, seeded)
     - Return deterministic verdicts: matching photos → genuine/0.95, different product → mismatch/0.95, ambiguous → inconclusive/0.95
     - Unknown items → inconclusive/0.50 as default fallback
     - Register into DI composition root
     - _Requirements: 4.7, 16.4, 16.6_
 goo
-  - [ ] 4.3 Implement MockReasonParser (deterministic)
+  - [x] 4.3 Implement MockReasonParser (deterministic)
     - Extract mock claims from free-text based on keyword matching
     - Return reconciliation status: aligns / partially_aligns / contradicts / unparseable
     - For demo: keywords "cracked" → damage claim; "missing" → missing component; etc.
     - Register into DI composition root
     - _Requirements: 6.1, 6.2, 6.4, 6.5_
 
-  - [ ] 4.4 Implement FraudScoreCalculator
+  - [x] 4.4 Implement FraudScoreCalculator
     - Combine identity verdict, reconciliation status, unsupported claim count, return-history frequency
     - Identity mismatch → score ≥ 0.9 regardless of other signals
     - Each unsupported claim adds configurable increment (default 0.15)
@@ -103,7 +103,7 @@ goo
     - Clamp output to [0.0, 1.0]
     - _Requirements: 7.1, 7.3, 7.6_
 
-  - [ ] 4.5 Implement GradingOrchestrator (grading failure fallback + retry logic)
+  - [x] 4.5 Implement GradingOrchestrator (grading failure fallback + retry logic)
     - Call IIdentityVerifier (5s timeout, 1 retry on failure)
     - Call IConditionGrader (10s timeout, 1 retry on failure)
     - Call IReasonParser for free-text reconciliation
@@ -112,30 +112,30 @@ goo
     - Publish ItemGraded event on completion
     - _Requirements: 5.6, 5.7, 9.1, 9.2, 9.5, 9.6, 7.2, 7.5_
 
-- [ ] 5. Disposition Engine — chain of responsibility + reason-aware refund
-  - [ ] 5.1 Implement the 9 routing strategy handlers as individual classes
+- [x] 5. Disposition Engine — chain of responsibility + reason-aware refund
+  - [x] 5.1 Implement the 9 routing strategy handlers as individual classes
     - ManualReviewFlagHandler, FraudCheckHandler, LowConfidenceHandler, GradeAInstantMatchHandler, GradeAResaleHandler, GradeBRefurbishmentHandler, GradeCDLowValueHandler, GradeCDHighValueHandler, DefaultFallbackHandler
     - Each implements `IDispositionHandler` with `handle()` and `setNext()`
     - _Requirements: 10.1, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11_
 
-  - [ ] 5.2 Wire handlers into a Chain of Responsibility with priority ordering
+  - [x] 5.2 Wire handlers into a Chain of Responsibility with priority ordering
     - Build the chain in strict priority order (manual-review → fraud → low-confidence → grade-A instant match → grade-A resale → grade-B → grade-C/D low value → grade-C/D high value → default)
     - Unavailable demand signal treated as no nearby demand
     - _Requirements: 10.1, 10.12_
 
-  - [ ] 5.3 Implement reason-aware refund estimate calculation
+  - [x] 5.3 Implement reason-aware refund estimate calculation
     - Fault reasons (defective, damaged_in_transit, wrong_item, not_as_described) → 100% refund regardless of route
     - Choice reasons (changed_mind, size_fit) → route-based percentage from config
     - Set isMinimumGuarantee=true for manual_inspection and refurbishment when choice reason
     - _Requirements: 12.1, 12.2, 11.3_
 
-  - [ ] 5.4 Implement plain-language explanation generator
+  - [x] 5.4 Implement plain-language explanation generator
     - Generate single sentence ≤160 chars containing reason + next step
     - No internal identifiers, no jargon, no "fraud"/"suspicious" for manual inspection
     - Manual inspection explanations include review timeframe from config
     - _Requirements: 13.1, 13.2, 13.4, 13.5_
 
-  - [ ] 5.5 Implement DispositionOrchestrator (event listener + publish DispositionAssigned)
+  - [x] 5.5 Implement DispositionOrchestrator (event listener + publish DispositionAssigned)
     - Subscribe to ItemGraded event
     - Build RoutingContext (assessment + item value + demand signal + return reason)
     - Run chain, produce DispositionDecision
@@ -143,33 +143,33 @@ goo
     - Trigger correct state transition on ReturnRequest (→ Listed, → AwaitingPickup, → Completed, → ManualReview)
     - _Requirements: 10.13, 14.2, 14.4, 15.5_
 
-- [ ] 6. In-memory repositories and local media storage
-  - [ ] 6.1 Implement InMemoryReturnRequestRepository
+- [x] 6. In-memory repositories and local media storage
+  - [x] 6.1 Implement InMemoryReturnRequestRepository
     - Implements `IReturnRequestRepository`: save, findById, findByCustomerId, findByOrderItemId, countByCustomerInDays
     - Use a Map<string, ReturnRequest> for storage
     - Register into DI composition root
     - _Requirements: 14.5, 7.1_
 
-  - [ ] 6.2 Implement InMemoryConditionAssessmentRepository and InMemoryDispositionDecisionRepository
+  - [x] 6.2 Implement InMemoryConditionAssessmentRepository and InMemoryDispositionDecisionRepository
     - Simple Map-based storage implementing the repository interfaces
     - Register into DI composition root
     - _Requirements: 5.7, 10.13_
 
-  - [ ] 6.3 Implement LocalFilesystemMediaStorage
+  - [x] 6.3 Implement LocalFilesystemMediaStorage
     - Implements `IMediaStorage`: store files to a local `./uploads/` directory
     - Generate simple file paths instead of presigned URLs
     - Basic validation: check file size limits and format
     - Register into DI composition root
     - _Requirements: 3.8, 16.5_
 
-  - [ ] 6.4 Implement MockAuthService
+  - [x] 6.4 Implement MockAuthService
     - Simple in-memory user store; always-authenticate mode for demo
     - Provide a seeded customer with a delivered order for the demo flow
     - Register into DI composition root
     - _Requirements: 1.7_
 
-- [ ] 7. Returns Facade, hero-path wiring, and seed data
-  - [ ] 7.1 Implement ReturnsFacade (the application service)
+- [x] 7. Returns Facade, hero-path wiring, and seed data
+  - [x] 7.1 Implement ReturnsFacade (the application service)
     - `checkEligibility()`: validate ownership, check return window
     - `initiateReturn()`: create ReturnRequest in Initiated state, publish ReturnInitiated
     - `submitReason()`: validate and store reason + details
@@ -178,7 +178,7 @@ goo
     - `getReturnById()`: return read-only projection
     - _Requirements: 1.1, 1.7, 2.3, 3.6, 15.1, 15.7_
 
-  - [ ] 7.2 Wire the full event-driven hero path end-to-end
+  - [x] 7.2 Wire the full event-driven hero path end-to-end
     - ReturnsFacade → publishes ReturnInitiated → GradingOrchestrator subscribes → grades → publishes ItemGraded → DispositionOrchestrator subscribes → routes → publishes DispositionAssigned → ReturnsFacade subscribes → transitions state
     - For instant_match route: state → AwaitingPickup, publish DeliveryJobCreated
     - For list_for_resale route: state → Listed, publish ListingRequested
@@ -187,12 +187,12 @@ goo
     - Verify the full chain executes with mock adapters and in-memory repos
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 14.2, 14.4_
 
-  - [ ] 7.3 Finalize DI composition root wiring
+  - [x] 7.3 Finalize DI composition root wiring
     - Now that all modules exist, complete the composition root wiring: event bus subscriptions, facade → orchestrator → adapter dependencies
     - Verify all registrations are complete and the system boots without errors
     - _Requirements: 16.5_
 
-  - [ ] 7.4 Seed demo data (product, order, customer, demand signal)
+  - [x] 7.4 Seed demo data (product, order, customer, demand signal)
     - Create a seeded product with catalog image (for identity verification)
     - Create a seeded delivered order owned by the demo customer
     - Create a seeded nearby buyer demand signal (for instant_match path)
@@ -201,7 +201,7 @@ goo
     - _Requirements: 16.3, 16.4, 10.3_
 
 - [ ] 8. API layer for the demo
-  - [ ] 8.1 Implement Express/Fastify API routes for the return flow
+  - [~] 8.1 Implement Express/Fastify API routes for the return flow
     - POST /returns — initiate a return (eligibility + creation)
     - POST /returns/:id/reason — submit reason
     - POST /returns/:id/media — submit media references
@@ -212,26 +212,26 @@ goo
     - _Requirements: 1.5, 8.1, 8.4, 12.3_
 
 - [ ] 9. React frontend — hero-path screens
-  - [ ] 9.1 Scaffold React app shell and routing
+  - [~] 9.1 Scaffold React app shell and routing
     - Set up React Router with routes for the return flow
     - Create a minimal storefront shell (static nav, stub order-detail page with "Return" button)
     - Mobile-first responsive layout, WCAG AA basics (contrast, focus states, alt text)
     - _Requirements: 1.5_
 
-  - [ ] 9.2 Build the eligibility result screen
+  - [~] 9.2 Build the eligibility result screen
     - Display product image, name, order date alongside eligibility status
     - Show remaining days in return window or "no longer eligible" message
     - Error state with retry option if policy retrieval fails
     - _Requirements: 1.2, 1.3, 1.4, 1.6_
 
-  - [ ] 9.3 Build the reason picker screen
+  - [~] 9.3 Build the reason picker screen
     - 6 mutually exclusive reason options (single selection)
     - Free-text input field (1–500 chars, trimmed) shown after selection
     - Inline validation: disable "Next" until a reason is selected
     - Allow changing selection and editing/clearing free-text before proceeding
     - _Requirements: 2.1, 2.2, 2.4, 2.5_
 
-  - [ ] 9.4 Build the guided media capture screen
+  - [~] 9.4 Build the guided media capture screen
     - Progressive disclosure: one capture slot at a time (front → back → closeup → video)
     - On-screen framing guides for each slot showing where to position the item
     - Camera-capture and upload-from-gallery toggle/button per slot
@@ -240,7 +240,7 @@ goo
     - Network error resilience: retain previous captures, allow retry of failed upload
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.7, 3.8, 3.9_
 
-  - [ ] 9.5 Build the live grading progress screen
+  - [~] 9.5 Build the live grading progress screen
     - Show 3–6 named progress steps ("Verifying item…", "Assessing condition…", "Checking for defects…", "Almost done…")
     - Advance steps as sub-step completion events arrive (≤5s between steps)
     - Skeleton loaders / optimistic UI: keep surrounding elements interactive (no full-screen block)
@@ -249,20 +249,20 @@ goo
     - On failure: show friendly message ("Your return has been submitted, we'll review within 24h") + allow navigation away
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 9.3, 9.4_
 
-  - [ ] 9.6 Build the disposition result screen (refund estimate + explanation)
+  - [~] 9.6 Build the disposition result screen (refund estimate + explanation)
     - Display refund estimate with currency symbol and amount, positioned above pickup/action controls
     - Display plain-language explanation alongside refund estimate
     - Pickup scheduling controls disabled until refund estimate is displayed
     - Error state if refund estimate is unavailable (retry or proceed without)
     - _Requirements: 12.3, 12.4, 12.5, 13.3_
 
-  - [ ] 9.7 Wire frontend to API and verify full hero-path flow in browser
+  - [~] 9.7 Wire frontend to API and verify full hero-path flow in browser
     - Connect all screens to the API endpoints from task 8.1
     - Handle API errors gracefully in each screen
     - Verify the full flow works end-to-end in a browser: order detail → return button → eligibility → reason → capture → grading progress → disposition result
     - _Requirements: 1.5_
 
-- [ ] 10. Checkpoint — Demo hero path works locally with UI
+- [~] 10. Checkpoint — Demo hero path works locally with UI
   - Ensure all tests pass, ask the user if questions arise.
   - At this point the full hero path (order detail → return → reason → media → grading progress → disposition result with refund + explanation) runs end-to-end in a browser, backed by mock adapters and in-memory repos, zero AWS credentials needed.
 
@@ -293,11 +293,11 @@ goo
     - Test isMinimumGuarantee flag logic
     - **Validates: Requirements 16.3, 16.4, 16.6, 12.2, 11.3**
 
-- [ ] 12. Checkpoint — Tests pass, demo path verified
+- [~] 12. Checkpoint — Tests pass, demo path verified
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. Bedrock live adapter (priority AWS task for real demo grading)
-  - [ ] 13.1 Implement BedrockConditionGraderAdapter
+  - [~] 13.1 Implement BedrockConditionGraderAdapter
     - Implements `IConditionGrader` using Amazon Bedrock (Claude or Nova multimodal model)
     - Send photos as images to the model; extract representative frames from the video (e.g., 3–5 evenly-spaced frames) and send them as additional images, since Bedrock multimodal models accept images but not raw video
     - Structured prompt requesting grade, defects, reasoning, confidence
@@ -305,24 +305,24 @@ goo
     - Handle Bedrock API errors gracefully (timeout, throttling)
     - _Requirements: 5.1, 16.1_
 
-  - [ ] 13.2 Implement BedrockIdentityVerifierAdapter
+  - [~] 13.2 Implement BedrockIdentityVerifierAdapter
     - Implements `IIdentityVerifier` using Amazon Bedrock multimodal
     - Compare submitted photos against catalog image with a prompt for verdict + confidence
     - Parse model response into `IdentityVerificationResult`
     - _Requirements: 4.1, 16.2_
 
-  - [ ] 13.3 Implement BedrockReasonParserAdapter
+  - [~] 13.3 Implement BedrockReasonParserAdapter
     - Implements `IReasonParser` using Amazon Bedrock text model
     - Send free-text + observed defects to extract claims and reconcile
     - Parse response into `ReasonReconciliation`
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 13.4 Add configuration toggle to swap between Mock and Bedrock adapters
+  - [~] 13.4 Add configuration toggle to swap between Mock and Bedrock adapters
     - Update DI composition root to read adapter selection from config/env
     - When BEDROCK_ENABLED=true, inject Bedrock adapters; else inject mocks
     - _Requirements: 16.5_
 
-- [ ] 14. Final checkpoint — End-to-end demo runs with mock or Bedrock
+- [~] 14. Final checkpoint — End-to-end demo runs with mock or Bedrock
   - Ensure all tests pass, ask the user if questions arise.
   - Demo can run fully local (mock) or with Bedrock for real AI grading by setting one env var.
 

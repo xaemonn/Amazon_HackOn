@@ -1,2 +1,3 @@
-// Grading application module — GradingFacade, grading orchestrator
-export {};
+// Grading application module — GradingOrchestrator
+
+export { GradingOrchestrator, type GradingInput } from './GradingOrchestrator.js';

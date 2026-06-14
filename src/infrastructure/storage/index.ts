@@ -1,2 +1,2 @@
 // Storage infrastructure — S3 adapter, local filesystem adapter
-export {};
+export { LocalFilesystemMediaStorage } from './LocalFilesystemMediaStorage.js';

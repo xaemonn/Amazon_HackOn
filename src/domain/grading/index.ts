@@ -1,4 +1,12 @@
-// Grading domain module — ConditionAssessment, IConditionGrader, IIdentityVerifier, IReasonParser
+// Grading domain module — ConditionAssessment, IConditionGrader, IIdentityVerifier, IReasonParser, FraudScoreCalculator
+
+export {
+  FraudScoreCalculator,
+  type FraudScoreInputs,
+  type FraudScoreResult,
+  type FraudScoreConfig,
+  type IFraudScoreCalculator,
+} from './FraudScoreCalculator.js';
 
 import type {
   ConditionGrade,

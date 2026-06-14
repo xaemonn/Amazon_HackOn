@@ -24,3 +24,5 @@ export type {
   ReturnCompletedEvent,
   ManualReviewInitiatedEvent,
 } from './events.js';
+
+export type { IAuthService, Customer, OrderItem } from './IAuthService.js';

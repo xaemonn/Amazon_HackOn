@@ -3,6 +3,33 @@
 import type { DispositionRoute, RefundEstimate } from '../shared/types.js';
 import type { ConditionAssessment } from '../grading/index.js';
 
+// ─── Re-exports ──────────────────────────────────────────────────────────────
+
+export type { IDispositionHandler } from './IDispositionHandler.js';
+export type { RoutingContext, DemandSignal } from './RoutingContext.js';
+export type { RoutingResult } from './RoutingResult.js';
+export type { IRefundCalculator } from './RefundCalculator.js';
+export { RefundCalculator } from './RefundCalculator.js';
+
+export {
+  BaseDispositionHandler,
+  ManualReviewFlagHandler,
+  FraudCheckHandler,
+  LowConfidenceHandler,
+  GradeAInstantMatchHandler,
+  GradeAResaleHandler,
+  GradeBRefurbishmentHandler,
+  GradeCDLowValueHandler,
+  GradeCDHighValueHandler,
+  DefaultFallbackHandler,
+  computeRefundEstimate,
+} from './handlers/index.js';
+
+export { ExplanationGenerator } from './ExplanationGenerator.js';
+export type { IExplanationGenerator, ExplanationContext } from './ExplanationGenerator.js';
+
+export { buildDispositionChain, evaluateDisposition } from './DispositionChainFactory.js';
+
 // ─── Disposition Decision ────────────────────────────────────────────────────
 
 /**

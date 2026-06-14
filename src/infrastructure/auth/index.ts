@@ -1,2 +1,2 @@
 // Auth infrastructure — Cognito adapter, mock auth
-export {};
+export { MockAuthService } from './MockAuthService.js';
