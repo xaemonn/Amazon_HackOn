@@ -51,14 +51,22 @@ export function createApp() {
 
   // Initialize hero-path event wiring (ItemGraded → Graded with assessment,
   // DispositionAssigned → final state with decision attached to entity).
-  // Note: createContainer() already initializes the DispositionOrchestrator's
-  // event subscriptions (ItemGraded → evaluate disposition).
+  // MUST be called BEFORE dispositionOrchestrator.initialize() so that
+  // GradingCompleteHandler transitions Grading → Graded before DispositionOrchestrator
+  // processes the same ItemGraded event.
   initializeHeroPathWiring({
     eventBus: container.getRequired('eventBus'),
     returnRequestRepository: container.getRequired('returnRequestRepository'),
     conditionAssessmentRepository: container.getRequired('conditionAssessmentRepository'),
     dispositionDecisionRepository: container.getRequired('dispositionDecisionRepository'),
   });
+
+  // Now initialize DispositionOrchestrator's ItemGraded subscription AFTER
+  // GradingCompleteHandler is subscribed (ensures correct ordering).
+  const dispositionOrchestrator = container.getRequired('dispositionOrchestrator') as {
+    initialize(): void;
+  };
+  dispositionOrchestrator.initialize();
 
   // ── Routes ─────────────────────────────────────────────────────────────────
 

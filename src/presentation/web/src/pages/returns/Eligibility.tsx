@@ -9,30 +9,28 @@ interface EligibilityResult {
   productName: string;
   productImage: string;
   orderDate: string;
+  errorMessage?: string | null;
 }
 
 type ScreenState = 'loading' | 'result' | 'error';
 
 /**
- * Simulates an eligibility check for the demo.
- * In production, this would call GET /api/returns/eligibility.
+ * Calls the eligibility API endpoint.
+ * Falls back to a user-friendly error on network or server failures.
  */
-function fetchEligibility(
-  _customerId: string,
-  _orderItemId: string
+async function fetchEligibility(
+  customerId: string,
+  orderItemId: string
 ): Promise<EligibilityResult> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        eligible: true,
-        daysRemaining: 28,
-        policyExpirationDate: null,
-        productName: 'Wireless Noise-Cancelling Headphones',
-        productImage: '🎧',
-        orderDate: '2025-01-15',
-      });
-    }, 800);
-  });
+  const params = new URLSearchParams({ customerId, orderItemId });
+  const response = await fetch(`/api/returns/eligibility?${params.toString()}`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `Eligibility check failed (${response.status})`);
+  }
+
+  return response.json();
 }
 
 export function Eligibility() {
@@ -49,13 +47,25 @@ export function Eligibility() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const checkEligibility = useCallback(async () => {
     setScreenState('loading');
+    setErrorMessage(null);
     try {
       const result = await fetchEligibility(customerId, orderItemId);
+      // If the API returns an errorMessage (ownership issue, item not found), show as error
+      if (result.errorMessage) {
+        setErrorMessage(result.errorMessage);
+        setScreenState('error');
+        return;
+      }
       setEligibility(result);
       setScreenState('result');
-    } catch {
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'The eligibility check is temporarily unavailable. Please try again.'
+      );
       setScreenState('error');
     }
   }, [customerId, orderItemId]);
@@ -93,7 +103,7 @@ export function Eligibility() {
         <div className="eligibility-error" role="alert">
           <div className="eligibility-error-icon" aria-hidden="true">⚠️</div>
           <p>
-            The eligibility check is temporarily unavailable. Please try again.
+            {errorMessage ?? 'The eligibility check is temporarily unavailable. Please try again.'}
           </p>
           <div className="eligibility-actions">
             <button
@@ -122,7 +132,7 @@ export function Eligibility() {
               role="img"
               aria-label={eligibility.productName}
             >
-              {eligibility.productImage}
+              {eligibility.productImage || '📦'}
             </div>
             <div className="eligibility-product-info">
               <p className="eligibility-product-name">

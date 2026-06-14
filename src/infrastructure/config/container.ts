@@ -322,8 +322,11 @@ export function createContainer(): Container {
   );
   container.register('dispositionOrchestrator', dispositionOrchestrator);
 
-  // Initialize event subscriptions — DispositionOrchestrator subscribes to ItemGraded.
-  dispositionOrchestrator.initialize();
+  // NOTE: dispositionOrchestrator.initialize() is NOT called here.
+  // It must be called AFTER GradingCompleteHandler subscribes to ItemGraded
+  // (via initializeHeroPathWiring in server.ts) to ensure correct event ordering:
+  // GradingCompleteHandler transitions Grading → Graded BEFORE DispositionOrchestrator
+  // processes the same ItemGraded event and publishes DispositionAssigned.
 
   // ── Load seed data for dev/demo mode ────────────────────────────────────────
   loadSeedData({

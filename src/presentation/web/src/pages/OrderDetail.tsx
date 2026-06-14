@@ -4,11 +4,11 @@ import './OrderDetail.css';
 // Seeded demo data
 const DEMO_ORDER = {
   orderId: 'order-item-001',
-  customerId: 'customer-demo-001',
-  productName: 'Wireless Noise-Cancelling Headphones',
+  customerId: 'customer-001',
+  productName: 'Premium Wireless Headphones',
   orderDate: '2025-01-15',
   deliveryDate: '2025-01-18',
-  price: '₹4,999',
+  price: '₹1,299',
   status: 'Delivered',
 };
 

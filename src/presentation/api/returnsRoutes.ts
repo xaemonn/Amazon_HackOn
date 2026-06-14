@@ -121,6 +121,43 @@ function getIdParam(req: Request): string {
 export function createReturnsRouter(returnsFacade: ReturnsFacade): Router {
   const router = Router();
 
+  // ── GET /returns/eligibility — Check return eligibility ──────────────────
+
+  router.get('/eligibility', async (req: Request, res: Response) => {
+    try {
+      const customerId = req.query['customerId'] as string | undefined;
+      const orderItemId = req.query['orderItemId'] as string | undefined;
+
+      if (!customerId || typeof customerId !== 'string') {
+        res.status(400).json({ error: 'customerId query parameter is required.' });
+        return;
+      }
+      if (!orderItemId || typeof orderItemId !== 'string') {
+        res.status(400).json({ error: 'orderItemId query parameter is required.' });
+        return;
+      }
+
+      const result = await returnsFacade.checkEligibility(customerId, orderItemId);
+
+      // Serialize dates for JSON response
+      res.status(200).json({
+        eligible: result.eligible,
+        daysRemaining: result.daysRemaining,
+        policyExpirationDate: result.policyExpirationDate
+          ? result.policyExpirationDate.toISOString()
+          : null,
+        productName: result.productName,
+        productImage: result.productImage,
+        orderDate: result.orderDate instanceof Date
+          ? result.orderDate.toISOString().split('T')[0]
+          : result.orderDate,
+        errorMessage: result.errorMessage ?? null,
+      });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
   // ── POST /returns — Initiate a return ────────────────────────────────────
 
   router.post('/', async (req: Request, res: Response) => {
