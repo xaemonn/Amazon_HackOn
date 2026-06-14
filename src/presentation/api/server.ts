@@ -5,6 +5,7 @@
  *  - JSON body parsing
  *  - CORS support (configurable origin)
  *  - Returns routes mounted at /api/returns
+ *  - Account routes mounted at /api/account
  *  - Health check at /api/health
  *  - Error handling middleware
  *
@@ -20,6 +21,7 @@ import cors from 'cors';
 import { createContainer } from '../../infrastructure/config/container.js';
 import { initializeHeroPathWiring } from '../../application/hero-path-wiring.js';
 import { createReturnsRouter } from './returnsRoutes.js';
+import { createAccountRouter } from './accountRoutes.js';
 
 // ─── App Factory ─────────────────────────────────────────────────────────────
 
@@ -48,6 +50,8 @@ export function createApp() {
 
   const container = createContainer();
   const returnsFacade = container.getRequired('returnsFacade');
+  const authService = container.getRequired('authService');
+  const accountService = container.getRequired('accountService');
 
   // Initialize hero-path event wiring (ItemGraded → Graded with assessment,
   // DispositionAssigned → final state with decision attached to entity).
@@ -81,6 +85,9 @@ export function createApp() {
 
   // Mount returns routes
   app.use('/api/returns', createReturnsRouter(returnsFacade));
+
+  // Mount account routes (all require auth)
+  app.use('/api/account', createAccountRouter(authService, accountService));
 
   // ── 404 Handler ────────────────────────────────────────────────────────────
 

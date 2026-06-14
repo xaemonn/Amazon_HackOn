@@ -7,3 +7,5 @@ export { InMemoryOrderRepository } from './InMemoryOrderRepository.js';
 export { InMemoryReturnRequestRepository } from './InMemoryReturnRequestRepository.js';
 export { InMemoryCustomerRepository } from './InMemoryCustomerRepository.js';
 export { InMemoryOtpStore } from './InMemoryOtpStore.js';
+export { DynamoOrderRepository } from './DynamoOrderRepository.js';
+export { DynamoCustomerRepository } from './DynamoCustomerRepository.js';

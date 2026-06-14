@@ -606,7 +606,7 @@ describe('Property 17: Out-of-stock products sorted after in-stock in default re
       variantCount: fc.integer({ min: 1, max: 4 }),
     }).chain(({ brand, basePrice, variantCount }) => {
       // Generate stock values: if forceOutOfStock all are 0, otherwise at least one > 0
-      const stockArbs = Array.from({ length: variantCount }, () =>
+      const stockArbs: fc.Arbitrary<number>[] = Array.from({ length: variantCount }, () =>
         forceOutOfStock
           ? fc.constant(0)
           : fc.integer({ min: 0, max: 50 })
@@ -614,15 +614,16 @@ describe('Property 17: Out-of-stock products sorted after in-stock in default re
 
       return fc.tuple(...stockArbs).map((stocks) => {
         // If not forced out of stock, ensure at least one variant has stock > 0
-        if (!forceOutOfStock && stocks.every((s) => s === 0)) {
-          stocks[0] = 1; // Force first variant to be in stock
+        const mutableStocks: number[] = Array.from(stocks);
+        if (!forceOutOfStock && mutableStocks.every((s) => s === 0)) {
+          (mutableStocks as number[])[0] = 1; // Force first variant to be in stock
         }
         return {
           id: productId,
           title: `${COMMON_KEYWORD} item ${index}`,
           brand,
           basePrice,
-          variants: stocks.map((stock, vi) => ({
+          variants: mutableStocks.map((stock, vi) => ({
             id: `${productId}-v${vi}`,
             condition: ALL_CONDITIONS[vi % ALL_CONDITIONS.length],
             price: Math.max(50, basePrice - vi * 100),

@@ -6,3 +6,5 @@
 
 export { createApp, startServer } from './server.js';
 export { createReturnsRouter } from './returnsRoutes.js';
+export { createAccountRouter } from './accountRoutes.js';
+export { createAuthMiddleware } from './middleware/authMiddleware.js';

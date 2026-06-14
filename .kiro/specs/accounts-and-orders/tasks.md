@@ -1,4 +1,4 @@
-w# Implementation Plan: Accounts & Orders
+# Implementation Plan: Accounts & Orders
 
 ## Overview
 
@@ -13,7 +13,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
 
 ## Tasks
 
-- [ ] 1. Domain types and interfaces — ordering, account, identity
+- [x] 1. Domain types and interfaces — ordering, account, identity
   - [x] 1.1 Define ordering domain entities and `IOrderRepository`
     - Create `src/domain/ordering/RefundStatus.ts` — `RefundStatusCode` union, `RefundStatus` interface (`code`, `amount | null`, `currency | null`, `issuedAt: Date | null`)
     - Create `src/domain/ordering/OrderItem.ts` — `OrderItem` interface (`id`, `orderId`, `productId`, `variantId`, `productName`, `productImage`, `unitPrice`, `quantity`, `deliveryDate`, `deliveryStatus`, `refundStatus`)
@@ -151,7 +151,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - **Property: Round-trip profile update** — for any valid non-empty name N, `updateProfile(id, {name:N})` then `getCustomer(id)` returns customer with `name === N`
     - _Requirements: 3 (correctness property), 4 (correctness properties)_
 
-- [ ] 6. `OrdersService` facade and `RefundIssued` subscriber
+- [x] 6. `OrdersService` facade and `RefundIssued` subscriber
   - [x] 6.1 Implement `IOrdersService` interface and `OrdersService` class
     - Create `src/application/ordering/OrdersService.ts` implementing `IOrdersService`
     - Constructor: `(orderRepo: IOrderRepository, returnsFacade: IReturnsFacade, eventBus: IEventBus)` — subscribes to `'RefundIssued'` in constructor body
@@ -171,14 +171,14 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - `RefundIssued` event: fires subscriber; verifies `refundStatus` updated to `refund_issued` with correct amount; second identical event produces same state (idempotent); second event with different amount overwrites first (last-write-wins — Req 10.4)
     - _Requirements: 7, 8, 9.5, 10_
 
-  - [ ] 6.3 Write property-based tests for `OrdersService` correctness properties
+  - [x] 6.3 Write property-based tests for `OrdersService` correctness properties
     - **Property B: Customer isolation** — for any two distinct customers, `getOrdersByCustomer` results are disjoint by order id
     - **Property C: Idempotent refund reflection** — processing `RefundIssued(orderItemId, amount)` N times produces the same `refundStatus` as processing it once
     - **Property: Graceful unknown-order handling** — processing `RefundIssued` for a non-existent `orderItemId` does not throw and does not alter any other item's `refundStatus`
     - _Requirements: 7 (correctness property), 10 (correctness properties)_
 
-- [ ] 7. Update DI composition root — wire `IdentityService` as `IAuthService`
-  - [ ] 7.1 Update `src/infrastructure/config/container.ts` to register new services
+- [x] 7. Update DI composition root — wire `IdentityService` as `IAuthService`
+  - [x] 7.1 Update `src/infrastructure/config/container.ts` to register new services
     - Construct `InMemoryCustomerRepository([demoCustomer])` and `InMemoryOrderRepository([demoPrepaidOrder, demoCodOrder])` and `InMemoryOtpStore()`
     - Pre-seed demo session: `otpStore.saveSession({ token: DEMO_SESSION_TOKEN, customerId: DEMO_CUSTOMER_ID, expiresAt: far future })`
     - Construct `IdentityService(customerRepo, orderRepo, otpStore, config)` — implements both `IAuthService` and `IIdentityService`
@@ -192,8 +192,8 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Run `vitest --run` after wiring; confirm all tests in `ReturnsFacade.test.ts` and `hero-path-wiring.test.ts` pass without modification — the tests use their own `createMockAuthService()` and are unaffected by the container change
     - _Requirements: 11.4, 11.5, 12.1, 12.2, 12.5, 12.6, 13.1, 13.4_
 
-- [ ] 8. API routes — identity, account, orders
-  - [ ] 8.1 Implement `src/presentation/api/identityRoutes.ts`
+- [x] 8. API routes — identity, account, orders
+  - [x] 8.1 Implement `src/presentation/api/identityRoutes.ts`
     - `POST /identity/otp/send` — call `identityService.sendOtp(contact)`; 409 on `ContactAlreadyRegisteredError` (treated as redirect-to-login, not error — return `{ isExistingCustomer: true }`); 400 on invalid contact format
     - `POST /identity/otp/verify` — call `identityService.verifyOtp(contact, code)`; return `{ token }`; 401 on `OtpInvalidError`/`OtpExpiredError`; 429 on `OtpLockedError` with `retryAfterMs`
     - `POST /identity/logout` — call `identityService.logout(token)` from Authorization header; 200 always (idempotent)
@@ -201,7 +201,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Auth middleware helper: extract `Authorization: Bearer <token>` header; call `authenticate`; attach to request context; respond 401 if absent or invalid
     - _Requirements: 1.1, 2.1, 2.4, 2.5, 2.6, 14.1, 14.4_
 
-  - [ ] 8.2 Implement `src/presentation/api/accountRoutes.ts`
+  - [x] 8.2 Implement `src/presentation/api/accountRoutes.ts`
     - All routes require auth middleware (401 if unauthenticated)
     - All routes extract `customerId` from authenticated session; return 403 if path param customerId doesn't match session (cross-customer guard)
     - `GET /account/profile` → `accountService.getCustomer`
@@ -218,7 +218,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - `PUT /account/notifications` → `accountService.updateNotificationPreferences`
     - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.6, 5.1, 5.2, 5.3, 6.1, 6.2, 14.3_
 
-  - [ ] 8.3 Implement `src/presentation/api/ordersRoutes.ts`
+  - [x] 8.3 Implement `src/presentation/api/ordersRoutes.ts`
     - All routes require auth middleware
     - `GET /orders` → `ordersService.getOrdersByCustomer(session.customerId)`; return array sorted newest-first
     - `GET /orders/:orderId` → `ordersService.getOrderDetail(session.customerId, orderId)`; 404 if null (cross-customer returns null → 404, no data leak)
@@ -226,8 +226,8 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Register routes in `src/presentation/api/index.ts` and `server.ts`
     - _Requirements: 7.1, 7.3, 8.1, 8.4, 9.1, 9.5, 14.3, 14.4_
 
-- [ ] 9. React frontend — app shell, shared components, and auth screens
-  - [ ] 9.0 Scaffold React app shell, route config, and `SkeletonLoader` component
+- [x] 9. React frontend — app shell, shared components, and auth screens
+  - [x] 9.0 Scaffold React app shell, route config, and `SkeletonLoader` component
     - Update `src/presentation/web/src/main.tsx` (or `App.tsx`) to configure React Router with all routes:
       - `/login` → `<LoginPage />`
       - `/orders` → `<AuthGuard><OrdersListPage /></AuthGuard>`
@@ -240,14 +240,14 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Create `src/presentation/web/src/components/OrderCard.tsx` — stub placeholder (filled in task 11.1)
     - _Requirements: 9.6, 14.1, 14.4, 15.1_
 
-  - [ ] 9.1 Scaffold auth context, `AuthGuard`, and `useAuth` hook
+  - [x] 9.1 Scaffold auth context, `AuthGuard`, and `useAuth` hook
     - Create `src/presentation/web/src/contexts/AuthContext.tsx` — stores `{ customer, sessionToken, loading }` in context; reads token from `localStorage` on init; calls `GET /identity/me` to validate
     - Create `src/presentation/web/src/components/AuthGuard.tsx` — if `loading` render `<SkeletonLoader />`; if no customer navigate to `/login?returnTo=<currentPath>`; else render children (Req 14.4 — no personal data before auth confirmed)
     - Create `src/presentation/web/src/hooks/useAuth.ts` — returns context values + `login(token)` / `logout()` helpers
     - Add `<AuthGuard>` wrapping to routes: `/orders`, `/orders/:orderId`, `/account/*`
     - _Requirements: 14.1, 14.2, 14.4_
 
-  - [ ] 9.2 Build `LoginPage` and `SignUpPage`
+  - [x] 9.2 Build `LoginPage` and `SignUpPage`
     - `LoginPage` (`/login`): contact input (email or phone); "Send OTP" → `POST /identity/otp/send`; on success navigate to `OtpVerifyPage`; preserve `returnTo` query param
     - `OtpVerifyPage`: 6-digit code input; "Verify" → `POST /identity/otp/verify`; on success store token in `localStorage`, update auth context, navigate to `returnTo` or `/orders`
     - Inline error messages: invalid OTP (Req 1.3), expired OTP with "Resend" button (Req 1.4), locked state with countdown timer (Req 2.6)
@@ -255,14 +255,14 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Mobile-first layout; all inputs keyboard-accessible; WCAG AA contrast (Req 15.3, 15.4)
     - _Requirements: 1.1, 1.3, 1.4, 2.1, 2.2, 2.5, 2.6, 15.1, 15.3, 15.4_
 
-- [ ] 10. React frontend — account pages
-  - [ ] 10.1 Build `ProfilePage` with inline name editing
+- [x] 10. React frontend — account pages
+  - [x] 10.1 Build `ProfilePage` with inline name editing
     - `GET /account/profile` on mount; display name and masked contact (email or `+91 ****XXXX`)
     - Inline edit: click to enable text input (1–100 chars); `PUT /account/profile`; optimistic update + confirm; inline error on empty/whitespace name (Req 3.2, 3.3)
     - Skeleton loader while loading (Req 3.1 — 2s display requirement)
     - _Requirements: 3.1, 3.2, 3.3, 15.1, 15.3_
 
-  - [ ] 10.2 Build `AddressBookPage` with add/edit/remove/default controls
+  - [x] 10.2 Build `AddressBookPage` with add/edit/remove/default controls
     - `GET /account/addresses`; render list default-first; each address card shows fields
     - "Add address" form: all 6 required fields; pincode 6-digit validation; per-field inline errors (Req 4.6)
     - Edit: inline form pre-filled with existing values
@@ -271,7 +271,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Optimistic UI: update list immediately, revert on API error
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 15.1_
 
-  - [ ] 10.3 Build `PaymentMethodsPage` with add/remove controls
+  - [x] 10.3 Build `PaymentMethodsPage` with add/remove controls
     - `GET /account/payment-methods`; render each method with type label and masked details
     - "Add UPI": text input for UPI ID; inline error on duplicate (Req 5.3)
     - "Add card": inputs for last-four, expiry month, expiry year, cardholder name; display only — no full card number stored (Req 5.4)
@@ -280,14 +280,14 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Skeleton loader; 2s display target (Req 5.5)
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 15.1_
 
-  - [ ] 10.4 Build `NotificationPrefsPage` with toggle matrix
+  - [x] 10.4 Build `NotificationPrefsPage` with toggle matrix
     - `GET /account/notifications`; render 5 event types × 4 channels as toggle grid
     - Each toggle calls `PUT /account/notifications` with the changed cell; optimistic update (toggle instantly, revert on error with error toast — Req 6.2)
     - Skeleton loader; 2s display target (Req 6.1)
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 15.1_
 
-- [ ] 11. React frontend — orders pages and return entry point
-  - [ ] 11.1 Build `OrdersListPage` (`/orders`)
+- [x] 11. React frontend — orders pages and return entry point
+  - [x] 11.1 Build `OrdersListPage` (`/orders`)
     - `GET /orders`; render `<OrderCard>` per order, sorted newest-first
     - Each `<OrderCard>`: last-8-chars order id, placed date, overall status badge, first product image + name, item count
     - Skeleton loaders while fetching (Req 7.5 — no full-screen block); error state with retry (Req 7 implied)
@@ -296,7 +296,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Mobile-first; all product images have `alt="{productName}"` (Req 15.2); WCAG AA contrast (Req 15.3)
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 15.1, 15.2, 15.3_
 
-  - [ ] 11.2 Build `OrderDetailPage` (`/orders/:orderId`) and `OrderItemRow` component with return button
+  - [x] 11.2 Build `OrderDetailPage` (`/orders/:orderId`) and `OrderItemRow` component with return button
     - `GET /orders/:orderId`; if 404 display not-found message (no data leak — Req 8.5)
     - Order header: full order id, placed date, payment type badge, overall status
     - Per item: `<OrderItemRow>` with product image (alt=`"{productName}"`, Req 15.2), name, qty, unit price (₹), delivery date, delivery status badge, refund badge when `refundStatus.code === 'refund_issued'` (shows amount with `₹` symbol — Req 10.2)
@@ -309,7 +309,7 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     - Visible focus state on return button (Req 15.5); keyboard navigable (Req 15.4)
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 10.2, 10.5, 15.1, 15.2, 15.3, 15.4, 15.5_
 
-- [ ] 12. Checkpoint — Demo hero path works end-to-end locally
+- [x] 12. Checkpoint — Demo hero path works end-to-end locally
   - Run `vitest --run`; all tests must pass
   - Manually verify the full hero path in a browser:
     1. Navigate to `/orders` unauthenticated → redirected to `/login?returnTo=/orders`
@@ -319,38 +319,38 @@ built `ReturnsFacade` before the demo runs, replacing the old `MockAuthService`.
     5. Click "Return or replace items" → navigates to Returns eligibility screen with `?orderItemId=order-item-001`
   - Verify `RefundIssued` reflection: manually publish event via test script; reload Order Detail; confirm refund badge appears on the item
 
-- [ ] 13. Property-based tests for ordering domain correctness properties
-  - [ ] 13.1 Write PBT for customer isolation invariant
+- [x] 13. Property-based tests for ordering domain correctness properties
+  - [x] 13.1 Write PBT for customer isolation invariant
     - **Property B: Customer isolation** — generate N customers each with M orders; assert `getOrdersByCustomer(C.id)` contains only orders where `customerId === C.id`
     - **Validates: Requirement 7 correctness property**
 
-  - [ ] 13.2 Write PBT for idempotent refund reflection
+  - [x] 13.2 Write PBT for idempotent refund reflection
     - **Property C: Idempotent refund reflection** — generate random `(orderItemId, amount)` pairs; call `updateOrderItemRefundStatus` 1×, 2×, 5× with the same values; assert final state is identical after all repetitions
     - **Validates: Requirement 10 correctness properties**
 
-  - [ ] 13.3 Write PBT for seed idempotence
+  - [x] 13.3 Write PBT for seed idempotence
     - **Property D: Seed idempotence** — construct repositories from seed data multiple times; assert identical state each time (no duplication)
     - **Validates: Requirement 13 correctness property**
 
-  - [ ] 13.4 Write PBT for address book single-default invariant
+  - [x] 13.4 Write PBT for address book single-default invariant
     - **Property A: Single-default invariant** — generate arbitrary sequences of add/remove/setDefault operations; assert `addresses.filter(a => a.isDefault).length` is always 0 or 1 after every operation
     - **Validates: Requirement 4 correctness property**
 
-- [ ] 14. Optional/Stretch — Cognito live adapter
-  - [ ]* 14.1 Implement `CognitoAuthAdapter` for `IAuthService`
+- [x] 14. Optional/Stretch — Cognito live adapter
+  - [x] 14.1 Implement `CognitoAuthAdapter` for `IAuthService`
     - Verify Cognito JWT tokens via `CognitoIdentityProviderClient.getUser()`
     - Map Cognito `sub` claim to `customerId`; delegate ownership/order-item queries to `DynamoOrderRepository`
     - Config toggle: `COGNITO_ENABLED=true` swaps in this adapter at the composition root
     - _Requirements: 1.7, 2.3, 2.7_
 
-- [ ] 15. Optional/Stretch — DynamoDB adapters for customer and order data
-  - [ ]* 15.1 Implement `DynamoCustomerRepository`
+- [x] 15. Optional/Stretch — DynamoDB adapters for customer and order data
+  - [x] 15.1 Implement `DynamoCustomerRepository`
     - Implements `ICustomerRepository` using DynamoDB per the table design in design.md
     - Upsert via `PutItem` with `updatedAt` condition for optimistic locking
     - `findByContact`: Query on GSI1 (`email` PK)
     - _Requirements: 12.2, 12.6_
 
-  - [ ]* 15.2 Implement `DynamoOrderRepository`
+  - [x] 15.2 Implement `DynamoOrderRepository`
     - Implements `IOrderRepository` using Orders + OrderItems tables per the design
     - `findByCustomerId`: Query on GSI1 (`customerId` PK, `placedDate` SK) — returns sorted result
     - `findOrderItemById`: Query on OrderItems GSI1 (`orderItemId` PK)

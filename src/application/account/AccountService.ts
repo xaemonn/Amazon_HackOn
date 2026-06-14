@@ -8,7 +8,7 @@ import type {
   CardMethod,
   CodMethod,
 } from '../../domain/account/PaymentMethod.js';
-import type { NotificationPreferences } from '../../domain/account/NotificationPreferences.js';
+import type { NotificationPreferences, NotificationEventType, NotificationChannel } from '../../domain/account/NotificationPreferences.js';
 import type { ICustomerRepository } from '../../domain/account/ICustomerRepository.js';
 import {
   CustomerNotFoundError,
@@ -28,6 +28,10 @@ export type AddPaymentMethodInput =
   | Omit<UpiMethod, never>
   | Omit<CardMethod, never>
   | Omit<CodMethod, never>;
+
+/** Partial update type: each event type key is optional, and each channel key within is optional. */
+export type PartialNotificationPreferences = Partial<Record<NotificationEventType, Partial<Record<NotificationChannel, boolean>>>>;
+
 
 // ── Interface ─────────────────────────────────────────────────────────────────
 
@@ -57,7 +61,7 @@ export interface IAccountService {
   // Notification Preferences (Req 6)
   updateNotificationPreferences(
     customerId: string,
-    prefs: Partial<NotificationPreferences>,
+    prefs: PartialNotificationPreferences,
   ): Promise<Customer>;
 }
 
@@ -372,7 +376,7 @@ export class AccountService implements IAccountService {
 
   async updateNotificationPreferences(
     customerId: string,
-    prefs: Partial<NotificationPreferences>,
+    prefs: PartialNotificationPreferences,
   ): Promise<Customer> {
     const customer = await this.loadOrThrow(customerId);
 

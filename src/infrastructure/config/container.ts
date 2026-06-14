@@ -21,22 +21,31 @@ import type { IReturnRequestRepository, IAuditLogRepository, IMediaStorage } fro
 import type { IConditionGrader, IIdentityVerifier, IFraudScoreCalculator } from '../../domain/grading/index.js';
 import type { IReasonParser } from '../../domain/grading/IReasonParser.js';
 import type { IDispositionDecisionRepository, IConditionAssessmentRepository } from '../../domain/disposition/index.js';
-import { InMemoryAuditLogRepository, InMemoryReturnRequestRepository, InMemoryConditionAssessmentRepository, InMemoryDispositionDecisionRepository } from '../persistence/index.js';
+import { InMemoryAuditLogRepository, InMemoryReturnRequestRepository, InMemoryConditionAssessmentRepository, InMemoryDispositionDecisionRepository, InMemoryOrderRepository, InMemoryCustomerRepository, InMemoryOtpStore } from '../persistence/index.js';
 import { InProcessEventBus } from '../events/index.js';
 import { MockConditionGrader, MockIdentityVerifier, MockReasonParser, BedrockConditionGrader, BedrockIdentityVerifier, BedrockReasonParser } from '../ai/index.js';
-import { MockAuthService } from '../auth/index.js';
 import { FraudScoreCalculator } from '../../domain/grading/FraudScoreCalculator.js';
 import { LocalFilesystemMediaStorage } from '../storage/index.js';
 import { GradingOrchestrator } from '../../application/grading/GradingOrchestrator.js';
 import { ReturnsFacade } from '../../application/returns/index.js';
 import { InMemoryDemandSignalProvider } from '../seed/InMemoryDemandSignalProvider.js';
-import { loadSeedData } from '../seed/index.js';
+import {
+  DEMO_CUSTOMER_ID,
+  DEMO_SESSION_TOKEN,
+  SEED_DEMAND_SIGNAL,
+  demoCustomer,
+  demoPrepaidOrder,
+  demoCodOrder,
+} from '../seed/index.js';
 import {
   DispositionOrchestrator,
   type IReturnRequestLookup,
   type IDemandSignalProvider,
   type IReturnHistoryProvider,
 } from '../../application/disposition/index.js';
+import { IdentityService } from '../../application/identity/IdentityService.js';
+import { AccountService } from '../../application/account/AccountService.js';
+import { OrdersService } from '../../application/ordering/OrdersService.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -60,6 +69,9 @@ export interface ContainerRegistry {
   returnsFacade: ReturnsFacade;
   gradingOrchestrator: GradingOrchestrator;
   dispositionOrchestrator: DispositionOrchestrator;
+  identityService: IdentityService;
+  accountService: AccountService;
+  ordersService: OrdersService;
 }
 
 // ─── Container Class ─────────────────────────────────────────────────────────
@@ -229,8 +241,26 @@ export function createContainer(): Container {
   // Register the in-process event bus as the default IEventBus implementation.
   container.register('eventBus', new InProcessEventBus());
 
-  // Register the mock auth service for dev/demo mode (always-authenticate).
-  container.register('authService', new MockAuthService());
+  // ── New repository and OTP store instances (seeded with demo data) ──────────
+  const customerRepo = new InMemoryCustomerRepository([demoCustomer]);
+  const orderRepo = new InMemoryOrderRepository([demoPrepaidOrder, demoCodOrder]);
+  const otpStore = new InMemoryOtpStore();
+
+  // Pre-seed demo session so the demo customer is authenticated without OTP
+  void otpStore.saveSession({
+    token: DEMO_SESSION_TOKEN,
+    customerId: DEMO_CUSTOMER_ID,
+    expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // far future (1 year)
+  });
+
+  // ── IdentityService: implements both IAuthService and IIdentityService ──────
+  const identityService = new IdentityService(customerRepo, orderRepo, otpStore, config);
+  container.register('authService', identityService);
+  container.register('identityService', identityService);
+
+  // ── AccountService ──────────────────────────────────────────────────────────
+  const accountService = new AccountService(customerRepo);
+  container.register('accountService', accountService);
 
   // Register the in-memory audit log repository.
   container.register('auditLogRepository', new InMemoryAuditLogRepository());
@@ -328,10 +358,22 @@ export function createContainer(): Container {
   // GradingCompleteHandler transitions Grading → Graded BEFORE DispositionOrchestrator
   // processes the same ItemGraded event and publishes DispositionAssigned.
 
-  // ── Load seed data for dev/demo mode ────────────────────────────────────────
-  loadSeedData({
-    authService: container.getRequired('authService') as MockAuthService,
-    demandSignalProvider,
+  // ── OrdersService — subscribes to RefundIssued at construction ──────────────
+  const ordersService = new OrdersService(
+    orderRepo,
+    container.getRequired('returnsFacade'),
+    container.getRequired('eventBus'),
+  );
+  container.register('ordersService', ordersService);
+
+  // ── Seed demand signals ─────────────────────────────────────────────────────
+  // Signal for item-grade-a (existing Grade-A product — triggers instant_match)
+  demandSignalProvider.addSignal(SEED_DEMAND_SIGNAL.productId, SEED_DEMAND_SIGNAL.signal);
+  // Signal for prod-demo-1 (demo product from ordering seed data)
+  demandSignalProvider.addSignal('prod-demo-1', {
+    buyerId: 'buyer-002',
+    distanceKm: 12,
+    matchType: 'active_order',
   });
 
   return container;
