@@ -143,10 +143,31 @@ export class OrdersService implements IOrdersService {
   /**
    * Handles the `RefundIssued` domain event published by the Returns module.
    * Extracts refund details from the payload and writes them to the order item.
-   * Last-write-wins semantics ensure idempotence for duplicate events.
+   *
+   * Idempotent: if the order item already has refundStatus code 'refund_issued',
+   * the event is discarded without modification (Requirement 8.4).
+   *
+   * If the orderItemId does not exist, logs a warning and discards without
+   * throwing (Requirement 8.3).
    */
   private async handleRefundIssued(event: DomainEvent): Promise<void> {
     const { orderItemId, amount, currency, issuedAt } = event.payload;
+
+    // Look up the order item to check current refundStatus
+    const found = await this.orderRepo.findOrderItemById(orderItemId as string);
+
+    if (!found) {
+      console.warn(
+        '[OrdersService] handleRefundIssued: orderItemId not found, discarding event',
+        { orderItemId },
+      );
+      return;
+    }
+
+    // Idempotent: skip if already refunded (Requirement 8.4)
+    if (found.item.refundStatus.code === 'refund_issued') {
+      return;
+    }
 
     const refundStatus: RefundStatus = {
       code: 'refund_issued',

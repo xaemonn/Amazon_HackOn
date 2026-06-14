@@ -12,7 +12,7 @@
  *   eligible:false; IReturnsFacade error returns eligible:false (no rethrow)
  * - RefundIssued event: fires subscriber; verifies refundStatus updated to refund_issued with
  *   correct amount; second identical event produces same state (idempotent); second event with
- *   different amount overwrites first (last-write-wins)
+ *   different amount is discarded — first refund wins (Req 8.4 idempotent)
  *
  * Requirements: 7, 8, 9.5, 10
  */
@@ -306,7 +306,7 @@ describe('OrdersService', () => {
       expect(order!.items[0].refundStatus.code).toBe('none');
     });
 
-    it('second call with a different amount overwrites — last-write-wins (Req 10.4)', async () => {
+    it('second call with a different amount overwrites — last-write-wins', async () => {
       const item = makeOrderItem({ id: 'item-001', refundStatus: NONE_REFUND });
       await repo.save(makeOrder({ id: 'order-001', items: [item] }));
 
@@ -436,7 +436,7 @@ describe('OrdersService', () => {
       expect(issuedAt!.toISOString()).toBe(isoString);
     });
 
-    it('second identical RefundIssued event produces the same state (idempotent — Req 10.4)', async () => {
+    it('second identical RefundIssued event produces the same state (idempotent — Req 8.4)', async () => {
       const item = makeOrderItem({ id: 'item-001', refundStatus: NONE_REFUND });
       await repo.save(makeOrder({ id: 'order-001', items: [item] }));
 
@@ -457,7 +457,7 @@ describe('OrdersService', () => {
       expect(order!.items[0].refundStatus.code).toBe('refund_issued');
     });
 
-    it('second event with a different amount overwrites the first — last-write-wins (Req 10.4)', async () => {
+    it('second event with a different amount is discarded — first refund wins (Req 8.4 idempotent)', async () => {
       const item = makeOrderItem({ id: 'item-001', refundStatus: NONE_REFUND });
       await repo.save(makeOrder({ id: 'order-001', items: [item] }));
 
@@ -471,15 +471,16 @@ describe('OrdersService', () => {
 
       await fireEvent('RefundIssued', {
         orderItemId: 'item-001',
-        returnRequestId: 'rr-001',
+        returnRequestId: 'rr-002',
         amount: 450,
         currency: 'INR',
         issuedAt: '2024-07-10T11:00:00.000Z',
       });
 
       const order = await repo.findById('order-001');
-      // Second event wins; no accumulation
-      expect(order!.items[0].refundStatus.amount).toBe(450);
+      // First refund wins; subsequent events are discarded (Req 8.4)
+      expect(order!.items[0].refundStatus.amount).toBe(300);
+      expect(order!.items[0].refundStatus.currency).toBe('INR');
     });
 
     it('RefundIssued for a non-existent orderItemId does not throw', async () => {

@@ -1,10 +1,10 @@
 /**
  * Second Life Commerce — Application Entry Point
  *
- * Starts the Express API server for the Zero-Touch Returns flow.
+ * Starts the unified Express API server with all modules wired together.
  */
 
 import 'dotenv/config';
-import { startServer } from './presentation/api/server.js';
+import { startServer } from './server.js';
 
 startServer();

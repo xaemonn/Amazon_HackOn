@@ -20,6 +20,8 @@ export interface ProductProps {
   category: string; // category ID reference
   basePrice: number; // in ₹
   fitMetadata?: FitMetadata;
+  averageRating?: number; // 1.0–5.0 inclusive; null/undefined means no ratings yet
+  reviewCount?: number;   // 0–99999 inclusive
 }
 
 /**
@@ -40,6 +42,8 @@ export class Product {
   get category(): string { return this._props.category; }
   get basePrice(): number { return this._props.basePrice; }
   get fitMetadata(): FitMetadata | undefined { return this._props.fitMetadata; }
+  get averageRating(): number | undefined { return this._props.averageRating; }
+  get reviewCount(): number | undefined { return this._props.reviewCount; }
 
   toProps(): ProductProps { return { ...this._props }; }
 }
