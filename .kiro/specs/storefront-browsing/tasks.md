@@ -61,16 +61,16 @@ This plan implements the Storefront Browsing module following the layered archit
     - Create `src/infrastructure/catalog/index.ts` re-exporting all implementations
     - _Requirements: 6.4_
 
-- [ ] 3. Implement application services
-  - [~] 3.1 Create CatalogConfig and defaults
+- [x] 3. Implement application services
+  - [x] 3.1 Create CatalogConfig and defaults
     - Create `src/application/catalog/CatalogConfig.ts` with `CatalogConfig` interface and `DEFAULT_CATALOG_CONFIG` constant containing all configurable values (discounts, limits, delivery days)
     - _Requirements: 3.1, 6.6, 6.7_
 
-  - [~] 3.2 Create DeliveryEstimate interface and helper
+  - [x] 3.2 Create DeliveryEstimate interface and helper
     - Create `src/application/catalog/DeliveryEstimate.ts` with `DeliveryEstimate` interface and a `computeDeliveryEstimate(config)` function that calculates date range from today
     - _Requirements: 1.1_
 
-  - [~] 3.3 Create SearchService with filtering, sorting, and pagination
+  - [x] 3.3 Create SearchService with filtering, sorting, and pagination
     - Create `src/application/catalog/SearchService.ts` with `SearchOptions`, `SearchFilters`, `SortOption`, `SearchResult`, and `ProductSearchCard` interfaces
     - Implement keyword search delegating to `IProductRepository.searchByKeyword`
     - Implement filter logic: priceMin/priceMax, brands, minRating, conditions
@@ -78,14 +78,14 @@ This plan implements the Storefront Browsing module following the layered archit
     - Implement pagination with 1-based page numbers
     - _Requirements: 4.3, 4.4, 4.5, 4.6, 4.8, 8.4_
 
-  - [~] 3.4 Implement CatalogService facade
+  - [x] 3.4 Implement CatalogService facade
     - Create `src/application/catalog/CatalogService.ts` implementing `getProductById`, `getVariantsByProductId`, `searchProducts`, `getCategories`, `createVariantFromListing`, and `getDeliveryEstimate`
     - Validate all inputs and return `CatalogResult<T>` with structured `CatalogError` on failure
     - Delegate search to SearchService internally
     - Implement `createVariantFromListing`: validate grade is A, compute Open_Box price from discount config, cap unitPhotos at maxUnitPhotos, publish `ListingCreated` on success
     - _Requirements: 6.1, 6.5, 6.6, 6.7, 3.1, 3.2_
 
-  - [~] 3.5 Implement ListingRequestedHandler
+  - [x] 3.5 Implement ListingRequestedHandler
     - Create `src/application/catalog/ListingRequestedHandler.ts` that subscribes to `ListingRequested` on the event bus
     - Validate required fields (returnRequestId, productId, conditionGrade, assessmentSummary, mediaReferences)
     - Reject non-A grades with structured log
@@ -95,7 +95,7 @@ This plan implements the Storefront Browsing module following the layered archit
     - Never throw — always catch and log
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6, 3.7, 10.1, 10.2, 10.3, 10.4_
 
-  - [~] 3.6 Create application barrel export
+  - [x] 3.6 Create application barrel export
     - Create `src/application/catalog/index.ts` re-exporting CatalogService, CatalogConfig, ListingRequestedHandler, and public types
     - _Requirements: 6.1_
 
