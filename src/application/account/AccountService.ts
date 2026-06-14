@@ -8,7 +8,7 @@ import type {
   CardMethod,
   CodMethod,
 } from '../../domain/account/PaymentMethod.js';
-import type { NotificationPreferences } from '../../domain/account/NotificationPreferences.js';
+import type { NotificationPreferences, NotificationChannel, NotificationEventType } from '../../domain/account/NotificationPreferences.js';
 import type { ICustomerRepository } from '../../domain/account/ICustomerRepository.js';
 import {
   CustomerNotFoundError,
@@ -57,7 +57,7 @@ export interface IAccountService {
   // Notification Preferences (Req 6)
   updateNotificationPreferences(
     customerId: string,
-    prefs: Partial<NotificationPreferences>,
+    prefs: Partial<{ [K in NotificationEventType]: Partial<Record<NotificationChannel, boolean>> }>,
   ): Promise<Customer>;
 }
 
@@ -372,7 +372,7 @@ export class AccountService implements IAccountService {
 
   async updateNotificationPreferences(
     customerId: string,
-    prefs: Partial<NotificationPreferences>,
+    prefs: Partial<{ [K in NotificationEventType]: Partial<Record<NotificationChannel, boolean>> }>,
   ): Promise<Customer> {
     const customer = await this.loadOrThrow(customerId);
 

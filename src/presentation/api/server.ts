@@ -20,6 +20,12 @@ import cors from 'cors';
 import { createContainer } from '../../infrastructure/config/container.js';
 import { initializeHeroPathWiring } from '../../application/hero-path-wiring.js';
 import { createReturnsRouter } from './returnsRoutes.js';
+import { createCatalogRouter } from './catalogRoutes.js';
+import { createAuthRouter } from './authRoutes.js';
+import { createOrdersRouter } from './ordersRoutes.js';
+import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
+import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
+import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
 
 // ─── App Factory ─────────────────────────────────────────────────────────────
 
@@ -68,6 +74,11 @@ export function createApp() {
   };
   dispositionOrchestrator.initialize();
 
+  // ── Shell services (order repo, auth) ──────────────────────────────────────
+
+  const orderRepo = new InMemoryOrderRepository([demoPrepaidOrder, demoCodOrder]);
+  const authService = container.getRequired('authService') as MockAuthService;
+
   // ── Routes ─────────────────────────────────────────────────────────────────
 
   // Health check
@@ -79,7 +90,9 @@ export function createApp() {
     });
   });
 
-  // Mount returns routes
+  app.use('/api/catalog', createCatalogRouter());
+  app.use('/api/auth', createAuthRouter(authService));
+  app.use('/api/orders', createOrdersRouter(orderRepo));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
 
   // ── 404 Handler ────────────────────────────────────────────────────────────
