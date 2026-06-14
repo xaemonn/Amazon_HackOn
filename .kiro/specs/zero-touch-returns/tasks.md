@@ -41,33 +41,33 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - The composition root will be incrementally filled as each module is implemented in subsequent tasks
     - _Requirements: 16.5_
 
-- [ ] 2. ReturnRequest state machine and Returns Module domain
-  - [ ] 2.1 Implement the ReturnRequest entity and State Pattern state machine
+- [x] 2. ReturnRequest state machine and Returns Module domain
+  - [x] 2.1 Implement the ReturnRequest entity and State Pattern state machine
     - Define `ReturnState` type, `ReturnRequestProps` interface, `MediaReference` interface
     - Implement `ReturnStateMachine` class enforcing the legal transition map from the design
     - `transition()` rejects illegal transitions with error specifying current and attempted state
     - `getLegalTransitions()` returns valid next states
     - _Requirements: 14.1, 14.2, 14.3_
 
-  - [ ] 2.2 Implement audit logging on state transitions
+   - [x] 2.2 Implement audit logging on state transitions
     - Create `AuditRecord` interface and in-memory `AuditLogRepository`
     - Every successful transition persists an audit record (returnId, previous state, new state, timestamp, actor, trigger)
     - _Requirements: 14.5_
 
-  - [ ] 2.3 Implement ReturnRequest value objects (ReturnReason, free-text validation, media completeness check)
+  - [x] 2.3 Implement ReturnRequest value objects (ReturnReason, free-text validation, media completeness check)
     - `ReturnReason` enum with the 6 values
     - Free-text validation: trim, reject >500 chars, whitespace-only → null
     - Media completeness: requires 3 photos (front/back/closeup) + 1 video, valid formats and size limits
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.6, 3.8_
 
-  - [ ] 2.4 Implement return eligibility check logic
+  - [x] 2.4 Implement return eligibility check logic
     - Calculate whether current date is within the Return_Window from delivery date
     - Return eligible status + remaining days or policy expiration date
     - Ownership verification: reject if customer doesn't own order-item
     - _Requirements: 1.1, 1.2, 1.3, 1.7_
 
-- [ ] 3. In-process event bus (log-on-failure)
-  - [ ] 3.1 Implement InProcessEventBus with publish/subscribe and log-on-failure
+- [x] 3. In-process event bus (log-on-failure)
+  - [x] 3.1 Implement InProcessEventBus with publish/subscribe and log-on-failure
     - Implement `IEventBus` interface: synchronous in-process pub-sub
     - On subscriber error: log the error with event ID and type; do NOT propagate to publisher or other subscribers
     - Support event deduplication by event ID for idempotent processing
@@ -75,19 +75,19 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - _Requirements: 15.9, 15.10, 15.11_
 
 - [ ] 4. Grading Module — mock adapters and fraud scoring
-  - [ ] 4.1 Implement MockConditionGrader (deterministic, seeded)
+  - [x] 4.1 Implement MockConditionGrader (deterministic, seeded)
     - Return predictable grades based on seeded item identifiers (item-grade-a → A/0.95, item-grade-b → B/0.90, etc.)
     - Unknown items → Grade B, confidence 0.70 as default fallback
     - Return defects list and reasoning text within invariant bounds (≤10 defects, ≤500 chars reasoning)
     - Register into DI composition root
     - _Requirements: 5.4, 16.3, 16.6_
-
+q
   - [ ] 4.2 Implement MockIdentityVerifier (deterministic, seeded)
     - Return deterministic verdicts: matching photos → genuine/0.95, different product → mismatch/0.95, ambiguous → inconclusive/0.95
     - Unknown items → inconclusive/0.50 as default fallback
     - Register into DI composition root
     - _Requirements: 4.7, 16.4, 16.6_
-
+goo
   - [ ] 4.3 Implement MockReasonParser (deterministic)
     - Extract mock claims from free-text based on keyword matching
     - Return reconciliation status: aligns / partially_aligns / contradicts / unparseable

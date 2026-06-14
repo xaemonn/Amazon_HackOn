@@ -1,2 +1,2 @@
 // AI infrastructure — BedrockGraderAdapter, BedrockVerifierAdapter, mocks
-export {};
+export { MockConditionGrader } from './MockConditionGrader.js';

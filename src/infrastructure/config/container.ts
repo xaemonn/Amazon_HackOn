@@ -16,6 +16,9 @@ import type { IEventBus } from '../../domain/shared/events.js';
 import type { IReturnRequestRepository, IAuditLogRepository, IMediaStorage } from '../../domain/returns/index.js';
 import type { IConditionGrader, IIdentityVerifier, IReasonParser } from '../../domain/grading/index.js';
 import type { IDispositionDecisionRepository, IConditionAssessmentRepository } from '../../domain/disposition/index.js';
+import { InMemoryAuditLogRepository } from '../persistence/index.js';
+import { InProcessEventBus } from '../events/index.js';
+import { MockConditionGrader } from '../ai/index.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -112,12 +115,22 @@ export class Container {
 // ─── Factory & Singleton ─────────────────────────────────────────────────────
 
 /**
- * Create a fresh container instance pre-loaded with config.
+ * Create a fresh container instance pre-loaded with config and default
+ * in-memory implementations for dev/demo mode.
  * Use in tests or when you need an isolated container.
  */
 export function createContainer(): Container {
   const container = new Container();
   container.register('config', getConfig());
+  // Register the in-process event bus as the default IEventBus implementation.
+  // In production this is swapped for an Amazon EventBridge adapter via config.
+  container.register('eventBus', new InProcessEventBus());
+  // Register the in-memory audit log repository as the default implementation.
+  // It will be swapped for a DynamoDB-backed one when AWS adapters are wired in.
+  container.register('auditLogRepository', new InMemoryAuditLogRepository());
+  // Register the deterministic mock condition grader for dev/demo mode.
+  // When ZTR_BEDROCK_ENABLED=true, this is replaced by BedrockGraderAdapter.
+  container.register('conditionGrader', new MockConditionGrader());
   return container;
 }
 

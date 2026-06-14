@@ -1,2 +1,2 @@
 // Events infrastructure — EventBridge adapter, in-process event bus
-export {};
+export { InProcessEventBus } from './InProcessEventBus.js';
