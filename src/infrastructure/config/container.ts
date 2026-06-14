@@ -10,6 +10,8 @@
  * will be injected; otherwise mock/in-process implementations are used.
  */
 
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import type { AppConfig } from './index.js';
 import { getConfig } from './index.js';
 import type { IEventBus, DomainEvent } from '../../domain/shared/events.js';
@@ -21,7 +23,7 @@ import type { IReasonParser } from '../../domain/grading/IReasonParser.js';
 import type { IDispositionDecisionRepository, IConditionAssessmentRepository } from '../../domain/disposition/index.js';
 import { InMemoryAuditLogRepository, InMemoryReturnRequestRepository, InMemoryConditionAssessmentRepository, InMemoryDispositionDecisionRepository } from '../persistence/index.js';
 import { InProcessEventBus } from '../events/index.js';
-import { MockConditionGrader, MockIdentityVerifier, MockReasonParser } from '../ai/index.js';
+import { MockConditionGrader, MockIdentityVerifier, MockReasonParser, BedrockConditionGrader, BedrockIdentityVerifier, BedrockReasonParser } from '../ai/index.js';
 import { MockAuthService } from '../auth/index.js';
 import { FraudScoreCalculator } from '../../domain/grading/FraudScoreCalculator.js';
 import { LocalFilesystemMediaStorage } from '../storage/index.js';
@@ -190,6 +192,27 @@ class ReturnHistoryProviderAdapter implements IReturnHistoryProvider {
   }
 }
 
+// ─── Media Loader Helper ─────────────────────────────────────────────────────
+
+/**
+ * Creates a function that loads media bytes from the local uploads directory.
+ * Used by Bedrock adapters to read uploaded photos/videos for AI analysis.
+ * Returns an empty buffer if the file does not exist (graceful fallback).
+ */
+function createMediaLoader(basePath: string = './uploads'): (storageKey: string) => Promise<Buffer> {
+  return async (storageKey: string): Promise<Buffer> => {
+    const filePath = path.resolve(basePath, storageKey);
+    try {
+      return await fs.readFile(filePath);
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        return Buffer.alloc(0);
+      }
+      throw err;
+    }
+  };
+}
+
 // ─── Factory & Singleton ─────────────────────────────────────────────────────
 
 /**
@@ -221,14 +244,27 @@ export function createContainer(): Container {
   // Register the in-memory disposition decision repository.
   container.register('dispositionDecisionRepository', new InMemoryDispositionDecisionRepository());
 
-  // Register the deterministic mock condition grader for dev/demo mode.
-  container.register('conditionGrader', new MockConditionGrader());
+  // ── AI Adapters: conditional on ZTR_BEDROCK_ENABLED ──────────────────────────
 
-  // Register the deterministic mock identity verifier for dev/demo mode.
-  container.register('identityVerifier', new MockIdentityVerifier());
+  if (container.bedrockEnabled) {
+    // Live Bedrock adapters — require AWS credentials at runtime.
+    const mediaLoader = createMediaLoader();
 
-  // Register the deterministic mock reason parser for dev/demo mode.
-  container.register('reasonParser', new MockReasonParser());
+    container.register('conditionGrader', new BedrockConditionGrader({
+      fetchMediaBytes: mediaLoader,
+    }));
+
+    container.register('identityVerifier', new BedrockIdentityVerifier({
+      loadImage: async (key: string) => new Uint8Array(await mediaLoader(key)),
+    }));
+
+    container.register('reasonParser', new BedrockReasonParser());
+  } else {
+    // Deterministic mock adapters for dev/demo mode (no AWS credentials needed).
+    container.register('conditionGrader', new MockConditionGrader());
+    container.register('identityVerifier', new MockIdentityVerifier());
+    container.register('reasonParser', new MockReasonParser());
+  }
 
   // Register the FraudScoreCalculator with config-driven parameters.
   container.register('fraudScoreCalculator', new FraudScoreCalculator({

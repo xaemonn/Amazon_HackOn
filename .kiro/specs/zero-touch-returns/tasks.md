@@ -262,30 +262,30 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Verify the full flow works end-to-end in a browser: order detail → return button → eligibility → reason → capture → grading progress → disposition result
     - _Requirements: 1.5_
 
-- [~] 10. Checkpoint — Demo hero path works locally with UI
+- [x] 10. Checkpoint — Demo hero path works locally with UI
   - Ensure all tests pass, ask the user if questions arise.
   - At this point the full hero path (order detail → return → reason → media → grading progress → disposition result with refund + explanation) runs end-to-end in a browser, backed by mock adapters and in-memory repos, zero AWS credentials needed.
 
-- [-] 11. Core property-based tests and unit tests
-  - [ ] 11.1 Write property test for disposition chain correctness (Property 11)
+- [x] 11. Core property-based tests and unit tests
+  - [x] 11.1 Write property test for disposition chain correctness (Property 11)
     - **Property 11: Disposition Chain Produces Correct Route**
     - Generate random RoutingContexts with all combinations of grades, fraud scores, confidence levels, demand signals
     - Assert the chain always assigns the route matching the strict priority order
     - **Validates: Requirements 10.1, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.12**
 
-  - [ ] 11.2 Write property test for fraud score aggregation (Property 9)
+  - [x] 11.2 Write property test for fraud score aggregation (Property 9)
     - **Property 9: Fraud Score Aggregation and Bounds**
     - Generate random combinations of identity verdicts, reconciliation statuses, claim counts, history counts
     - Assert: output in [0.0, 1.0]; mismatch → ≥ 0.9; missing signals → requires_manual_review set
     - **Validates: Requirements 7.1, 7.3, 7.6**
 
-  - [ ] 11.3 Write property test for state machine legal transitions (Property 14)
+  - [x] 11.3 Write property test for state machine legal transitions (Property 14)
     - **Property 14: State Machine Enforces Legal Transitions**
     - Generate random (state, targetState) pairs from all possible combinations
     - Assert: legal transitions succeed; illegal transitions preserve state and return error
     - **Validates: Requirements 14.2, 14.3**
 
-  - [ ] 11.4 Write unit tests for mock adapters and reason-aware refund
+  - [x] 11.4 Write unit tests for mock adapters and reason-aware refund
     - Test MockConditionGrader returns correct grades for each seeded item
     - Test MockIdentityVerifier returns correct verdicts for each seeded photo set
     - Test MockReasonParser extracts claims and reconciles correctly
@@ -293,11 +293,11 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Test isMinimumGuarantee flag logic
     - **Validates: Requirements 16.3, 16.4, 16.6, 12.2, 11.3**
 
-- [ ] 12. Checkpoint — Tests pass, demo path verified
+- [x] 12. Checkpoint — Tests pass, demo path verified
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Bedrock live adapter (priority AWS task for real demo grading)
-  - [ ] 13.1 Implement BedrockConditionGraderAdapter
+- [x] 13. Bedrock live adapter (priority AWS task for real demo grading)
+  - [x] 13.1 Implement BedrockConditionGraderAdapter
     - Implements `IConditionGrader` using Amazon Bedrock (Claude or Nova multimodal model)
     - Send photos as images to the model; extract representative frames from the video (e.g., 3–5 evenly-spaced frames) and send them as additional images, since Bedrock multimodal models accept images but not raw video
     - Structured prompt requesting grade, defects, reasoning, confidence
@@ -305,24 +305,24 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Handle Bedrock API errors gracefully (timeout, throttling)
     - _Requirements: 5.1, 16.1_
 
-  - [ ] 13.2 Implement BedrockIdentityVerifierAdapter
+  - [x] 13.2 Implement BedrockIdentityVerifierAdapter
     - Implements `IIdentityVerifier` using Amazon Bedrock multimodal
     - Compare submitted photos against catalog image with a prompt for verdict + confidence
     - Parse model response into `IdentityVerificationResult`
     - _Requirements: 4.1, 16.2_
 
-  - [ ] 13.3 Implement BedrockReasonParserAdapter
+  - [x] 13.3 Implement BedrockReasonParserAdapter
     - Implements `IReasonParser` using Amazon Bedrock text model
     - Send free-text + observed defects to extract claims and reconcile
     - Parse response into `ReasonReconciliation`
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 13.4 Add configuration toggle to swap between Mock and Bedrock adapters
+  - [x] 13.4 Add configuration toggle to swap between Mock and Bedrock adapters
     - Update DI composition root to read adapter selection from config/env
     - When BEDROCK_ENABLED=true, inject Bedrock adapters; else inject mocks
     - _Requirements: 16.5_
 
-- [ ] 14. Final checkpoint — End-to-end demo runs with mock or Bedrock
+- [x] 14. Final checkpoint — End-to-end demo runs with mock or Bedrock
   - Ensure all tests pass, ask the user if questions arise.
   - Demo can run fully local (mock) or with Bedrock for real AI grading by setting one env var.
 

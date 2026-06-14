@@ -508,7 +508,7 @@ describe('GradingOrchestrator', () => {
   describe('timeout behavior', () => {
     it('should timeout identity verifier when it takes too long', async () => {
       identityVerifier = {
-        verifyIdentity: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 5000))),
+        verifyIdentity: vi.fn(() => new Promise((_resolve) => setTimeout(() => {}, 5000))),
       };
       config = createTestConfig({
         gradingTimeouts: {
@@ -528,7 +528,7 @@ describe('GradingOrchestrator', () => {
 
     it('should timeout condition grader when it takes too long', async () => {
       conditionGrader = {
-        assessCondition: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 5000))),
+        assessCondition: vi.fn(() => new Promise((_resolve) => setTimeout(() => {}, 5000))),
       };
       config = createTestConfig({
         gradingTimeouts: {
