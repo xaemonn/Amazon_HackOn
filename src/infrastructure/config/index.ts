@@ -99,6 +99,17 @@ export interface ManualReviewConfig {
   slaHours: number;
 }
 
+// ─── OTP (Identity Module) ───────────────────────────────────────────────────
+
+export interface OtpConfig {
+  /** Number of minutes before an OTP expires (default 10) */
+  validityMinutes: number;
+  /** Maximum incorrect OTP attempts before lockout (default 3) */
+  maxAttempts: number;
+  /** Number of minutes to lock a contact after exhausting attempts (default 15) */
+  lockoutMinutes: number;
+}
+
 // ─── Root Config ─────────────────────────────────────────────────────────────
 
 export interface AppConfig {
@@ -110,6 +121,7 @@ export interface AppConfig {
   eventRetry: EventRetryConfig;
   mediaLimits: MediaLimitsConfig;
   manualReview: ManualReviewConfig;
+  otp: OtpConfig;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -159,6 +171,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   manualReview: {
     slaHours: 24,
+  },
+  otp: {
+    validityMinutes: 10,
+    maxAttempts: 3,
+    lockoutMinutes: 15,
   },
 };
 
@@ -292,6 +309,17 @@ export function loadConfig(): AppConfig {
       slaHours:
         envNumber('ZTR_MANUAL_REVIEW_SLA_HOURS')
         ?? DEFAULT_CONFIG.manualReview.slaHours,
+    },
+    otp: {
+      validityMinutes:
+        envNumber('ZTR_OTP_VALIDITY_MINUTES')
+        ?? DEFAULT_CONFIG.otp.validityMinutes,
+      maxAttempts:
+        envNumber('ZTR_OTP_MAX_ATTEMPTS')
+        ?? DEFAULT_CONFIG.otp.maxAttempts,
+      lockoutMinutes:
+        envNumber('ZTR_OTP_LOCKOUT_MINUTES')
+        ?? DEFAULT_CONFIG.otp.lockoutMinutes,
     },
   };
 }

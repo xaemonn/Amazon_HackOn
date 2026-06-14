@@ -1,5 +1,6 @@
 /**
- * Seed Data Module — demo/dev seed data for the Zero-Touch Returns flow.
+ * Seed Data Module — demo/dev seed data for the Zero-Touch Returns flow
+ * and the Accounts & Orders feature.
  *
  * Exports a `loadSeedData()` function that populates the DI container's
  * services with deterministic demo data:
@@ -8,18 +9,36 @@
  *   - Delivered orders owned by the demo customer
  *   - A nearby buyer demand signal (for instant_match routing)
  *
- * Requirements: 16.3, 16.4, 10.3
+ * Requirements: 16.3, 16.4, 10.3, 13.1, 13.2, 13.3, 13.4, 13.5
  */
 
 import type { Customer, OrderItem } from '../../domain/shared/index.js';
 import type { DemandSignal } from '../../domain/disposition/RoutingContext.js';
 import type { MockAuthService } from '../auth/MockAuthService.js';
 import { InMemoryDemandSignalProvider } from './InMemoryDemandSignalProvider.js';
+import type { Customer as AccountCustomer } from '../../domain/account/Customer.js';
+import { defaultAllEnabled } from '../../domain/account/NotificationPreferences.js';
+import type { Order } from '../../domain/ordering/Order.js';
+import type { OrderItem as OrderingOrderItem } from '../../domain/ordering/OrderItem.js';
+
+// ─── Canonical Demo Constants ────────────────────────────────────────────────
+
+/** Shared demo customer ID — consistent across all modules and restarts. */
+export const DEMO_CUSTOMER_ID = 'customer-001';
+
+/** Pre-seeded session token for the demo flow (no OTP required in dev). */
+export const DEMO_SESSION_TOKEN = 'demo-session-token';
+
+/** Demo customer email address. */
+export const DEMO_EMAIL = 'priya@example.com';
+
+/** Internal convenience constant for time calculations. */
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ─── Seed Constants ──────────────────────────────────────────────────────────
 
 /**
- * Demo customer used across the entire demo flow.
+ * Demo customer used across the entire demo flow (shared/IAuthService shape).
  */
 export const DEMO_CUSTOMER: Customer = {
   id: 'customer-001',
@@ -130,6 +149,121 @@ export const SEED_DEMAND_SIGNAL: { productId: string; signal: DemandSignal } = {
     distanceKm: 15,
     matchType: 'active_order',
   },
+};
+
+// ─── Account Domain Seed Objects ─────────────────────────────────────────────
+
+/**
+ * Full account-domain Customer object for Priya Sharma.
+ * Requirements: 13.1
+ */
+export const demoCustomer: AccountCustomer = {
+  id: DEMO_CUSTOMER_ID,
+  name: 'Priya Sharma',
+  email: DEMO_EMAIL,
+  addresses: [
+    {
+      id: 'addr-demo-1',
+      recipientName: 'Priya Sharma',
+      streetLine1: '42 MG Road',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+      country: 'India',
+      isDefault: true,
+      createdAt: new Date('2024-01-01'),
+    },
+  ],
+  paymentMethods: [
+    {
+      id: 'pm-demo-1',
+      type: 'upi',
+      upiId: 'priya@okaxis',
+      isPreferred: true,
+      createdAt: new Date('2024-01-01'),
+    },
+    {
+      id: 'pm-demo-2',
+      type: 'cod',
+      isPreferred: false,
+      createdAt: new Date('2024-01-01'),
+    },
+  ],
+  notificationPreferences: defaultAllEnabled(),
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+};
+
+/**
+ * Prepaid order with two items:
+ *   - order-item-001: inside 30-day return window (2 days ago)
+ *   - oi-demo-ineligible: outside 30-day return window (45 days ago)
+ * Requirements: 13.2, 13.3, 13.5
+ */
+export const demoPrepaidOrder: Order = {
+  id: 'order-demo-prepaid',
+  customerId: DEMO_CUSTOMER_ID,
+  placedDate: new Date(Date.now() - 5 * DAY_MS),
+  status: 'delivered',
+  paymentType: 'prepaid',
+  items: [
+    {
+      id: 'order-item-001',
+      orderId: 'order-demo-prepaid',
+      customerId: DEMO_CUSTOMER_ID,
+      productId: 'item-grade-a',
+      variantId: 'var-demo-1',
+      productName: 'Premium Wireless Headphones',
+      productImage: '/images/headphones.jpg',
+      unitPrice: 1299,
+      quantity: 1,
+      deliveryDate: new Date(Date.now() - 2 * DAY_MS),
+      deliveryStatus: 'delivered',
+      refundStatus: { code: 'none', amount: null, currency: null, issuedAt: null },
+    } satisfies OrderingOrderItem,
+    {
+      id: 'oi-demo-ineligible',
+      orderId: 'order-demo-prepaid',
+      customerId: DEMO_CUSTOMER_ID,
+      productId: 'prod-demo-2',
+      variantId: 'var-demo-2',
+      productName: 'Phone Case',
+      productImage: '/images/phone-case.jpg',
+      unitPrice: 299,
+      quantity: 1,
+      deliveryDate: new Date(Date.now() - 45 * DAY_MS),
+      deliveryStatus: 'delivered',
+      refundStatus: { code: 'none', amount: null, currency: null, issuedAt: null },
+    } satisfies OrderingOrderItem,
+  ],
+};
+
+/**
+ * COD order with one item inside the return window (8 days ago).
+ * Requirements: 13.5
+ */
+export const demoCodOrder: Order = {
+  id: 'order-demo-cod',
+  customerId: DEMO_CUSTOMER_ID,
+  placedDate: new Date(Date.now() - 10 * DAY_MS),
+  status: 'delivered',
+  paymentType: 'cod',
+  items: [
+    {
+      id: 'oi-demo-cod-1',
+      orderId: 'order-demo-cod',
+      customerId: DEMO_CUSTOMER_ID,
+      productId: 'prod-demo-3',
+      variantId: 'var-demo-3',
+      productName: 'Running Shoes',
+      productImage: '/images/shoes.jpg',
+      unitPrice: 3499,
+      quantity: 1,
+      deliveryDate: new Date(Date.now() - 8 * DAY_MS),
+      deliveryStatus: 'delivered',
+      refundStatus: { code: 'none', amount: null, currency: null, issuedAt: null },
+    } satisfies OrderingOrderItem,
+  ],
 };
 
 // ─── Load Function ───────────────────────────────────────────────────────────
