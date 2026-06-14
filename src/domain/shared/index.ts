@@ -23,6 +23,7 @@ export type {
   ReturnCancelledEvent,
   ReturnCompletedEvent,
   ManualReviewInitiatedEvent,
+  RefundIssuedEvent,
 } from './events.js';
 
 export type { IAuthService, Customer, OrderItem } from './IAuthService.js';

@@ -166,3 +166,18 @@ export interface ManualReviewInitiatedEvent extends DomainEvent {
     confidence: number;
   };
 }
+
+/**
+ * Published by the Returns feature when a refund is finalised.
+ * The Ordering module subscribes to update the order item's refund status.
+ */
+export interface RefundIssuedEvent extends DomainEvent {
+  eventType: 'RefundIssued';
+  payload: {
+    orderItemId: string;
+    returnRequestId: string;
+    amount: number;
+    currency: string;
+    issuedAt: string; // ISO 8601 date string
+  };
+}
