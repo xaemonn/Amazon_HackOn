@@ -1,0 +1,108 @@
+/* ConditionSelector — mobile-first condition variant picker */
+
+.condition-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.condition-selector__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.condition-selector__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.condition-selector__option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-white);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.condition-selector__option:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-bg);
+}
+
+.condition-selector__option:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.condition-selector__option--selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light, #eef6ff);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.condition-selector__option--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--color-bg);
+}
+
+.condition-selector__option--disabled:hover {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+}
+
+.condition-selector__condition-name {
+  font-weight: 600;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.condition-selector__price {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-left: auto;
+}
+
+.condition-selector__stock {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.condition-selector__stock--out {
+  color: var(--color-error, #d32f2f);
+  font-weight: 600;
+}
+
+/* Responsive — tablet+ */
+@media (min-width: 768px) {
+  .condition-selector__options {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .condition-selector__option {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 160px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+
+  .condition-selector__price {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,39 @@
+.category-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.category-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.category-page__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 0.25rem;
+}
+
+.category-page__count {
+  font-size: 0.875rem;
+  color: #565959;
+  margin: 0;
+}
+
+.category-page__loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #565959;
+}
+
+.category-page__content {
+  min-height: 200px;
+}
+
+.category-page__empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #565959;
+  font-size: 1rem;
+}
