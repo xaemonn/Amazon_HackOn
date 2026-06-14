@@ -181,3 +181,18 @@ export interface RefundIssuedEvent extends DomainEvent {
     issuedAt: string; // ISO 8601 date string
   };
 }
+
+/**
+ * Published when CheckoutService successfully places an order.
+ * Downstream modules (Returns, Notifications, etc.) may subscribe.
+ */
+export interface OrderPlacedEvent extends DomainEvent {
+  eventType: 'OrderPlaced';
+  payload: {
+    orderId: string;
+    customerId: string;
+    paymentType: string;
+    orderItemIds: string[];
+    highRtoFlag: boolean;
+  };
+}

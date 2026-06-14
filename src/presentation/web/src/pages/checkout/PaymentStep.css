@@ -1,0 +1,263 @@
+/* PaymentStep.css — Mobile-first, WCAG AA contrast */
+
+.payment-step {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.payment-step__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.25rem;
+}
+
+/* Skeleton loading */
+.payment-step__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.payment-step__skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Error state */
+.payment-step__error {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.payment-step__error-msg {
+  font-size: 1rem;
+  color: #dc2626;
+  margin: 0 0 1rem;
+}
+
+.payment-step__retry-btn {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.payment-step__retry-btn:hover {
+  background: #1d4ed8;
+}
+
+.payment-step__retry-btn:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Payment method list */
+.payment-step__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Payment method card */
+.payment-step__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.payment-step__card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.payment-step__card--selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.payment-step__card:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Radio indicator */
+.payment-step__card-radio {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #9ca3af;
+  border-radius: 50%;
+  margin-top: 2px;
+  transition: border-color 0.15s ease;
+}
+
+.payment-step__card--selected .payment-step__card-radio {
+  border-color: #2563eb;
+}
+
+.payment-step__radio-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.payment-step__radio-dot--active {
+  background: #2563eb;
+}
+
+/* Card details */
+.payment-step__card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-step__card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.125rem;
+}
+
+.payment-step__card-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.payment-step__card-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.payment-step__card-type {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* High-RTO warning */
+.payment-step__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.payment-step__warning-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.payment-step__warning-text {
+  font-size: 0.85rem;
+  color: #92400e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Validation error */
+.payment-step__validation-error {
+  font-size: 0.85rem;
+  color: #dc2626;
+  margin: 0 0 1rem;
+}
+
+/* Continue button */
+.payment-step__continue-btn {
+  display: block;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.payment-step__continue-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.payment-step__continue-btn:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.payment-step__continue-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .payment-step__title {
+    font-size: 1.1rem;
+  }
+
+  .payment-step__card {
+    padding: 0.75rem;
+  }
+
+  .payment-step__card-label {
+    font-size: 0.9rem;
+  }
+
+  .payment-step__card-type {
+    font-size: 0.75rem;
+  }
+
+  .payment-step__warning {
+    padding: 0.75rem;
+  }
+
+  .payment-step__warning-text {
+    font-size: 0.8rem;
+  }
+}
