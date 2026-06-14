@@ -5,6 +5,8 @@ export { InMemoryConditionAssessmentRepository } from './InMemoryConditionAssess
 export { InMemoryDispositionDecisionRepository } from './InMemoryDispositionDecisionRepository.js';
 export { InMemoryOrderRepository } from './InMemoryOrderRepository.js';
 export { InMemoryReturnRequestRepository } from './InMemoryReturnRequestRepository.js';
+export { InMemoryCartRepository } from './InMemoryCartRepository.js';
+export { InMemoryOrderMetadataRepository } from './InMemoryOrderMetadataRepository.js';
 export { InMemoryCustomerRepository } from './InMemoryCustomerRepository.js';
 export { InMemoryOtpStore } from './InMemoryOtpStore.js';
 export { DynamoOrderRepository } from './DynamoOrderRepository.js';
