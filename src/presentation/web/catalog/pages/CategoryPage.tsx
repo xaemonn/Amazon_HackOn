@@ -7,7 +7,7 @@ import './CategoryPage.css';
 
 export function CategoryPage() {
   const { id } = useParams<{ id: string }>();
-  const { searchProducts, getCategories, ready } = useCatalog();
+  const { getProductsByCategory, getVariants, getCategories, ready } = useCatalog();
 
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [categoryName, setCategoryName] = useState('');
@@ -27,24 +27,33 @@ export function CategoryPage() {
           setCategoryName(cat.name);
         }
 
-        // Search products by category name (the search matches on category)
-        if (cat) {
-          const result = await searchProducts(cat.name, { pageSize: 50 });
-          if (!cancelled) {
-            setProducts(
-              result.products.map((p) => ({
-                id: p.id,
-                title: p.title,
-                brand: p.brand,
-                thumbnailUrl: p.thumbnailUrl,
-                lowestPrice: p.lowestPrice,
-                averageRating: p.averageRating,
-                reviewCount: p.reviewCount,
-                isOutOfStock: p.isOutOfStock,
-                hasSecondLife: p.hasSecondLife,
-              }))
-            );
+        // Get products by category ID directly via facade
+        const categoryProducts = await getProductsByCategory(id!);
+        if (!cancelled) {
+          // Build product cards with variant data for lowest price
+          const cards: ProductCardData[] = [];
+          for (const product of categoryProducts) {
+            const variants = await getVariants(product.id);
+            const inStockVariants = variants.filter(v => v.stock > 0);
+            const allOutOfStock = inStockVariants.length === 0;
+            const pool = allOutOfStock ? variants : inStockVariants;
+            const lowestPrice = pool.length > 0
+              ? Math.min(...pool.map(v => v.price))
+              : product.basePrice;
+
+            cards.push({
+              id: product.id,
+              title: product.title,
+              brand: product.brand,
+              thumbnailUrl: product.catalogImageUrl,
+              lowestPrice,
+              averageRating: product.averageRating ?? null,
+              reviewCount: product.reviewCount ?? 0,
+              isOutOfStock: allOutOfStock,
+              hasSecondLife: variants.some(v => v.sourceReturnId !== undefined),
+            });
           }
+          setProducts(cards);
         }
       } finally {
         if (!cancelled) {
@@ -55,7 +64,7 @@ export function CategoryPage() {
 
     loadCategory();
     return () => { cancelled = true; };
-  }, [ready, id, searchProducts, getCategories]);
+  }, [ready, id, getProductsByCategory, getVariants, getCategories]);
 
   if (loading) {
     return (

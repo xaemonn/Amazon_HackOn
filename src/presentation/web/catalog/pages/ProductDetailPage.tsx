@@ -14,6 +14,9 @@ export interface ProductDetailData {
   category: string;
   basePrice: number;
   fitMetadata?: { sizeOffsetIndicator: string; offsetMagnitude: number };
+  averageRating?: number;
+  reviewCount?: number;
+  additionalImages?: string[];
 }
 
 export interface VariantData {

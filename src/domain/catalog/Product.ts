@@ -20,6 +20,9 @@ export interface ProductProps {
   category: string; // category ID reference
   basePrice: number; // in ₹
   fitMetadata?: FitMetadata;
+  averageRating?: number;      // 1–5, one decimal place; absent means "No ratings yet"
+  reviewCount?: number;        // total number of reviews; absent or 0 means no reviews
+  additionalImages?: string[]; // extra gallery images beyond catalogImageUrl
 }
 
 /**
@@ -40,6 +43,9 @@ export class Product {
   get category(): string { return this._props.category; }
   get basePrice(): number { return this._props.basePrice; }
   get fitMetadata(): FitMetadata | undefined { return this._props.fitMetadata; }
+  get averageRating(): number | undefined { return this._props.averageRating; }
+  get reviewCount(): number | undefined { return this._props.reviewCount; }
+  get additionalImages(): string[] | undefined { return this._props.additionalImages ? [...this._props.additionalImages] : undefined; }
 
   toProps(): ProductProps { return { ...this._props }; }
 }

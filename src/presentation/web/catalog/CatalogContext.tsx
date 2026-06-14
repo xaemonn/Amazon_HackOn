@@ -44,6 +44,7 @@ export interface CatalogContextValue {
   getVariants: (productId: string) => Promise<ProductVariant[]>;
   searchProducts: (keyword: string, options?: SearchOptions) => Promise<SearchResult>;
   getCategories: () => Promise<Category[]>;
+  getProductsByCategory: (categoryId: string) => Promise<Product[]>;
   getDeliveryEstimate: () => Promise<DeliveryEstimate>;
   getDeals: () => Promise<{ productId: string; variantId: string; title: string; thumbnailUrl: string; basePrice: number; discountedPrice: number }[]>;
   getSecondLifeItems: () => Promise<{ productId: string; variantId: string; title: string; imageUrl: string; condition: 'Open_Box' | 'Certified_Renewed'; price: number }[]>;
@@ -97,6 +98,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const getCategories = async () => {
     return serviceRef.current!.getCategories();
+  };
+
+  const getProductsByCategory = async (categoryId: string) => {
+    return serviceRef.current!.getProductsByCategory(categoryId);
   };
 
   const getDeliveryEstimate = async () => {
@@ -155,6 +160,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     getVariants,
     searchProducts,
     getCategories,
+    getProductsByCategory,
     getDeliveryEstimate,
     getDeals,
     getSecondLifeItems,

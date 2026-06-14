@@ -78,6 +78,13 @@ export class CatalogService {
     return this.categoryRepo.findAll();
   }
 
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+    if (!categoryId || typeof categoryId !== 'string' || categoryId.trim().length === 0) {
+      return [];
+    }
+    return this.productRepo.findByCategory(categoryId);
+  }
+
   async getDeliveryEstimate(): Promise<DeliveryEstimate> {
     return computeDeliveryEstimate(this.config);
   }

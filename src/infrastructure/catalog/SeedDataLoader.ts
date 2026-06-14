@@ -51,6 +51,12 @@ export class SeedDataLoader {
         catalogImageUrl: '/assets/products/prod-headphones-001.jpg',
         category: 'cat-electronics',
         basePrice: 29990,
+        averageRating: 4.6,
+        reviewCount: 2847,
+        additionalImages: [
+          '/assets/products/prod-headphones-001-side.jpg',
+          '/assets/products/prod-headphones-001-case.jpg',
+        ],
       }),
       // Electronics — budget product (basePrice < 500 — R7.7)
       new Product({
@@ -60,6 +66,11 @@ export class SeedDataLoader {
         catalogImageUrl: '/assets/products/prod-cable-002.jpg',
         category: 'cat-electronics',
         basePrice: 299,
+        averageRating: 4.1,
+        reviewCount: 12453,
+        additionalImages: [
+          '/assets/products/prod-cable-002-detail.jpg',
+        ],
       }),
       // Electronics — mid-range
       new Product({
@@ -69,6 +80,12 @@ export class SeedDataLoader {
         catalogImageUrl: '/assets/products/prod-speaker-003.jpg',
         category: 'cat-electronics',
         basePrice: 11999,
+        averageRating: 4.4,
+        reviewCount: 1892,
+        additionalImages: [
+          '/assets/products/prod-speaker-003-back.jpg',
+          '/assets/products/prod-speaker-003-top.jpg',
+        ],
       }),
       // Footwear — runs_small (R7.3)
       new Product({
@@ -79,8 +96,13 @@ export class SeedDataLoader {
         category: 'cat-footwear',
         basePrice: 16999,
         fitMetadata: { sizeOffsetIndicator: 'runs_small', offsetMagnitude: 1 },
+        averageRating: 4.3,
+        reviewCount: 956,
+        additionalImages: [
+          '/assets/products/prod-sneakers-004-sole.jpg',
+        ],
       }),
-      // Footwear — standard
+      // Footwear — standard (no ratings — tests "No ratings yet" path)
       new Product({
         id: 'prod-sandals-005',
         title: 'Nike Comfort Slide Sandals',
@@ -88,6 +110,7 @@ export class SeedDataLoader {
         catalogImageUrl: '/assets/products/prod-sandals-005.jpg',
         category: 'cat-footwear',
         basePrice: 2499,
+        // No averageRating/reviewCount → "No ratings yet" on PDP
       }),
       // Home — basePrice >= 500 (R7.7)
       new Product({
@@ -97,6 +120,11 @@ export class SeedDataLoader {
         catalogImageUrl: '/assets/products/prod-lamp-006.jpg',
         category: 'cat-home',
         basePrice: 3499,
+        averageRating: 4.7,
+        reviewCount: 634,
+        additionalImages: [
+          '/assets/products/prod-lamp-006-lit.jpg',
+        ],
       }),
     ];
 

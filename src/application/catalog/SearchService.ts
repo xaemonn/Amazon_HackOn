@@ -81,8 +81,8 @@ export class SearchService {
         brand: product.brand,
         thumbnailUrl: product.catalogImageUrl,
         lowestPrice,
-        averageRating: null, // no rating system yet — stubbed
-        reviewCount: 0,      // stubbed
+        averageRating: product.averageRating ?? null,
+        reviewCount: product.reviewCount ?? 0,
         isOutOfStock: allOutOfStock,
         hasSecondLife,
       });

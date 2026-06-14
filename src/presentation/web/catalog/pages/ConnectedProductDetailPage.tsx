@@ -41,6 +41,7 @@ export function ConnectedProductDetailPage() {
           category: prod.category,
           basePrice: prod.basePrice,
           fitMetadata: prod.fitMetadata,
+          additionalImages: prod.additionalImages,
         });
         setVariants(
           vars.map((v) => ({
@@ -78,6 +79,8 @@ export function ConnectedProductDetailPage() {
       deliveryEstimate={deliveryEstimate}
       loading={loading}
       error={error}
+      averageRating={product?.averageRating ?? null}
+      reviewCount={product?.reviewCount ?? 0}
       onRetry={loadProduct}
     />
   );
