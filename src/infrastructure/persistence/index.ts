@@ -1,2 +1,3 @@
 // Persistence infrastructure — DynamoDB adapters, in-memory repos
-export {};
+
+export { InMemoryAuditLogRepository } from './InMemoryAuditLogRepository.js';

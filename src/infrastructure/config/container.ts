@@ -16,6 +16,7 @@ import type { IEventBus } from '../../domain/shared/events.js';
 import type { IReturnRequestRepository, IAuditLogRepository, IMediaStorage } from '../../domain/returns/index.js';
 import type { IConditionGrader, IIdentityVerifier, IReasonParser } from '../../domain/grading/index.js';
 import type { IDispositionDecisionRepository, IConditionAssessmentRepository } from '../../domain/disposition/index.js';
+import { InMemoryAuditLogRepository } from '../persistence/index.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -112,12 +113,16 @@ export class Container {
 // ─── Factory & Singleton ─────────────────────────────────────────────────────
 
 /**
- * Create a fresh container instance pre-loaded with config.
+ * Create a fresh container instance pre-loaded with config and default
+ * in-memory implementations for dev/demo mode.
  * Use in tests or when you need an isolated container.
  */
 export function createContainer(): Container {
   const container = new Container();
   container.register('config', getConfig());
+  // Register the in-memory audit log repository as the default implementation.
+  // It will be swapped for a DynamoDB-backed one when AWS adapters are wired in.
+  container.register('auditLogRepository', new InMemoryAuditLogRepository());
   return container;
 }
 
