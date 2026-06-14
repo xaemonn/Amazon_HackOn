@@ -36,28 +36,28 @@ This plan implements the Storefront Browsing module following the layered archit
     - Create `src/domain/catalog/index.ts` re-exporting all entities, types, and interfaces
     - _Requirements: 6.1_
 
-- [ ] 2. Implement in-memory repositories
-  - [~] 2.1 Implement InMemoryProductRepository
+- [x] 2. Implement in-memory repositories
+  - [x] 2.1 Implement InMemoryProductRepository
     - Create `src/infrastructure/catalog/InMemoryProductRepository.ts` using `Map<string, Product>` storage
     - Implement `searchByKeyword` as case-insensitive substring match on title, brand, and category name
     - Include `addProduct` method for seed data loading
     - _Requirements: 6.4, 4.8_
 
-  - [~] 2.2 Implement InMemoryVariantRepository
+  - [x] 2.2 Implement InMemoryVariantRepository
     - Create `src/infrastructure/catalog/InMemoryVariantRepository.ts` using `Map<string, ProductVariant>` with secondary index `Map<string, string[]>` for productId lookups
     - Include `addVariant` method for seed data loading
     - _Requirements: 6.4_
 
-  - [~] 2.3 Implement InMemoryCategoryRepository
+  - [x] 2.3 Implement InMemoryCategoryRepository
     - Create `src/infrastructure/catalog/InMemoryCategoryRepository.ts` using `Map<string, Category>` storage
     - Include `addCategory` method for seed data loading
     - _Requirements: 6.4, 7.5_
 
-  - [~] 2.4 Implement LocalMediaResolver
+  - [x] 2.4 Implement LocalMediaResolver
     - Create `src/infrastructure/catalog/IMediaResolver.ts` interface and `src/infrastructure/catalog/LocalMediaResolver.ts` that maps storage keys to `/assets/uploads/{storageKey}`
     - _Requirements: 2.3_
 
-  - [~] 2.5 Create infrastructure barrel export
+  - [x] 2.5 Create infrastructure barrel export
     - Create `src/infrastructure/catalog/index.ts` re-exporting all implementations
     - _Requirements: 6.4_
 
