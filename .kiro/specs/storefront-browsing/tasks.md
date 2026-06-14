@@ -99,7 +99,7 @@ This plan implements the Storefront Browsing module following the layered archit
     - Create `src/application/catalog/index.ts` re-exporting CatalogService, CatalogConfig, ListingRequestedHandler, and public types
     - _Requirements: 6.1_
 
-- [~] 4. Checkpoint - Core domain and application layers
+- [x] 4. Checkpoint - Core domain and application layers
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 5. Implement seed data loading
@@ -113,7 +113,7 @@ This plan implements the Storefront Browsing module following the layered archit
     - Use `/assets/products/{productId}.jpg` pattern for catalogImageUrl
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-  - [ ]* 5.2 Write unit tests for SeedDataLoader
+  - [x] 5.2 Write unit tests for SeedDataLoader
     - Verify correct number of categories, products, and variants are loaded
     - Verify at least one product has 3 condition variants
     - Verify footwear product has fitMetadata with runs_small
@@ -157,99 +157,99 @@ This plan implements the Storefront Browsing module following the layered archit
     - Wire CatalogService into components via context or props
     - _Requirements: 5.5_
 
-- [~] 7. Checkpoint - Full vertical slice
+- [x] 7. Checkpoint - Full vertical slice
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Property-based tests for search and filtering logic
-  - [ ]* 8.1 Write property test: Search returns matching products (Property 10)
+- [x] 8. Property-based tests for search and filtering logic
+  - [x] 8.1 Write property test: Search returns matching products (Property 10)
     - **Property 10: Search returns matching products via case-insensitive substring**
     - Generate random products and keywords; verify a product appears in results iff keyword is a case-insensitive substring of title, brand, or category name
     - **Validates: Requirements 4.3, 4.8**
 
-  - [ ]* 8.2 Write property test: Search sort produces correctly ordered results (Property 11)
+  - [x] 8.2 Write property test: Search sort produces correctly ordered results (Property 11)
     - **Property 11: Search sort produces correctly ordered results**
     - Generate random search results; verify price_asc → non-decreasing order, price_desc → non-increasing, rating_desc → non-increasing
     - **Validates: Requirements 4.5**
 
-  - [ ]* 8.3 Write property test: Search filters return only matching products (Property 12)
+  - [x] 8.3 Write property test: Search filters return only matching products (Property 12)
     - **Property 12: Search filters return only products satisfying all active criteria**
     - Generate random products and filter combinations; verify all results satisfy every active filter simultaneously
     - **Validates: Requirements 4.6**
 
-  - [ ]* 8.4 Write property test: Out-of-stock products sorted after in-stock (Property 17)
+  - [x] 8.4 Write property test: Out-of-stock products sorted after in-stock (Property 17)
     - **Property 17: Out-of-stock products sorted after in-stock in default relevance sort**
     - Generate random products with mixed stock; verify out-of-stock appear after in-stock in relevance sort
     - **Validates: Requirements 8.4**
 
-- [ ] 9. Property-based tests for event handling and variant creation
-  - [ ]* 9.1 Write property test: Valid Grade A ListingRequested creates variant (Property 5)
+- [x] 9. Property-based tests for event handling and variant creation
+  - [x] 9.1 Write property test: Valid Grade A ListingRequested creates variant (Property 5)
     - **Property 5: Valid Grade A ListingRequested creates correct variant and publishes ListingCreated**
     - Generate valid ListingRequested events; verify variant condition, price, stock, sourceReturnId, conditionReport, unitPhotos cap, and ListingCreated event payload
     - **Validates: Requirements 3.1, 3.2, 6.7**
 
-  - [ ]* 9.2 Write property test: Unknown productId discarded gracefully (Property 6)
+  - [x] 9.2 Write property test: Unknown productId discarded gracefully (Property 6)
     - **Property 6: Unknown productId in ListingRequested results in graceful discard**
     - Generate events with non-existent productIds; verify no variant created, no ListingCreated published, no exception thrown, structured warning logged
     - **Validates: Requirements 3.3, 10.1, 10.2, 10.3, 10.4**
 
-  - [ ]* 9.3 Write property test: Non-A grade discarded (Property 7)
+  - [x] 9.3 Write property test: Non-A grade discarded (Property 7)
     - **Property 7: Non-A grade ListingRequested is discarded**
     - Generate events with grades B, C, D, null, empty, random strings; verify no variant created and no ListingCreated published
     - **Validates: Requirements 3.4**
 
-  - [ ]* 9.4 Write property test: Idempotent processing (Property 8)
+  - [x] 9.4 Write property test: Idempotent processing (Property 8)
     - **Property 8: Idempotent ListingRequested processing**
     - Process a valid event twice; verify only one variant exists after both, no duplicate
     - **Validates: Requirements 3.6**
 
-  - [ ]* 9.5 Write property test: Malformed events discarded (Property 9)
+  - [x] 9.5 Write property test: Malformed events discarded (Property 9)
     - **Property 9: Malformed ListingRequested events are discarded with error log**
     - Generate events with null/empty/wrong-type required fields; verify discard and structured error log
     - **Validates: Requirements 3.7**
 
-- [ ] 10. Property-based tests for CatalogService validation
-  - [ ]* 10.1 Write property test: CatalogService validates inputs (Property 15)
+- [x] 10. Property-based tests for CatalogService validation
+  - [x] 10.1 Write property test: CatalogService validates inputs (Property 15)
     - **Property 15: CatalogService validates inputs and returns structured errors**
     - Generate invalid inputs (empty IDs, invalid conditions, negative prices); verify structured error objects returned, no unhandled exceptions
     - **Validates: Requirements 6.6**
 
-- [ ] 11. Property-based tests for PDP and home page logic
-  - [ ]* 11.1 Write property test: Buy button reflects stock (Property 1)
+- [x] 11. Property-based tests for PDP and home page logic
+  - [x] 11.1 Write property test: Buy button reflects stock (Property 1)
     - **Property 1: Buy button state reflects variant stock availability**
     - Generate products with various stock levels; verify buttons enabled iff at least one variant has stock > 0
     - **Validates: Requirements 1.3, 8.2**
 
-  - [ ]* 11.2 Write property test: Condition selector ordered by price (Property 2)
+  - [x] 11.2 Write property test: Condition selector ordered by price (Property 2)
     - **Property 2: Condition selector is ordered by price ascending**
     - Generate products with multiple variants at random prices; verify selector ordering is price ascending
     - **Validates: Requirements 2.1**
 
-  - [ ]* 11.3 Write property test: Second Life UI elements (Property 3)
+  - [x] 11.3 Write property test: Second Life UI elements (Property 3)
     - **Property 3: Second Life UI elements rendered based on variant metadata presence**
     - Generate variants with/without sourceReturnId, conditionReport, unitPhotos; verify badge/report/gallery render rules
     - **Validates: Requirements 2.3, 2.4**
 
-  - [ ]* 11.4 Write property test: Default variant selection (Property 4)
+  - [x] 11.4 Write property test: Default variant selection (Property 4)
     - **Property 4: Default variant selection is lowest-priced in-stock**
     - Generate products with multiple variants; verify initial selection is lowest-priced among in-stock
     - **Validates: Requirements 2.7**
 
-  - [ ]* 11.5 Write property test: Auto-switch on stock depletion (Property 16)
+  - [x] 11.5 Write property test: Auto-switch on stock depletion (Property 16)
     - **Property 16: Auto-switch selected variant on stock depletion**
     - Simulate stock transitions to zero; verify auto-switch to next lowest-priced in-stock or buttons disabled
     - **Validates: Requirements 8.3**
 
-  - [ ]* 11.6 Write property test: Deals rail correctness (Property 13)
+  - [x] 11.6 Write property test: Deals rail correctness (Property 13)
     - **Property 13: Deals rail contains only discounted variants**
     - Generate catalogs with mixed pricing; verify deals rail contains only variants priced below basePrice, max 10 items
     - **Validates: Requirements 5.3**
 
-  - [ ]* 11.7 Write property test: Second Life rail correctness (Property 14)
+  - [x] 11.7 Write property test: Second Life rail correctness (Property 14)
     - **Property 14: Second Life rail contains only Open_Box or Certified_Renewed variants**
     - Generate catalogs with mixed conditions; verify rail contains only Open_Box/Certified_Renewed, max 10 items
     - **Validates: Requirements 5.4**
 
-- [~] 12. Final checkpoint - Ensure all tests pass
+- [x] 12. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
