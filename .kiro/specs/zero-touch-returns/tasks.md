@@ -66,8 +66,8 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Ownership verification: reject if customer doesn't own order-item
     - _Requirements: 1.1, 1.2, 1.3, 1.7_
 
-- [ ] 3. In-process event bus (log-on-failure)
-  - [ ] 3.1 Implement InProcessEventBus with publish/subscribe and log-on-failure
+- [x] 3. In-process event bus (log-on-failure)
+  - [x] 3.1 Implement InProcessEventBus with publish/subscribe and log-on-failure
     - Implement `IEventBus` interface: synchronous in-process pub-sub
     - On subscriber error: log the error with event ID and type; do NOT propagate to publisher or other subscribers
     - Support event deduplication by event ID for idempotent processing
@@ -75,19 +75,19 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - _Requirements: 15.9, 15.10, 15.11_
 
 - [ ] 4. Grading Module — mock adapters and fraud scoring
-  - [ ] 4.1 Implement MockConditionGrader (deterministic, seeded)
+  - [x] 4.1 Implement MockConditionGrader (deterministic, seeded)
     - Return predictable grades based on seeded item identifiers (item-grade-a → A/0.95, item-grade-b → B/0.90, etc.)
     - Unknown items → Grade B, confidence 0.70 as default fallback
     - Return defects list and reasoning text within invariant bounds (≤10 defects, ≤500 chars reasoning)
     - Register into DI composition root
     - _Requirements: 5.4, 16.3, 16.6_
-
+q
   - [ ] 4.2 Implement MockIdentityVerifier (deterministic, seeded)
     - Return deterministic verdicts: matching photos → genuine/0.95, different product → mismatch/0.95, ambiguous → inconclusive/0.95
     - Unknown items → inconclusive/0.50 as default fallback
     - Register into DI composition root
     - _Requirements: 4.7, 16.4, 16.6_
-
+goo
   - [ ] 4.3 Implement MockReasonParser (deterministic)
     - Extract mock claims from free-text based on keyword matching
     - Return reconciliation status: aligns / partially_aligns / contradicts / unparseable
