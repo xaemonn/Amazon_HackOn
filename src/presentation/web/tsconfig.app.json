@@ -31,5 +31,5 @@
       "@web/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "catalog"]
 }

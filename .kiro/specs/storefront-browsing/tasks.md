@@ -120,24 +120,24 @@ This plan implements the Storefront Browsing module following the layered archit
     - Verify price thresholds (below and above ₹500)
     - _Requirements: 7.1, 7.2, 7.3, 7.7_
 
-- [ ] 6. Implement presentation layer components
-  - [~] 6.1 Create GlobalNav component
+- [x] 6. Implement presentation layer components
+  - [x] 6.1 Create GlobalNav component
     - Create `src/presentation/web/catalog/components/GlobalNav.tsx` with logo, SearchBar, category menu, account icon, and cart icon with badge (1–99, "99+" for >99)
     - Keyboard-navigable, WCAG AA contrast
     - _Requirements: 5.1, 4.1_
 
-  - [~] 6.2 Create SearchBar component with autocomplete
+  - [x] 6.2 Create SearchBar component with autocomplete
     - Create `src/presentation/web/catalog/components/SearchBar.tsx` with text input (max 200 chars), autocomplete dropdown on 2+ chars within 300ms, dismiss on blur or <2 chars
     - Up to 8 suggestions from CatalogService
     - _Requirements: 4.1, 4.2_
 
-  - [~] 6.3 Create HomePage component with CategoryTiles, DealsRail, and SecondLifeRail
+  - [x] 6.3 Create HomePage component with CategoryTiles, DealsRail, and SecondLifeRail
     - Create `src/presentation/web/catalog/pages/HomePage.tsx` composing CategoryTiles (up to 12), DealsRail (up to 10 discounted variants), and SecondLifeRail (up to 10 Open_Box/Certified_Renewed variants)
     - Hide rails when empty; skeleton loaders for async data
     - Mobile-first responsive layout
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.6, 5.7, 5.8, 5.9_
 
-  - [~] 6.4 Create ProductDetailPage component
+  - [x] 6.4 Create ProductDetailPage component
     - Create `src/presentation/web/catalog/pages/ProductDetailPage.tsx` with image gallery, product info (title, brand, price, delivery estimate, rating), condition selector, Second Life details, and purchase action buttons
     - Default selected variant: lowest-priced in-stock
     - Condition selector ordered by price ascending
@@ -146,13 +146,13 @@ This plan implements the Storefront Browsing module following the layered archit
     - Error state for product not found or network failure
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 8.1, 8.2, 8.3, 8.5, 8.6_
 
-  - [~] 6.5 Create SearchResultsPage component
+  - [x] 6.5 Create SearchResultsPage component
     - Create `src/presentation/web/catalog/pages/SearchResultsPage.tsx` with product grid (paginated at 20/page), FilterPanel (price range, brand checkboxes, min rating, condition multi-select), SortSelector, and NoResults state
     - Out-of-stock products show badge and sort after in-stock in default relevance sort
     - No-results state shows query, recovery suggestions, and optional Second Life rail
     - _Requirements: 4.3, 4.4, 4.5, 4.6, 4.7, 4.9, 8.4, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-  - [~] 6.6 Set up routing and page wiring
+  - [x] 6.6 Set up routing and page wiring
     - Create `src/presentation/web/catalog/index.tsx` with React Router routes for `/`, `/product/:id`, `/search`, and `/category/:id`
     - Wire CatalogService into components via context or props
     - _Requirements: 5.5_

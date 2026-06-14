@@ -1,0 +1,77 @@
+/* PurchaseActions — mobile-first Add to Cart / Buy Now buttons */
+
+.purchase-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.purchase-actions__unavailable {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-error, #d32f2f);
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.purchase-actions__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.purchase-actions__btn {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.purchase-actions__btn:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.purchase-actions__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Add to Cart */
+.purchase-actions__btn--cart {
+  background: var(--color-secondary, #ffc107);
+  color: var(--color-text);
+}
+
+.purchase-actions__btn--cart:hover:not(:disabled) {
+  background: var(--color-secondary-hover, #e0a800);
+}
+
+/* Buy Now */
+.purchase-actions__btn--buy {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.purchase-actions__btn--buy:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+/* Responsive — tablet+ */
+@media (min-width: 768px) {
+  .purchase-actions__buttons {
+    flex-direction: row;
+  }
+
+  .purchase-actions__btn {
+    width: auto;
+    flex: 1;
+    max-width: 220px;
+  }
+}
