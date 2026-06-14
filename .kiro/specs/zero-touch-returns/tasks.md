@@ -6,8 +6,8 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
 
 ## Tasks
 
-- [ ] 1. Project scaffold and domain interfaces
-  - [ ] 1.1 Create the layered folder structure (presentation/, application/, domain/, infrastructure/) and configure TypeScript project with path aliases
+- [x] 1. Project scaffold and domain interfaces
+  - [x] 1.1 Create the layered folder structure (presentation/, application/, domain/, infrastructure/) and configure TypeScript project with path aliases
     - Create `src/domain/shared/`, `src/domain/returns/`, `src/domain/grading/`, `src/domain/disposition/`
     - Create `src/application/returns/`, `src/application/grading/`, `src/application/disposition/`
     - Create `src/infrastructure/events/`, `src/infrastructure/ai/`, `src/infrastructure/persistence/`, `src/infrastructure/storage/`, `src/infrastructure/auth/`, `src/infrastructure/config/`
@@ -16,12 +16,12 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Initialize React app under `src/presentation/web/` (Vite + React + TypeScript)
     - _Requirements: 15.8, 16.5_
 
-  - [ ] 1.2 Define domain event types and IEventBus interface
+  - [x] 1.2 Define domain event types and IEventBus interface
     - Create `DomainEvent` base interface, `IEventBus` interface (publish, subscribe, unsubscribe)
     - Define all event payload interfaces: `ReturnInitiatedEvent`, `ItemGradedEvent`, `DispositionAssignedEvent`, `FraudFlaggedEvent`, `ListingRequestedEvent`, `DeliveryJobCreatedEvent`, `ReturnCancelledEvent`, `ReturnCompletedEvent`, `ManualReviewInitiatedEvent`
     - _Requirements: 14.4, 15.1, 15.3, 15.5, 15.6_
 
-  - [ ] 1.3 Define adapter interfaces (IConditionGrader, IIdentityVerifier, IReasonParser, IMediaStorage) and repository interfaces
+  - [x] 1.3 Define adapter interfaces (IConditionGrader, IIdentityVerifier, IReasonParser, IMediaStorage) and repository interfaces
     - Create `IConditionGrader` with `assessCondition()` method and types (`ConditionGrade`, `Defect`, `ConditionGradeResult`)
     - Create `IIdentityVerifier` with `verifyIdentity()` method and types (`IdentityVerdict`, `IdentityVerificationResult`)
     - Create `IReasonParser` with types (`ParsedClaim`, `ClaimType`, `ClaimVerdict`, `ReasonReconciliation`, `ReconciliationStatus`)
@@ -29,12 +29,12 @@ This plan sequences the Zero-Touch Returns feature for a 48-hour hackathon. It b
     - Create repository interfaces: `IReturnRequestRepository`, `IConditionAssessmentRepository`, `IDispositionDecisionRepository`, `IAuditLogRepository`
     - _Requirements: 16.1, 16.2, 5.2, 5.3, 5.5, 4.2, 6.1_
 
-  - [ ] 1.4 Define the configurable parameters module with defaults
+  - [x] 1.4 Define the configurable parameters module with defaults
     - Create a typed config object with all parameters from the design (returnWindow, grading timeouts, fraud threshold, disposition thresholds, refund percentages, event retry settings, media limits)
     - Load from environment/JSON with fallback defaults
     - _Requirements: 10.1, 7.1, 11.1, 12.2_
 
-  - [ ] 1.5 Create DI composition root as an incrementally-filled registry
+  - [x] 1.5 Create DI composition root as an incrementally-filled registry
     - Create a registry/container module that each subsystem registers into as it is built
     - Default to in-process/mock implementations; allow config-driven swap to live
     - At this stage: register config, event bus interface placeholder, and repository interface placeholders
