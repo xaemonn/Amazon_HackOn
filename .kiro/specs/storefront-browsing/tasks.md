@@ -102,8 +102,8 @@ This plan implements the Storefront Browsing module following the layered archit
 - [~] 4. Checkpoint - Core domain and application layers
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement seed data loading
-  - [~] 5.1 Create SeedDataLoader
+- [x] 5. Implement seed data loading
+  - [x] 5.1 Create SeedDataLoader
     - Create `src/infrastructure/catalog/SeedDataLoader.ts` with a synchronous `load(productRepo, variantRepo, categoryRepo)` method
     - Seed 3+ categories: Electronics, Footwear, Home
     - Seed 6+ products spanning those categories
