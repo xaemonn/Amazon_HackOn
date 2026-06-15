@@ -83,6 +83,7 @@ export class GradingOrchestrator {
           input.mediaReferences,
           input.productId,
           input.catalogImageRef,
+          input.reasonText ?? undefined,
         ),
         gradingTimeouts.conditionGraderTimeoutMs,
         gradingTimeouts.maxRetries,

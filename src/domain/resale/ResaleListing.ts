@@ -71,7 +71,14 @@ export interface ResaleListing {
   returnRequestId: string;
   productId: string;
   productName: string;
+  /** Primary display image — uses the customer's actual return photo (front shot) if available. */
   imageUrl: string | null;
+  /** All photo URLs submitted by the customer during the return — shown as a gallery. */
+  returnPhotoUrls: string[];
+  /** AI-generated condition summary shown to prospective buyers. */
+  conditionReasoning: string | null;
+  /** Specific defects detected, shown as bullet points on the listing. */
+  defects: Array<{ location: string; severity: string; description: string }>;
 
   grade: Extract<ConditionGrade, 'A' | 'B' | 'C'>;
   conditionLabel: string; // "Like New" | "Good (Returned)" | "Refurbished"

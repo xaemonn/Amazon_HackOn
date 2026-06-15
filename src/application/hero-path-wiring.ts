@@ -127,6 +127,8 @@ function routeToFinalState(route: DispositionRoute): ReturnState {
       return 'Listed';
     case 'returnless_refund':
     case 'donate_or_recycle':
+    case 'wrong_item_refund':
+    case 'wrong_item_unverified':
       return 'Completed';
   }
 }

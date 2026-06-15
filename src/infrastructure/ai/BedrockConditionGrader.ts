@@ -75,7 +75,11 @@ const VALID_SEVERITIES: Set<string> = new Set(['minor', 'moderate', 'severe']);
 
 // ─── Grading Prompt ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(productId: string): string {
+function buildSystemPrompt(productId: string, returnReason?: string): string {
+  const reasonSection = returnReason
+    ? `\nCUSTOMER'S STATED RETURN REASON: "${returnReason}"\nVerify whether the photos are visually consistent with this claim. If the stated reason (e.g. "size issue", "damaged in transit") appears inconsistent with what you see in the images, note the discrepancy in your reasoning. If consistent, confirm it.\n`
+    : '';
+
   return `You are an expert product condition grader for a returns platform.
 
 You will receive:
@@ -83,6 +87,7 @@ You will receive:
 2. One or more RETURN PHOTOS — submitted by the customer returning this item.
 
 Product ID: ${productId}
+${reasonSection}
 
 YOUR TASK:
 FIRST — verify the returned item is the SAME product as in the catalog image.
@@ -157,16 +162,18 @@ export class BedrockConditionGrader implements IConditionGrader {
   async assessCondition(
     mediaReferences: MediaReference[],
     productId: string,
-    catalogImageRef: string
+    catalogImageRef: string,
+    returnReason?: string,
   ): Promise<ConditionGradeResult> {
     console.log('[BedrockConditionGrader] Grading started', {
       productId,
       catalogImageRef,
       mediaCount: mediaReferences.length,
+      returnReason,
       model: this.modelId,
     });
     const contentBlocks = await this.buildContentBlocks(mediaReferences, catalogImageRef);
-    const systemPrompt = buildSystemPrompt(productId);
+    const systemPrompt = buildSystemPrompt(productId, returnReason);
 
     const userMessage: Message = {
       role: 'user',

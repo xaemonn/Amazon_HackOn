@@ -51,7 +51,11 @@ export type DispositionRoute =
   | 'refurbishment'
   | 'returnless_refund'
   | 'donate_or_recycle'
-  | 'manual_inspection';
+  | 'manual_inspection'
+  /** AI confirmed the customer's wrong-item / not-as-described claim → full refund, no listing. */
+  | 'wrong_item_refund'
+  /** AI could NOT verify the customer's wrong-item / not-as-described claim → ask to retake photos. */
+  | 'wrong_item_unverified';
 
 /**
  * Refund estimate produced alongside a disposition decision.
@@ -59,7 +63,7 @@ export type DispositionRoute =
 export interface RefundEstimate {
   amount: number;
   currency: string;
-  condition: 'immediate' | 'upon_sale' | 'after_review';
+  condition: 'immediate' | 'upon_sale' | 'after_review' | 'wrong_item_confirmed' | 'wrong_item_unverified';
   method: 'original_payment' | 'store_credit';
   isMinimumGuarantee: boolean;
   reasonAware: boolean;

@@ -11,6 +11,7 @@ import {
   setToken,
   type Address,
   type AuthCustomer,
+  type SizeProfile,
 } from '../api/client';
 
 interface AuthState {
@@ -21,7 +22,7 @@ interface AuthState {
   signup: (name: string, email: string, password: string) => Promise<void>;
   demoLogin: () => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (updates: { name?: string; phone?: string; address?: Address }) => Promise<void>;
+  updateUser: (updates: { name?: string; phone?: string; address?: Address; sizeProfile?: SizeProfile }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateUser = useCallback(async (updates: { name?: string; phone?: string; address?: Address }) => {
+  const updateUser = useCallback(async (updates: { name?: string; phone?: string; address?: Address; sizeProfile?: SizeProfile }) => {
     const updated = await apiUpdateProfile(updates);
     setUser(updated);
   }, []);

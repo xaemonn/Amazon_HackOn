@@ -82,6 +82,66 @@
 .header-deliver__icon { font-size: 1rem; }
 .header-deliver__label { color: rgba(255,255,255,0.65); display: block; }
 .header-deliver__city  { color: #fff; font-weight: 700; font-size: 0.8rem; display: block; }
+.header-deliver--open { border-color: #fff; }
+.header-deliver { background: none; border: 2px solid transparent; border-radius: 3px; cursor: pointer; font-family: inherit; text-align: left; padding: 0.35rem 0.4rem; }
+.header-deliver:hover { border-color: #fff; }
+
+/* Deliver-to wrapper (needed for popover positioning) */
+.header-deliver-wrap { position: relative; flex-shrink: 0; }
+
+/* Address edit popover */
+.addr-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 500;
+  background: #fff;
+  border: 1px solid #D5D9D9;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  padding: 1rem;
+  width: 300px;
+  color: #0F1111;
+}
+.addr-popover__title { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.75rem; }
+.addr-popover__input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #888C8C;
+  border-radius: 3px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.addr-popover__input:focus { outline: none; border-color: #007185; box-shadow: 0 0 0 2px rgba(0,113,133,0.2); }
+.addr-popover__row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.addr-popover__row .addr-popover__input { margin-bottom: 0.5rem; }
+.addr-popover__msg { font-size: 0.8rem; margin: 0.25rem 0 0.5rem; }
+.addr-popover__msg--ok  { color: #067D62; }
+.addr-popover__msg--err { color: #C40000; }
+.addr-popover__actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.addr-popover__save {
+  flex: 1;
+  padding: 0.55rem;
+  background: #FFD814;
+  border: 1px solid #C7A600;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.addr-popover__save:disabled { opacity: 0.55; cursor: not-allowed; }
+.addr-popover__cancel {
+  padding: 0.55rem 0.75rem;
+  background: #F0F2F2;
+  border: 1px solid #D5D9D9;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
 
 /* Search */
 .header-search {

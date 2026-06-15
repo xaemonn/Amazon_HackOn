@@ -5,13 +5,48 @@ import { useCart } from '../context/CartContext';
 import './Layout.css';
 
 export function Layout() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, updateUser } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [addrStreet, setAddrStreet] = useState('');
+  const [addrCity, setAddrCity] = useState('');
+  const [addrState, setAddrState] = useState('');
+  const [addrPincode, setAddrPincode] = useState('');
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrMsg, setAddrMsg] = useState<string | null>(null);
+
+  const openAddressPopover = () => {
+    setAddrStreet(user?.address?.street ?? '');
+    setAddrCity(user?.address?.city ?? '');
+    setAddrState((user?.address as { state?: string } | null | undefined)?.state ?? '');
+    setAddrPincode(user?.address?.pincode ?? '');
+    setAddrMsg(null);
+    setAddressOpen(true);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addrStreet.trim() || !addrCity.trim() || !addrPincode.trim()) {
+      setAddrMsg('Street, city and PIN are required.');
+      return;
+    }
+    setAddrSaving(true);
+    setAddrMsg(null);
+    try {
+      await updateUser({ address: { street: addrStreet.trim(), city: addrCity.trim(), state: addrState.trim(), pincode: addrPincode.trim() } });
+      setAddrMsg('✓ Address saved!');
+      setTimeout(() => setAddressOpen(false), 800);
+    } catch {
+      setAddrMsg('Failed to save. Please try again.');
+    } finally {
+      setAddrSaving(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +62,7 @@ export function Layout() {
   };
 
   return (
-    <div className="layout" onClick={() => { setAccountOpen(false); }}>
+    <div className="layout" onClick={() => { setAccountOpen(false); setAddressOpen(false); }}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
       {/* ─── Primary header ─── */}
@@ -43,16 +78,76 @@ export function Layout() {
             </span>
           </Link>
 
-          {/* Deliver to (desktop only) */}
+          {/* Deliver to (desktop only) — click to edit address inline */}
           {isAuthenticated && (
-            <div className="header-deliver">
-              <span className="header-deliver__icon" aria-hidden="true">📍</span>
-              <div>
-                <span className="header-deliver__label">Deliver to</span>
-                <span className="header-deliver__city">
-                  {user?.address?.city ?? 'Set address'}
-                </span>
-              </div>
+            <div className="header-deliver-wrap" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={`header-deliver${addressOpen ? ' header-deliver--open' : ''}`}
+                aria-expanded={addressOpen}
+                aria-haspopup="dialog"
+                onClick={() => { setAccountOpen(false); addressOpen ? setAddressOpen(false) : openAddressPopover(); }}
+              >
+                <span className="header-deliver__icon" aria-hidden="true">📍</span>
+                <div>
+                  <span className="header-deliver__label">Deliver to</span>
+                  <span className="header-deliver__city">
+                    {user?.address?.city ?? 'Set address'}
+                  </span>
+                </div>
+              </button>
+
+              {addressOpen && (
+                <div className="addr-popover" role="dialog" aria-label="Edit delivery address">
+                  <p className="addr-popover__title">Update delivery address</p>
+                  <form onSubmit={handleSaveAddress} noValidate>
+                    <input
+                      className="addr-popover__input"
+                      placeholder="Street address"
+                      value={addrStreet}
+                      onChange={(e) => setAddrStreet(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                    <div className="addr-popover__row">
+                      <input
+                        className="addr-popover__input"
+                        placeholder="City"
+                        value={addrCity}
+                        onChange={(e) => setAddrCity(e.target.value)}
+                        required
+                      />
+                      <input
+                        className="addr-popover__input"
+                        placeholder="State"
+                        value={addrState}
+                        onChange={(e) => setAddrState(e.target.value)}
+                      />
+                    </div>
+                    <input
+                      className="addr-popover__input"
+                      placeholder="PIN code"
+                      value={addrPincode}
+                      onChange={(e) => setAddrPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      inputMode="numeric"
+                      required
+                    />
+                    {addrMsg && (
+                      <p className={`addr-popover__msg${addrMsg.startsWith('✓') ? ' addr-popover__msg--ok' : ' addr-popover__msg--err'}`}>
+                        {addrMsg}
+                      </p>
+                    )}
+                    <div className="addr-popover__actions">
+                      <button type="submit" className="addr-popover__save" disabled={addrSaving}>
+                        {addrSaving ? 'Saving…' : 'Use this address'}
+                      </button>
+                      <button type="button" className="addr-popover__cancel" onClick={() => setAddressOpen(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
 

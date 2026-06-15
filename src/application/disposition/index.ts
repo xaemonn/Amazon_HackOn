@@ -5,4 +5,5 @@ export {
   type IReturnRequestLookup,
   type IDemandSignalProvider,
   type IReturnHistoryProvider,
+  type LookupMediaRef,
 } from './DispositionOrchestrator.js';

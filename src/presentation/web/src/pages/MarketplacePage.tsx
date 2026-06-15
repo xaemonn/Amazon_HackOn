@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   apiGetResaleListings,
@@ -8,7 +9,17 @@ import {
   type ResaleListing,
   type PurchaseResult,
 } from '../api/client';
+import { getViewedProductIds, listingRelevanceScore } from '../hooks/useProductHistory';
 import './MarketplacePage.css';
+
+// ─── CO2 savings (kg) per purchase, by condition grade ──────────────────────
+// Buying refurbished avoids new manufacturing. Estimates based on avg consumer
+// electronics lifecycle-assessment studies.
+const CO2_SAVED_KG: Record<string, number> = { A: 12, B: 8, C: 5 };
+
+function co2Saved(grade: string): number {
+  return CO2_SAVED_KG[grade] ?? 6;
+}
 
 const CITIES = ['Bengaluru', 'Mumbai', 'Delhi', 'Chennai', 'Hyderabad'];
 
@@ -33,6 +44,7 @@ function daysLeft(expiresAt: string | null): string | null {
 
 export function MarketplacePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   // Default to the user's registered city so they only see their city's listings.
   // Falls back to first CITIES entry if no address is saved.
   const userCity = (user as { address?: { city?: string } } | null)?.address?.city;
@@ -42,6 +54,16 @@ export function MarketplacePage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [purchaseResult, setPurchaseResult] = useState<PurchaseResult | null>(null);
+  const [greenCredit, setGreenCredit] = useState<{ kg: number; grade: string } | null>(null);
+
+  // Sort listings so products the user has previously viewed appear first.
+  const sortedListings = useMemo(() => {
+    const viewed = getViewedProductIds();
+    if (viewed.length === 0) return listings;
+    return [...listings].sort(
+      (a, b) => listingRelevanceScore(a.productId) - listingRelevanceScore(b.productId),
+    );
+  }, [listings]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,6 +90,7 @@ export function MarketplacePage() {
     try {
       const result = await apiPurchaseResale(listing.id, buyerId, city);
       setPurchaseResult(result);
+      setGreenCredit({ kg: co2Saved(listing.grade), grade: listing.grade });
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Purchase failed.');
@@ -134,7 +157,7 @@ export function MarketplacePage() {
         </p>
       ) : (
         <div className="market__grid">
-          {listings.map((l) => {
+          {sortedListings.map((l) => {
             const meta = GRADE_META[l.grade];
             const sameCity = l.sellerCity.toLowerCase() === city.toLowerCase();
             const directEligible =
@@ -142,16 +165,28 @@ export function MarketplacePage() {
               sameCity && l.status === 'active';
             const window = daysLeft(l.expiresAt);
             const discountPct = Math.round((1 - l.listedPrice / l.originalPrice) * 100);
+            const isForYou = listingRelevanceScore(l.productId) < 9999;
+
+            // Use return photos if available; fall back to catalog imageUrl
+            const photos = l.returnPhotoUrls?.length ? l.returnPhotoUrls : (l.imageUrl ? [l.imageUrl] : []);
+            const activePhoto = photos[0];
 
             return (
-              <article key={l.id} className={`mcard mcard--${l.grade}`}>
+              <article
+                key={l.id}
+                className={`mcard mcard--${l.grade}${isForYou ? ' mcard--for-you' : ''}`}
+                onClick={() => navigate(`/marketplace/${l.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
+                {/* Photo gallery — customer's actual return photos */}
                 <div className="mcard__media">
-                  {l.imageUrl ? (
+                  {isForYou && <span className="mcard__foryou-badge">⭐ Recommended for you</span>}
+                  {photos.length > 0 ? (
                     <img
-                      src={l.imageUrl}
-                      alt={l.productName}
+                      src={activePhoto}
+                      alt={`${l.productName} — customer return photo`}
                       loading="lazy"
-                      onError={(e) => { (e.currentTarget.style.display = 'none'); }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = ''; (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                   ) : (
                     <span className="mcard__media-fallback" aria-hidden="true">📦</span>
@@ -159,11 +194,42 @@ export function MarketplacePage() {
                   <span className={`mcard__grade mcard__grade--${l.grade}`}>
                     {l.grade} · {meta.tag}
                   </span>
+                  {photos.length > 1 && (
+                    <div className="mcard__thumbs">
+                      {photos.slice(0, 4).map((url, i) => (
+                        <img
+                          key={i}
+                          src={url}
+                          alt={`View ${i + 1}`}
+                          className="mcard__thumb"
+                          loading="lazy"
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mcard__body">
                   <h2 className="mcard__name">{l.productName}</h2>
                   <p className="mcard__blurb">{meta.blurb}</p>
+
+                  {/* AI condition report — why this grade was given */}
+                  {l.conditionReasoning && (
+                    <div className="mcard__condition">
+                      <p className="mcard__condition-title">AI Condition Report</p>
+                      <p className="mcard__condition-text">{l.conditionReasoning}</p>
+                      {l.defects?.length > 0 && (
+                        <ul className="mcard__defects">
+                          {l.defects.map((d, i) => (
+                            <li key={i}>
+                              <span className={`mcard__defect-badge mcard__defect-badge--${d.severity}`}>{d.severity}</span>
+                              {d.location}: {d.description}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
 
                   <div className="mcard__price">
                     <span className="mcard__price-now">{sym(l.currency)}{l.listedPrice.toLocaleString('en-IN')}</span>
@@ -183,15 +249,21 @@ export function MarketplacePage() {
                       <button
                         className="mcard__buy"
                         disabled={busyId === l.id}
-                        onClick={() => handleBuy(l)}
+                        onClick={(e) => { e.stopPropagation(); void handleBuy(l); }}
                       >
                         {busyId === l.id ? 'Processing…' : `Buy ${sym(l.currency)}${l.listedPrice.toLocaleString('en-IN')}`}
+                      </button>
+                      <button
+                        className="mcard__ghost"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/marketplace/${l.id}`); }}
+                      >
+                        View details
                       </button>
                       {l.expiresAt && (
                         <button
                           className="mcard__ghost"
                           disabled={busyId === l.id}
-                          onClick={() => handleForceExpire(l)}
+                          onClick={(e) => { e.stopPropagation(); void handleForceExpire(l); }}
                           title="Demo: simulate the local-buyer window lapsing"
                         >
                           Simulate window end
@@ -224,7 +296,7 @@ export function MarketplacePage() {
                       <button
                         className="mcard__buy"
                         disabled={busyId === l.id}
-                        onClick={() => handleAcceptKeep(l)}
+                        onClick={(e) => { e.stopPropagation(); void handleAcceptKeep(l); }}
                       >
                         Accept gift card & keep
                       </button>
@@ -243,9 +315,9 @@ export function MarketplacePage() {
         </div>
       )}
 
-      {/* Purchase confirmation */}
+      {/* Purchase confirmation + green credit celebration */}
       {purchaseResult && (
-        <div className="market__toast" role="status" onClick={() => setPurchaseResult(null)}>
+        <div className="market__toast" role="status" onClick={() => { setPurchaseResult(null); setGreenCredit(null); }}>
           <div className="market__toast-card" onClick={(e) => e.stopPropagation()}>
             <h3>{purchaseResult.directTransfer ? '⚡ Direct transfer arranged!' : '✓ Order placed'}</h3>
             {purchaseResult.fulfilment && (
@@ -265,7 +337,24 @@ export function MarketplacePage() {
                 )}
               </p>
             )}
-            <button className="mcard__buy" onClick={() => setPurchaseResult(null)}>Done</button>
+
+            {/* Green credit banner */}
+            {greenCredit && (
+              <div className="market__green-credit">
+                <div className="market__green-credit-icon">🌱</div>
+                <div>
+                  <strong>You saved ~{greenCredit.kg} kg of CO₂!</strong>
+                  <p>
+                    By choosing a certified refurbished Grade {greenCredit.grade} item instead of buying new,
+                    you helped avoid the emissions from manufacturing a brand-new product.
+                    That's equivalent to skipping ~{Math.round(greenCredit.kg * 6)} km of car travel. 🚗
+                  </p>
+                  <span className="market__green-badge">🏅 Green Buyer</span>
+                </div>
+              </div>
+            )}
+
+            <button className="mcard__buy" onClick={() => { setPurchaseResult(null); setGreenCredit(null); }}>Done</button>
           </div>
         </div>
       )}

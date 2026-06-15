@@ -346,3 +346,54 @@
 .pd-size__link:hover { text-decoration: underline; color: #C7511F; }
 
 .pd-size__error { color: #CC0C39; font-size: 0.82rem; font-weight: 600; margin: 0.5rem 0 0; }
+
+/* ── Customer Reviews ──────────────────────────────────────────── */
+.pd-reviews {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e7e7e7;
+}
+.pd-reviews-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F1111;
+  margin: 0 0 1.25rem;
+}
+.pd-reviews-avg { font-size: 0.9rem; color: #888; font-weight: 400; }
+
+.pd-reviews-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.pd-review {
+  border: 1px solid #e7e7e7;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: #fafafa;
+}
+.pd-review-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.pd-review-stars { color: #FFD814; font-size: 1rem; letter-spacing: 1px; }
+.pd-review-author { font-size: 0.9rem; color: #333; }
+.pd-review-date { font-size: 0.8rem; color: #888; }
+.pd-review-verified {
+  font-size: 0.75rem;
+  color: #1a7f37;
+  background: #e6f4ea;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.pd-review-title { font-weight: 700; font-size: 0.95rem; color: #0F1111; margin: 0 0 0.3rem; }
+.pd-review-body  { font-size: 0.9rem; color: #444; line-height: 1.55; margin: 0; }
+.pd-review-photos { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+.pd-review-photo {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}

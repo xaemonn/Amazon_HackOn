@@ -12,6 +12,10 @@ export interface IUser extends Document {
     state: string;
     pincode: string;
   } | null;
+  sizeProfile?: {
+    shoeSize?: number | null;
+    apparelSize?: string | null;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +27,11 @@ const addressSchema = new Schema({
   pincode:{ type: String },
 }, { _id: false });
 
+const sizeProfileSchema = new Schema({
+  shoeSize:    { type: Number, default: null },
+  apparelSize: { type: String, default: null },
+}, { _id: false });
+
 const userSchema = new Schema<IUser>(
   {
     name:         { type: String, required: true, trim: true },
@@ -30,6 +39,7 @@ const userSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     phone:        { type: String, default: null },
     address:      { type: addressSchema, default: null },
+    sizeProfile:  { type: sizeProfileSchema, default: null },
   },
   { timestamps: true },
 );

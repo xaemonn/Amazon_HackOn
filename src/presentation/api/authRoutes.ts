@@ -30,10 +30,11 @@ const DEMO_USER = {
 
 // In-memory profile for the demo account so "Edit Profile" stays functional
 // without persisting demo data to MongoDB.
-const demoProfile: { name: string; phone: string | null; address: unknown } = {
+const demoProfile: { name: string; phone: string | null; address: unknown; sizeProfile: unknown } = {
   name: DEMO_USER.name,
   phone: null,
   address: null,
+  sizeProfile: null,
 };
 
 export function signToken(userId: string, email: string, demo = false): string {
@@ -48,7 +49,7 @@ export function verifyToken(token: string): JwtPayload | null {
   }
 }
 
-function extractToken(req: Request): string | null {
+export function extractToken(req: Request): string | null {
   const h = req.headers.authorization;
   if (!h?.startsWith('Bearer ')) return null;
   return h.slice(7).trim() || null;
@@ -158,6 +159,7 @@ export function createAuthRouter(): Router {
         email: DEMO_USER.email,
         phone: demoProfile.phone,
         address: demoProfile.address,
+        sizeProfile: demoProfile.sizeProfile,
       },
     });
   });
@@ -178,6 +180,7 @@ export function createAuthRouter(): Router {
         email: DEMO_USER.email,
         phone: demoProfile.phone,
         address: demoProfile.address,
+        sizeProfile: demoProfile.sizeProfile,
       });
       return;
     }
@@ -191,6 +194,7 @@ export function createAuthRouter(): Router {
         email: user.email,
         phone: user.phone ?? null,
         address: user.address ?? null,
+        sizeProfile: user.sizeProfile ?? null,
       });
     } catch {
       res.status(500).json({ error: 'Failed to fetch user.' });
@@ -207,26 +211,29 @@ export function createAuthRouter(): Router {
 
     // Demo account updates stay in memory
     if (payload.demo) {
-      const { name, phone, address } = req.body as Record<string, unknown>;
-      if (name !== undefined)    demoProfile.name    = String(name).trim();
-      if (phone !== undefined)   demoProfile.phone   = String(phone).trim();
-      if (address !== undefined) demoProfile.address = address;
+      const { name, phone, address, sizeProfile } = req.body as Record<string, unknown>;
+      if (name !== undefined)        demoProfile.name        = String(name).trim();
+      if (phone !== undefined)       demoProfile.phone       = String(phone).trim();
+      if (address !== undefined)     demoProfile.address     = address;
+      if (sizeProfile !== undefined) demoProfile.sizeProfile = sizeProfile;
       res.json({
         id: DEMO_USER.id,
         name: demoProfile.name,
         email: DEMO_USER.email,
         phone: demoProfile.phone,
         address: demoProfile.address,
+        sizeProfile: demoProfile.sizeProfile,
       });
       return;
     }
 
     try {
-      const { name, phone, address } = req.body as Record<string, unknown>;
+      const { name, phone, address, sizeProfile } = req.body as Record<string, unknown>;
       const updates: Record<string, unknown> = {};
-      if (name !== undefined)    updates['name']    = String(name).trim();
-      if (phone !== undefined)   updates['phone']   = String(phone).trim();
-      if (address !== undefined) updates['address'] = address;
+      if (name !== undefined)        updates['name']        = String(name).trim();
+      if (phone !== undefined)       updates['phone']       = String(phone).trim();
+      if (address !== undefined)     updates['address']     = address;
+      if (sizeProfile !== undefined) updates['sizeProfile'] = sizeProfile;
 
       const user = await User.findByIdAndUpdate(
         payload.userId,
@@ -241,6 +248,7 @@ export function createAuthRouter(): Router {
         email: user.email,
         phone: user.phone ?? null,
         address: user.address ?? null,
+        sizeProfile: user.sizeProfile ?? null,
       });
     } catch {
       res.status(500).json({ error: 'Failed to update profile.' });

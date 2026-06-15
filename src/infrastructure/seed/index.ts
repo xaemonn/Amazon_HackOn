@@ -304,18 +304,15 @@ export const demoCodOrder: Order = {
 export interface LoadSeedDataOptions {
   /** The MockAuthService instance (has addOrderItem/addCustomer helpers). */
   authService: MockAuthService;
-  /** The InMemoryDemandSignalProvider to pre-seed with demand signals. */
-  demandSignalProvider: InMemoryDemandSignalProvider;
+  /** Kept for API compatibility; no longer used (Grade A goes to list_for_resale directly). */
+  demandSignalProvider?: InMemoryDemandSignalProvider;
 }
 
 /**
  * Populate the application's services with deterministic demo data.
- *
- * Call this during application startup (after the DI container is wired)
- * to ensure the demo flow has the data it needs.
  */
 export function loadSeedData(options: LoadSeedDataOptions): void {
-  const { authService, demandSignalProvider } = options;
+  const { authService } = options;
 
   // 1. Register order items into the auth service
   //    (The MockAuthService constructor already seeds some items, but we
@@ -324,12 +321,8 @@ export function loadSeedData(options: LoadSeedDataOptions): void {
     authService.addOrderItem(orderItem);
   }
 
-  // 2. Register the demand signal for instant-match routing
-  demandSignalProvider.addSignal(SEED_DEMAND_SIGNAL.productId, SEED_DEMAND_SIGNAL.signal);
-
   console.log(
-    '[Seed] Loaded demo data: %d order items, %d demand signals',
+    '[Seed] Loaded demo data: %d order items',
     SEED_ORDER_ITEMS.length,
-    1,
   );
 }

@@ -18,6 +18,7 @@ import type {
   ResaleListing,
   TransferAllocation,
 } from '../../domain/resale/ResaleListing.js';
+import type { InMemorySellerBuyerMatchRepository } from '../../infrastructure/persistence/InMemorySellerBuyerMatchRepository.js';
 import {
   sellListing,
   expireListing,
@@ -36,7 +37,14 @@ export interface CreateListingInput {
   grade: 'A' | 'B' | 'C';
   productId: string;
   productName: string;
+  /** Primary display image — should be the customer's actual front-facing return photo. */
   imageUrl: string | null;
+  /** All return photo URLs for the gallery view. */
+  returnPhotoUrls: string[];
+  /** AI condition summary from the grading assessment. */
+  conditionReasoning: string | null;
+  /** Defects detected during grading. */
+  defects: Array<{ location: string; severity: string; description: string }>;
   originalPrice: number;
   currency: string;
   sellerCustomerId: string;
@@ -78,6 +86,7 @@ export class ResaleService {
       directTransferEtaHours: number;
       warehouseShipEtaHours: number;
     },
+    private readonly matchRepo?: InMemorySellerBuyerMatchRepository,
   ) {}
 
   /**
@@ -102,6 +111,9 @@ export class ResaleService {
       productId: input.productId,
       productName: input.productName,
       imageUrl: input.imageUrl,
+      returnPhotoUrls: input.returnPhotoUrls,
+      conditionReasoning: input.conditionReasoning,
+      defects: input.defects,
       grade: input.grade,
       conditionLabel: pricing.conditionLabel,
       listingType: pricing.listingType,
@@ -157,6 +169,26 @@ export class ResaleService {
     await this.repo.save(sold);
 
     const fulfilment = sold.fulfilment!;
+
+    // Record the internal P2P seller↔buyer mapping for delivery routing.
+    // This is intentionally NOT returned to the caller — it's ops-only.
+    if (this.matchRepo) {
+      await this.matchRepo.create({
+        listingId: listing.id,
+        returnRequestId: listing.returnRequestId,
+        sellerCustomerId: listing.sellerCustomerId,
+        sellerCity: listing.sellerCity,
+        buyerCustomerId: input.buyerCustomerId,
+        buyerCity: input.buyerCity,
+        productId: listing.productId,
+        productName: listing.productName,
+        listedPrice: listing.listedPrice,
+        currency: listing.currency,
+        fulfilmentMode: fulfilment.mode,
+        deliveryPartner: fulfilment.deliveryPartner ?? null,
+      });
+    }
+
     return {
       listing: sold,
       fulfilment,

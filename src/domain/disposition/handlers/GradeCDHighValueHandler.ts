@@ -1,8 +1,7 @@
 /**
- * GradeCDHighValueHandler — Priority 8
+ * GradeDHandler — Priority 8
  *
- * If grade is C or D and the item value is at or above the configurable threshold
- * (default ₹500), route to donate_or_recycle.
+ * Grade D (severely damaged / unidentifiable): route to donate_or_recycle.
  *
  * Requirement: 10.10
  */
@@ -27,12 +26,7 @@ export class GradeCDHighValueHandler extends BaseDispositionHandler {
   handle(context: RoutingContext): RoutingResult | null {
     const { grade } = context.conditionAssessment;
 
-    if (grade !== 'C' && grade !== 'D') {
-      return this.passToNext(context);
-    }
-
-    // Value >= threshold → donate or recycle
-    if (context.itemValue < this.thresholds.returnlessRefundMaxValue) {
+    if (grade !== 'D') {
       return this.passToNext(context);
     }
 

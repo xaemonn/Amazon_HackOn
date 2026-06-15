@@ -47,7 +47,16 @@ export class ResaleListingHandler {
   }
 
   private async onDispositionAssigned(event: DomainEvent): Promise<void> {
-    const returnRequestId = (event.payload as { returnRequestId: string }).returnRequestId;
+    const payload = event.payload as { returnRequestId: string; route?: string };
+    const returnRequestId = payload.returnRequestId;
+
+    // Only list in the marketplace for explicit listing routes.
+    // All other routes (returnless_refund, refurbishment, donate_or_recycle, wrong_item_*, etc.)
+    // are handled elsewhere and must not create marketplace listings.
+    const LISTING_ROUTES = new Set(['list_for_resale']);
+    if (!LISTING_ROUTES.has(payload.route ?? '')) {
+      return;
+    }
 
     try {
       const assessment =
@@ -68,12 +77,25 @@ export class ResaleListingHandler {
         (await this.deps.getCustomerCity(returnData.customerId)) ??
         this.deps.defaultSellerCity;
 
+      // Build photo URLs from the customer's actual return media.
+      // Photos are served via /api/media/:storageKey (uploaded during the return flow).
+      // Fall back to the catalog image only when no photos were submitted.
+      const photoUrls = returnData.media
+        .filter((m) => m.type !== 'video')
+        .map((m) => `/api/media/${m.storageKey}`);
+
+      const primaryImageUrl =
+        photoUrls[0] ?? `/api/catalog/images/${returnData.productId}`;
+
       const listing = await this.deps.resaleService.createListingFromReturn({
         returnRequestId,
         grade: assessment.grade,
         productId: returnData.productId,
         productName,
-        imageUrl: `/api/catalog/images/${returnData.productId}`,
+        imageUrl: primaryImageUrl,
+        returnPhotoUrls: photoUrls,
+        conditionReasoning: assessment.reasoning ?? null,
+        defects: assessment.defects ?? [],
         originalPrice,
         currency,
         sellerCustomerId: returnData.customerId,

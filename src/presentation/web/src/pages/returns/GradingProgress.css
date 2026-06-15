@@ -383,3 +383,64 @@
   justify-content: center;
   flex-wrap: wrap;
 }
+
+/* Wrong-item refund confirmed */
+.grading-progress__wrong-item-refund {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: #F0FFF4;
+  border: 1.5px solid #38A169;
+  border-radius: 12px;
+}
+.grading-progress__wrong-item-icon { font-size: 3.5rem; line-height: 1; margin-bottom: 0.75rem; }
+.grading-progress__wrong-item-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #22543D;
+  margin: 0 0 0.75rem;
+}
+.grading-progress__wrong-item-text {
+  font-size: 0.95rem;
+  color: #2F4F3A;
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+.grading-progress__refund-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 0 1rem;
+}
+.grading-progress__refund-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38A169;
+  font-weight: 600;
+}
+.grading-progress__refund-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #22543D;
+}
+.grading-progress__wrong-item-note {
+  font-size: 0.85rem;
+  color: #4A7C59;
+  margin: 0 0 1.5rem;
+}
+
+/* Result action row */
+.grading-progress__result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.grading-progress__review-done {
+  font-size: 0.9rem;
+  color: #1a7f37;
+  font-weight: 600;
+  margin: 0;
+}

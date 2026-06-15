@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { ReviewModal } from './ReviewModal';
 import './ReturnPage.css';
 import './GradingProgress.css';
 
@@ -44,6 +46,7 @@ interface ProgressResponse {
   complete: boolean;
   result: {
     state: string;
+    productId?: string;
     conditionAssessment: ConditionAssessment | null;
     dispositionDecision: DispositionDecision | null;
   } | null;
@@ -62,6 +65,7 @@ interface LocationState {
 export function GradingProgress() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const state = location.state as LocationState | null;
   const returnId = state?.returnId;
 
@@ -73,8 +77,12 @@ export function GradingProgress() {
   const [showDelay, setShowDelay] = useState(false);
   const [isFailure, setIsFailure] = useState(false);
   const [isMismatch, setIsMismatch] = useState(false);
+  const [isWrongItemRefund, setIsWrongItemRefund] = useState(false);
+  const [isWrongItemUnverified, setIsWrongItemUnverified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notifyRequested, setNotifyRequested] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewDone, setReviewDone] = useState(false);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastAdvanceRef = useRef<number>(Date.now());
@@ -133,11 +141,16 @@ export function GradingProgress() {
         setResult(data.result);
 
         const assessment = data.result.conditionAssessment;
-        // Grading outcomes:
-        //  • grade null            → AI couldn't grade → manual review
-        //  • grade D / mismatch    → item doesn't match the order → ask to retake photos
-        //  • grade A / B / C       → quality grade, complete normally
-        if (!assessment || assessment.grade === null) {
+        const route = data.result.dispositionDecision?.route;
+
+        // Wrong-item fast-track routes take priority over generic grade checks.
+        if (route === 'wrong_item_refund') {
+          setIsWrongItemRefund(true);
+          setAnnouncement('Your wrong-item claim has been verified. A full refund has been initiated.');
+        } else if (route === 'wrong_item_unverified') {
+          setIsWrongItemUnverified(true);
+          setAnnouncement("We couldn't verify your claim from the photos provided. Please retake clearer photos and try again.");
+        } else if (!assessment || assessment.grade === null) {
           setIsFailure(true);
           setAnnouncement('Grading could not be completed. Your return has been submitted for manual review.');
         } else if (assessment.grade === 'D' || assessment.identityVerdict === 'mismatch') {
@@ -252,6 +265,97 @@ export function GradingProgress() {
         <p className="return-page-note">
           No return ID found. Please start the return flow from your orders.
         </p>
+      </section>
+    );
+  }
+
+  // ─── Render: Wrong item confirmed — full refund ────────────────────────────
+
+  if (isComplete && isWrongItemRefund) {
+    const disposition = result?.dispositionDecision;
+    return (
+      <section className="grading-progress" aria-labelledby="grading-title">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {announcement}
+        </div>
+        <div className="grading-progress__wrong-item-refund">
+          <div className="grading-progress__wrong-item-icon" aria-hidden="true">✅</div>
+          <h2 className="grading-progress__wrong-item-title">
+            Claim Verified — Full Refund Initiated
+          </h2>
+          <p className="grading-progress__wrong-item-text">
+            We confirmed you received the wrong item. A <strong>100% refund</strong> has
+            been initiated to your original payment method. You do not need to return the item.
+          </p>
+          {disposition && (
+            <div className="grading-progress__refund-amount">
+              <span className="grading-progress__refund-label">Refund Amount</span>
+              <span className="grading-progress__refund-value">
+                {disposition.refundEstimate.currency === 'INR' ? '₹' : '$'}
+                {disposition.refundEstimate.amount.toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
+          <p className="grading-progress__wrong-item-note">
+            Refunds typically appear within 3–5 business days depending on your bank.
+          </p>
+          <button
+            className="grading-progress__btn grading-progress__btn--primary"
+            onClick={handleNavigateAway}
+          >
+            Back to Home
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // ─── Render: Wrong item unverified — ask to retake photos ──────────────────
+
+  if (isComplete && isWrongItemUnverified) {
+    const assessment = result?.conditionAssessment;
+    return (
+      <section className="grading-progress" aria-labelledby="grading-title">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {announcement}
+        </div>
+        <div className="grading-progress__mismatch">
+          <div className="grading-progress__mismatch-icon" aria-hidden="true">📷</div>
+          <h2 className="grading-progress__mismatch-title">
+            We Couldn't Verify Your Claim
+          </h2>
+          <p className="grading-progress__mismatch-text">
+            Our AI reviewed your photos but couldn't confirm your wrong-item or
+            not-as-described claim from the images provided.
+          </p>
+
+          {assessment?.reasoning && (
+            <div className="grading-progress__reasoning grading-progress__reasoning--mismatch">
+              <strong>What our AI saw:</strong>
+              <p>{assessment.reasoning}</p>
+            </div>
+          )}
+
+          <p className="grading-progress__mismatch-help">
+            Please retake photos with <strong>clear, well-lit shots</strong> of the actual
+            item you received — including any labels, tags, or packaging — and try again.
+          </p>
+
+          <div className="grading-progress__mismatch-actions">
+            <button
+              className="grading-progress__btn grading-progress__btn--primary"
+              onClick={handleRetakePhotos}
+            >
+              📷 Retake Photos
+            </button>
+            <button
+              className="grading-progress__btn grading-progress__btn--secondary"
+              onClick={handleNavigateAway}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </section>
     );
   }
@@ -409,13 +513,40 @@ export function GradingProgress() {
               may be adjusted within 1 business day.
             </div>
           )}
-          <button
-            className="grading-progress__btn grading-progress__btn--primary"
-            onClick={handleViewResult}
-          >
-            View Full Result
-          </button>
+          <div className="grading-progress__result-actions">
+            <button
+              className="grading-progress__btn grading-progress__btn--primary"
+              onClick={handleViewResult}
+            >
+              View Full Result
+            </button>
+            {user && !reviewDone && (
+              <button
+                className="grading-progress__btn grading-progress__btn--secondary"
+                onClick={() => setShowReviewModal(true)}
+              >
+                ✍️ Write a Review
+              </button>
+            )}
+            {reviewDone && (
+              <p className="grading-progress__review-done">✓ Review submitted — thank you!</p>
+            )}
+          </div>
         </div>
+
+        {/* Review modal */}
+        {showReviewModal && (result?.productId ?? state?.orderItemId) && (
+          <ReviewModal
+            productId={result?.productId ?? state?.orderItemId ?? ''}
+            productName="Your Returned Item"
+            returnRequestId={returnId}
+            photoUrls={[]}
+            prefillBody={state?.reasonDetails ?? ''}
+            customerName={user?.name ?? 'Customer'}
+            onClose={() => setShowReviewModal(false)}
+            onSubmitted={() => { setShowReviewModal(false); setReviewDone(true); }}
+          />
+        )}
       </section>
     );
   }

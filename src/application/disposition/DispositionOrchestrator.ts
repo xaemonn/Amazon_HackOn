@@ -45,6 +45,13 @@ import { evaluateDisposition } from '../../domain/disposition/DispositionChainFa
  * Lookup interface for retrieving ReturnRequest data needed by the
  * disposition orchestrator (reason, item value, product info).
  */
+/** Minimal media reference shape exposed to the lookup result. */
+export interface LookupMediaRef {
+  id: string;
+  storageKey: string;
+  type: string;
+}
+
 export interface IReturnRequestLookup {
   findById(id: string): Promise<{
     returnReason: ReturnReason;
@@ -53,6 +60,8 @@ export interface IReturnRequestLookup {
     productId: string;
     customerId: string;
     orderItemId: string;
+    /** Media references submitted by the customer — used as listing photos. */
+    media: LookupMediaRef[];
   } | null>;
 }
 

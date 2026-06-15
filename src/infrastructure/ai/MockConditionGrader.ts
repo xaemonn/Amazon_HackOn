@@ -128,34 +128,82 @@ const DEFAULT_RESULT: SeededResult = {
   ],
 };
 
+// ─── Return-reason → grading signal map ─────────────────────────────────────
+// Maps the structured return reason code to a verification note that the mock
+// grader appends to its reasoning, simulating what a real AI would check.
+
+const REASON_VERIFICATION: Record<string, string> = {
+  size_issue:
+    'Return reason: size issue. Photos show the item label/tag is visible — size markings appear consistent with the stated reason.',
+  damaged_in_transit:
+    'Return reason: damaged in transit. Images inspected for external impact damage. Visual findings align with the customer\'s stated reason.',
+  wrong_item_sent:
+    'Return reason: wrong item received. Product markings and branding compared against the ordered product reference — please see identity assessment above.',
+  defective_item:
+    'Return reason: item defective. Photos reviewed for functional defect indicators (broken components, malfunction signs).',
+  changed_mind:
+    'Return reason: change of mind. No damage expected; condition assessed purely on cosmetic inspection.',
+  not_as_described:
+    'Return reason: not as described. Item visually compared against catalog imagery for discrepancies in colour, material or features.',
+  missing_parts:
+    'Return reason: missing parts/accessories. Submitted photos checked for completeness of visible components.',
+};
+
 // ─── Implementation ───────────────────────────────────────────────────────────
 
 export class MockConditionGrader implements IConditionGrader {
   /**
    * Assess the condition of a returned item using the seeded deterministic map.
+   * Incorporates the customer's stated return reason as a verification signal.
    *
-   * @param _mediaReferences  - Ignored in mock; real media not required for demo.
-   * @param productId         - Drives the seeded result lookup.
-   * @param _catalogImageRef  - Ignored in mock (real comparison requires Bedrock).
+   * @param mediaReferences  - Used to heuristically detect potential AI-generated images.
+   * @param productId        - Drives the seeded result lookup.
+   * @param _catalogImageRef - Ignored in mock (real comparison requires Bedrock).
+   * @param returnReason     - The customer's stated return reason; appended to reasoning.
    */
   async assessCondition(
-    _mediaReferences: MediaReference[],
+    mediaReferences: MediaReference[],
     productId: string,
-    _catalogImageRef: string
+    _catalogImageRef: string,
+    returnReason?: string,
   ): Promise<ConditionGradeResult> {
     const seed = SEEDED_RESULTS[productId] ?? DEFAULT_RESULT;
 
-    // Defensive copies so callers cannot mutate the seeded data.
+    // Build reasoning: base seed reasoning + reason verification note.
+    let reasoning = seed.reasoning;
+    if (returnReason) {
+      const note = REASON_VERIFICATION[returnReason];
+      if (note) {
+        // Truncate so total stays ≤ 500 chars
+        const suffix = ` | ${note}`;
+        reasoning = (reasoning + suffix).slice(0, 500);
+      }
+    }
+
+    // Heuristic AI-image detection for the mock:
+    // In a real implementation Bedrock would analyse pixel-level artifacts.
+    // Here we flag submissions with suspiciously few bytes as potentially
+    // AI-generated (real camera photos are always larger than 5KB).
+    const totalBytes = mediaReferences.reduce((s, m) => s + (m.sizeBytes ?? 0), 0);
+    const avgBytes = mediaReferences.length > 0 ? totalBytes / mediaReferences.length : 0;
+    const likelySynthetic = mediaReferences.length > 0 && avgBytes < 5_000;
+
     return {
       grade: seed.grade,
       confidence: seed.confidence,
-      reasoning: seed.reasoning,
+      reasoning,
       defects: seed.defects.map((d) => ({ ...d })),
-      authenticity: {
-        aiGenerated: false,
-        confidence: 0.9,
-        note: 'Mock grader does not analyze image authenticity.',
-      },
+      authenticity: likelySynthetic
+        ? {
+            aiGenerated: true,
+            confidence: 0.72,
+            note: 'Images are unusually small (avg < 5 KB). Possible AI-generated or screen-captured photos — flagged for manual review.',
+          }
+        : {
+            aiGenerated: false,
+            confidence: 0.91,
+            note: 'Images appear to be genuine camera captures. No synthetic-generation indicators detected.',
+          },
     };
   }
 }

@@ -24,6 +24,7 @@ import type { RoutingContext } from './RoutingContext.js';
 import type { RoutingResult } from './RoutingResult.js';
 
 import {
+  WrongItemHandler,
   ManualReviewFlagHandler,
   FraudCheckHandler,
   LowConfidenceHandler,
@@ -49,7 +50,8 @@ export function buildDispositionChain(config: AppConfig): IDispositionHandler {
     manualReview,
   } = config;
 
-  // Instantiate all 9 handlers with their config dependencies
+  // Instantiate all handlers with their config dependencies
+  const wrongItemHandler = new WrongItemHandler();
   const manualReviewHandler = new ManualReviewFlagHandler(refundPercentages, manualReview);
   const fraudCheckHandler = new FraudCheckHandler(fraud, refundPercentages, manualReview);
   const lowConfidenceHandler = new LowConfidenceHandler(dispositionThresholds, refundPercentages, manualReview);
@@ -61,6 +63,8 @@ export function buildDispositionChain(config: AppConfig): IDispositionHandler {
   const defaultFallbackHandler = new DefaultFallbackHandler(refundPercentages, manualReview);
 
   // Wire the chain in strict priority order via setNext()
+  // WrongItemHandler runs first — intercepts wrong_item / not_as_described before all others
+  wrongItemHandler.setNext(manualReviewHandler);
   manualReviewHandler.setNext(fraudCheckHandler);
   fraudCheckHandler.setNext(lowConfidenceHandler);
   lowConfidenceHandler.setNext(gradeAInstantMatchHandler);
@@ -71,7 +75,7 @@ export function buildDispositionChain(config: AppConfig): IDispositionHandler {
   gradeCDHighValueHandler.setNext(defaultFallbackHandler);
 
   // Return the head of the chain
-  return manualReviewHandler;
+  return wrongItemHandler;
 }
 
 /**

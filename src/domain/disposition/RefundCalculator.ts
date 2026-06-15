@@ -54,6 +54,10 @@ function getRefundCondition(route: DispositionRoute): RefundEstimate['condition'
     case 'donate_or_recycle':
     case 'manual_inspection':
       return 'after_review';
+    case 'wrong_item_refund':
+      return 'immediate';
+    case 'wrong_item_unverified':
+      return 'after_review';
   }
 }
 
@@ -67,6 +71,8 @@ function getRefundMethod(route: DispositionRoute): RefundEstimate['method'] {
     case 'list_for_resale':
     case 'refurbishment':
     case 'manual_inspection':
+    case 'wrong_item_refund':
+    case 'wrong_item_unverified':
       return 'original_payment';
     case 'donate_or_recycle':
       return 'store_credit';
@@ -89,7 +95,13 @@ export class RefundCalculator implements IRefundCalculator {
     returnReason: ReturnReason,
   ): RefundEstimate {
     const isFault = RefundCalculator.isFaultReason(returnReason);
-    const percentage = isFault ? 100 : this.refundPercentages[route];
+    // Wrong-item routes are handled by WrongItemHandler — should not reach here,
+    // but guard defensively so the config lookup never fails.
+    const routePercentage =
+      route in this.refundPercentages
+        ? (this.refundPercentages as unknown as Record<string, number>)[route]
+        : 100;
+    const percentage = isFault ? 100 : routePercentage;
     const rawAmount = (itemValue * percentage) / 100;
     const amount = Math.max(0, Math.round(rawAmount));
 

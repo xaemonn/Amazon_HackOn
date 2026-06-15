@@ -1,8 +1,7 @@
 /**
- * GradeCDLowValueHandler — Priority 7
+ * GradeCReturnlessRefundHandler — Priority 7
  *
- * If grade is C or D and the item value is below the configurable threshold
- * (default ₹500), route to returnless_refund (customer keeps the item).
+ * Grade C: customer keeps the item and receives a refund — always, regardless of value.
  *
  * Requirement: 10.9
  */
@@ -27,11 +26,7 @@ export class GradeCDLowValueHandler extends BaseDispositionHandler {
   handle(context: RoutingContext): RoutingResult | null {
     const { grade } = context.conditionAssessment;
 
-    if (grade !== 'C' && grade !== 'D') {
-      return this.passToNext(context);
-    }
-
-    if (context.itemValue >= this.thresholds.returnlessRefundMaxValue) {
+    if (grade !== 'C') {
       return this.passToNext(context);
     }
 

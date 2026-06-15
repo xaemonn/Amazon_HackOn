@@ -1,6 +1,7 @@
 // Disposition Handlers — Chain of Responsibility implementations
 
 export { BaseDispositionHandler } from './BaseDispositionHandler.js';
+export { WrongItemHandler } from './WrongItemHandler.js';
 export { ManualReviewFlagHandler } from './ManualReviewFlagHandler.js';
 export { FraudCheckHandler } from './FraudCheckHandler.js';
 export { LowConfidenceHandler } from './LowConfidenceHandler.js';

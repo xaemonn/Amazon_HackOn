@@ -1,7 +1,7 @@
 /**
- * GradeBRefurbishmentHandler — Priority 6
+ * GradeBResaleHandler — Priority 6
  *
- * If grade is B, route to refurbishment.
+ * If grade is B, list directly in the returned marketplace at a discount.
  *
  * Requirement: 10.8
  */
@@ -32,21 +32,21 @@ export class GradeBRefurbishmentHandler extends BaseDispositionHandler {
     const refundEstimate = computeRefundEstimate(
       context.itemValue,
       context.currency,
-      'refurbishment',
+      'list_for_resale',
       context.returnReason,
       this.refundPercentages,
     );
 
     return {
-      route: 'refurbishment',
+      route: 'list_for_resale',
       refundEstimate,
-      explanation: this.explanationGenerator.generate('refurbishment', {
-        route: 'refurbishment',
-        handlerName: 'GradeBRefurbishmentHandler',
+      explanation: this.explanationGenerator.generate('list_for_resale', {
+        route: 'list_for_resale',
+        handlerName: 'GradeBResaleHandler',
         slaHours: 0,
         hasNearbyBuyer: false,
       }),
-      handlerName: 'GradeBRefurbishmentHandler',
+      handlerName: 'GradeBResaleHandler',
       fallbackTriggered: false,
       degradedInputs: [],
     };

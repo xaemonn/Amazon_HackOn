@@ -37,9 +37,11 @@ import {
   type IReturnRequestLookup,
   type IDemandSignalProvider,
   type IReturnHistoryProvider,
+  type LookupMediaRef,
 } from '../../application/disposition/index.js';
 import { ResaleService, ResaleListingHandler } from '../../application/resale/index.js';
 import { User } from '../auth/MongoUser.js';
+import { InMemorySellerBuyerMatchRepository } from '../persistence/InMemorySellerBuyerMatchRepository.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -160,6 +162,7 @@ class ReturnRequestLookupAdapter implements IReturnRequestLookup {
     productId: string;
     customerId: string;
     orderItemId: string;
+    media: LookupMediaRef[];
   } | null> {
     const returnRequest = await this.returnRequestRepository.findById(id);
     if (!returnRequest || !returnRequest.reason) {
@@ -171,6 +174,12 @@ class ReturnRequestLookupAdapter implements IReturnRequestLookup {
     const itemValue = orderItem?.price ?? 0;
     const currency = orderItem?.currency ?? 'INR';
 
+    const media: LookupMediaRef[] = (returnRequest.media ?? []).map((m) => ({
+      id: m.id,
+      storageKey: m.storageKey,
+      type: m.type,
+    }));
+
     return {
       returnReason: returnRequest.reason,
       itemValue,
@@ -178,6 +187,7 @@ class ReturnRequestLookupAdapter implements IReturnRequestLookup {
       productId: returnRequest.productId,
       customerId: returnRequest.customerId,
       orderItemId: returnRequest.orderItemId,
+      media,
     };
   }
 }
@@ -363,13 +373,16 @@ export function createContainer(): Container {
   const resaleListingRepository = new InMemoryResaleListingRepository();
   container.register('resaleListingRepository', resaleListingRepository);
 
+  const sellerBuyerMatchRepository = new InMemorySellerBuyerMatchRepository();
+  container.register('sellerBuyerMatchRepository' as keyof ContainerRegistry, sellerBuyerMatchRepository as unknown as ContainerRegistry[keyof ContainerRegistry]);
+
   const resaleService = new ResaleService(resaleListingRepository, {
     gradeDiscountPct: config.resale.gradeDiscountPct,
     transferWindowDays: config.resale.transferWindowDays,
     keepOfferGiftCardPct: config.resale.keepOfferGiftCardPct,
     directTransferEtaHours: config.resale.directTransferEtaHours,
     warehouseShipEtaHours: config.resale.warehouseShipEtaHours,
-  });
+  }, sellerBuyerMatchRepository);
   container.register('resaleService', resaleService);
 
   // Resolve the returner's registered city from MongoDB (falls back to default).

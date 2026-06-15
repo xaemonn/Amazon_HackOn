@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { apiGetReturnPolicy, type ReturnPolicyDecision } from '../api/client';
+import { apiGetReturnPolicy, apiGetReviews, type ReturnPolicyDecision, type ProductReview } from '../api/client';
 import { useProduct } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSizeProfile } from '../hooks/useSizeProfile';
 import { formatSize, getSizeRecommendation } from '../utils/sizing';
+import { recordProductView } from '../hooks/useProductHistory';
 import './ProductDetailPage.css';
 
 export function ProductDetailPage() {
@@ -21,6 +22,8 @@ export function ProductDetailPage() {
   const [returnPolicy, setReturnPolicy] = useState<ReturnPolicyDecision | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [sizePrompt, setSizePrompt] = useState(false);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewAvg, setReviewAvg] = useState<number | null>(null);
 
   const inCart = items.some((i) => i.product.id === productId);
 
@@ -35,6 +38,7 @@ export function ProductDetailPage() {
     setImgFailed(false);
     setSelectedSize(null);
     setSizePrompt(false);
+    if (productId) recordProductView(productId);
   }, [productId]);
 
   // Pre-select the recommended size once it's known
@@ -51,6 +55,14 @@ export function ProductDetailPage() {
       .then(setReturnPolicy)
       .catch(() => setReturnPolicy(null));
   }, [product, user]);
+
+  // Load customer reviews for this product.
+  useEffect(() => {
+    if (!productId) return;
+    apiGetReviews(productId)
+      .then((data) => { setReviews(data.reviews); setReviewAvg(data.avgRating); })
+      .catch(() => {});
+  }, [productId]);
 
   const requiresSize = !!sizeRec?.sizeable;
 
@@ -314,6 +326,45 @@ export function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Customer Reviews */}
+      {reviews.length > 0 && (
+        <section className="pd-reviews" aria-labelledby="pd-reviews-title">
+          <h2 id="pd-reviews-title" className="pd-reviews-title">
+            Customer Reviews
+            {reviewAvg !== null && (
+              <span className="pd-reviews-avg"> · {reviewAvg.toFixed(1)} ★ ({reviews.length})</span>
+            )}
+          </h2>
+          <div className="pd-reviews-list">
+            {reviews.map((r) => (
+              <div key={r.id} className="pd-review">
+                <div className="pd-review-header">
+                  <span className="pd-review-stars" aria-label={`${r.rating} out of 5`}>
+                    {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                  </span>
+                  <strong className="pd-review-author">{r.customerName}</strong>
+                  <span className="pd-review-date">
+                    {new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {r.returnRequestId && (
+                    <span className="pd-review-verified">✓ Verified Return</span>
+                  )}
+                </div>
+                <p className="pd-review-title">{r.title}</p>
+                <p className="pd-review-body">{r.body}</p>
+                {r.photoUrls?.length > 0 && (
+                  <div className="pd-review-photos">
+                    {r.photoUrls.map((url, i) => (
+                      <img key={i} src={url} alt={`Review photo ${i + 1}`} className="pd-review-photo" loading="lazy" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

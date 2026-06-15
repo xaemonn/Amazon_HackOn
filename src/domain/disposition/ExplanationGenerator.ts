@@ -41,19 +41,25 @@ export class ExplanationGenerator implements IExplanationGenerator {
         return 'Your item is like-new and a buyer nearby wants it. Your refund is processed immediately.';
 
       case 'list_for_resale':
-        return 'Your item is in great condition and will be listed for resale. Your refund is processed once it sells.';
+        return 'Your item has been listed in the returned marketplace. Your refund is processed once it sells.';
 
       case 'refurbishment':
         return 'Your item has minor wear and will be sent for refurbishment. Your refund is being processed.';
 
       case 'returnless_refund':
-        return 'You can keep the item — no return needed. Your refund is processed immediately.';
+        return 'You can keep the item — no return needed. A full refund has been processed to your original payment method.';
 
       case 'donate_or_recycle':
         return 'Your item will be donated or responsibly recycled. Thank you for helping reduce waste.';
 
       case 'manual_inspection':
         return `Our team needs to review your return. You'll hear back within ${context.slaHours} hours.`;
+
+      case 'wrong_item_refund':
+        return 'We confirmed you received the wrong item. A full refund has been initiated — no return needed.';
+
+      case 'wrong_item_unverified':
+        return 'We couldn\'t confirm your claim from the photos provided. Please retake clearer photos and try again.';
 
       default:
         return `Our team needs to review your return. You'll hear back within ${context.slaHours} hours.`;

@@ -39,12 +39,18 @@ export interface Address {
   pincode: string;
 }
 
+export interface SizeProfile {
+  shoeSize?: number | null;
+  apparelSize?: string | null;
+}
+
 export interface AuthCustomer {
   id: string;
   name: string;
   email: string;
   phone?: string | null;
   address?: Address | null;
+  sizeProfile?: SizeProfile | null;
 }
 
 export async function apiSignup(name: string, email: string, password: string): Promise<{ token: string; customer: AuthCustomer }> {
@@ -77,6 +83,7 @@ export async function apiUpdateProfile(updates: {
   name?: string;
   phone?: string;
   address?: Address;
+  sizeProfile?: SizeProfile;
 }): Promise<AuthCustomer> {
   return apiFetch('/auth/profile', {
     method: 'PATCH',
@@ -186,6 +193,9 @@ export interface ResaleListing {
   productId: string;
   productName: string;
   imageUrl: string | null;
+  returnPhotoUrls: string[];
+  conditionReasoning: string | null;
+  defects: Array<{ location: string; severity: string; description: string }>;
   grade: ResaleGrade;
   conditionLabel: string;
   listingType: ResaleListingType;
@@ -264,4 +274,42 @@ export async function apiGetReturnPolicy(
   productValue: number,
 ): Promise<ReturnPolicyDecision> {
   return apiFetch(`/returns/policy?customerId=${encodeURIComponent(customerId)}&productValue=${productValue}`);
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  customerId: string;
+  customerName: string;
+  rating: number;
+  title: string;
+  body: string;
+  returnRequestId: string | null;
+  photoUrls: string[];
+  createdAt: string;
+}
+
+export async function apiSubmitReview(review: {
+  productId: string;
+  rating: number;
+  title: string;
+  body: string;
+  returnRequestId?: string | null;
+  photoUrls?: string[];
+  customerName?: string;
+}): Promise<{ review: ProductReview }> {
+  return apiFetch('/reviews', {
+    method: 'POST',
+    body: JSON.stringify(review),
+  });
+}
+
+export async function apiGetReviews(productId: string): Promise<{
+  reviews: ProductReview[];
+  total: number;
+  avgRating: number | null;
+}> {
+  return apiFetch(`/reviews?productId=${encodeURIComponent(productId)}`);
 }

@@ -373,6 +373,7 @@ export function createReturnsRouter(returnsFacade: ReturnsFacade): Router {
           complete: true,
           result: {
             state: returnRequest.state,
+            productId: returnRequest.productId,
             conditionAssessment: returnRequest.conditionAssessment,
             dispositionDecision: returnRequest.dispositionDecision,
           },

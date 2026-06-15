@@ -208,7 +208,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     lockoutMinutes: 15,
   },
   resale: {
-    gradeDiscountPct: { A: 10, B: 25, C: 40 },
+    gradeDiscountPct: { A: 0, B: 25, C: 40 },
     transferWindowDays: 4,
     keepOfferGiftCardPct: 30,
     directTransferEtaHours: 4,

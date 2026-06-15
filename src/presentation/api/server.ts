@@ -28,6 +28,7 @@ import { createAuthRouter } from './authRoutes.js';
 import { createOrdersRouter } from './ordersRoutes.js';
 import { createResaleRouter } from './resaleRoutes.js';
 import { createProductsRouter } from './productsRoutes.js';
+import { createReviewRouter } from './reviewRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
 import { seedDemoUsersAndOrders, seedOrderForCustomer, DEMO_USERS } from '../../infrastructure/seed/demoUsers.js';
@@ -104,6 +105,7 @@ export function createApp() {
   // Resale marketplace (relisting / circular commerce)
   const resaleService = container.getRequired('resaleService');
   app.use('/api/resale', createResaleRouter(resaleService));
+  app.use('/api/reviews', createReviewRouter());
 
   // Background sweeper: resolve lapsed local-buyer windows
   // (Grade A → warehouse, Grade C → keep-offer). Runs every 60s.
@@ -144,6 +146,37 @@ export function createApp() {
       await fs.writeFile(path.join(dir, filename), body);
 
       res.status(200).json({ storageKey: `${returnId}/${filename}` });
+    },
+  );
+
+  // ── Media download: GET /api/media/:returnId/:filename ────────────────────
+  // Serves the customer's uploaded return photos so marketplace listings can
+  // display actual return images instead of catalog imagery.
+  app.get(
+    '/api/media/:returnId/:filename',
+    async (req: Request, res: Response) => {
+      const { returnId, filename } = req.params as { returnId: string; filename: string };
+
+      if (!/^[\w-]+$/.test(returnId) || !/^[\w.-]+$/.test(filename)) {
+        res.status(400).json({ error: 'Invalid path.' });
+        return;
+      }
+
+      const filePath = path.resolve('./uploads', returnId, filename);
+      try {
+        await fs.access(filePath);
+        const ext = path.extname(filename).toLowerCase().slice(1);
+        const mime =
+          ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' :
+          ext === 'png'  ? 'image/png'  :
+          ext === 'webp' ? 'image/webp' :
+          'application/octet-stream';
+        res.setHeader('Content-Type', mime);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.sendFile(filePath);
+      } catch {
+        res.status(404).json({ error: 'Media not found.' });
+      }
     },
   );
 

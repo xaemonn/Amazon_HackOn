@@ -180,6 +180,7 @@ describe('Hero Path Wiring — End-to-End', () => {
           productId: req.productId,
           customerId: req.customerId,
           orderItemId: req.orderItemId,
+          media: (req.media ?? []).map((m) => ({ id: m.id, storageKey: m.storageKey, type: m.type })),
         };
       },
     };
