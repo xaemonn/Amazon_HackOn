@@ -15,7 +15,6 @@
 import type { IEventBus, DomainEvent } from '../../domain/shared/events.js';
 import type { IAuthService } from '../../domain/shared/IAuthService.js';
 import type { IConditionAssessmentRepository } from '../../domain/grading/IConditionAssessmentRepository.js';
-import { isResaleGrade } from '../../domain/resale/index.js';
 import type { ResaleService } from './ResaleService.js';
 import type { IReturnRequestLookup } from '../disposition/DispositionOrchestrator.js';
 
@@ -50,19 +49,22 @@ export class ResaleListingHandler {
     const payload = event.payload as { returnRequestId: string; route?: string };
     const returnRequestId = payload.returnRequestId;
 
-    // Only list in the marketplace for explicit listing routes.
-    // All other routes (returnless_refund, refurbishment, donate_or_recycle, wrong_item_*, etc.)
-    // are handled elsewhere and must not create marketplace listings.
-    const LISTING_ROUTES = new Set(['list_for_resale']);
-    if (!LISTING_ROUTES.has(payload.route ?? '')) {
-      return;
-    }
-
     try {
       const assessment =
         await this.deps.conditionAssessmentRepository.findByReturnRequestId(returnRequestId);
-      if (!assessment || !isResaleGrade(assessment.grade)) {
-        return; // Not a resellable grade (D / null) — nothing to relist.
+      if (!assessment) return;
+
+      // Items flagged for human review (reason↔photo mismatch, wrong item,
+      // manipulated photos, fraud) must NOT be relisted — they go to manual
+      // inspection instead.
+      if (assessment.requiresManualReview) {
+        return;
+      }
+
+      // Only Grade A (Like New) and Grade B (discounted) are relisted for resale.
+      // Grade C → refund + recycle/keep; Grade D → manual/recycle. Neither is relisted.
+      if (assessment.grade !== 'A' && assessment.grade !== 'B') {
+        return;
       }
 
       const returnData = await this.deps.returnRequestLookup.findById(returnRequestId);

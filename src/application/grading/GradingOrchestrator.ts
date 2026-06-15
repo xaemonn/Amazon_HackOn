@@ -131,17 +131,32 @@ export class GradingOrchestrator {
 
     const manualReviewReasons: string[] = [];
 
-    if (identityFailed) {
-      manualReviewReasons.push('identity_verification_unavailable');
-    }
-    if (conditionFailed) {
-      manualReviewReasons.push('condition_grading_timeout');
-    }
-    if (reconciliation.status === 'unparseable' && input.reasonText) {
-      manualReviewReasons.push('reason_unparseable');
+    // ── Fraud / mismatch signals that genuinely warrant human review ──────
+    // Per product policy, a return only goes to manual review when there is a
+    // real fraud signal — chiefly: the customer's stated reason does NOT match
+    // what the photos show, or the wrong item was returned, or the photos look
+    // manipulated. Benign uncertainty (inconclusive identity, an unparseable
+    // free-text reason) must NOT block automated grade-based disposition.
+
+    const unsupportedClaimCount = reconciliation.claims.filter(
+      (c) => c.verdict === 'unsupported',
+    ).length;
+
+    // (1) Reason ↔ image mismatch: stated reason is contradicted by the photos,
+    //     or specific claims are unsupported by the visual evidence.
+    const reasonMismatch =
+      !!input.reasonText &&
+      (reconciliation.status === 'contradicts' || unsupportedClaimCount > 0);
+    if (reasonMismatch) {
+      manualReviewReasons.push('reason_photo_mismatch');
     }
 
-    // Anti-fraud: flag suspected AI-generated / manipulated photos for review
+    // (2) Wrong item returned (identity mismatch) — clear fraud.
+    if (identityVerdict === 'mismatch') {
+      manualReviewReasons.push('item_mismatch');
+    }
+
+    // (3) Suspected AI-generated / manipulated photos.
     const authenticity = conditionResult?.authenticity;
     const suspectedAiImages =
       authenticity?.aiGenerated === true && authenticity.confidence >= 0.5;
@@ -149,11 +164,18 @@ export class GradingOrchestrator {
       manualReviewReasons.push('suspected_ai_generated_images');
     }
 
-    // ── Step 5: Compute Fraud Score ──────────────────────────────────────
+    // (4) Technical failures — the AI couldn't verify identity or assess
+    //     condition at all. Safe-default to human review (Req 9.1, 9.2, 9.5).
+    //     NOTE: this is a *failure* of the check, NOT a benign 'inconclusive'
+    //     verdict or an unparseable free-text reason — those must NOT block.
+    if (identityFailed) {
+      manualReviewReasons.push('identity_verification_unavailable');
+    }
+    if (conditionFailed) {
+      manualReviewReasons.push('condition_grading_timeout');
+    }
 
-    const unsupportedClaimCount = reconciliation.claims.filter(
-      (c) => c.verdict === 'unsupported',
-    ).length;
+    // ── Step 5: Compute Fraud Score (aggregate signal) ───────────────────
 
     const fraudInputs: FraudScoreInputs = {
       identityVerdict: identityFailed ? null : identityVerdict,
@@ -165,26 +187,24 @@ export class GradingOrchestrator {
 
     const fraudResult = this.fraudScoreCalculator.compute(fraudInputs);
 
-    // Merge fraud calculator's manual review reasons
-    if (fraudResult.requiresManualReview) {
+    // Manual review fires for genuine fraud/mismatch and technical failures —
+    // but NOT for a benign 'inconclusive' identity verdict or an unparseable
+    // free-text reason on their own (those previously blocked clean returns).
+    const requiresManualReview =
+      conditionFailed ||
+      identityFailed ||
+      reasonMismatch ||
+      identityVerdict === 'mismatch' ||
+      suspectedAiImages ||
+      (fraudResult.requiresManualReview && fraudResult.score >= fraud.threshold);
+
+    // Surface the aggregate fraud reasons only when they actually block.
+    if (requiresManualReview && fraudResult.requiresManualReview) {
       for (const reason of fraudResult.manualReviewReasons) {
         if (!manualReviewReasons.includes(reason)) {
           manualReviewReasons.push(reason);
         }
       }
-    }
-
-    const requiresManualReview =
-      conditionFailed ||
-      identityFailed ||
-      identityVerdict === 'inconclusive' ||
-      fraudResult.requiresManualReview ||
-      suspectedAiImages ||
-      manualReviewReasons.length > 0;
-
-    // If identity verdict is 'inconclusive' from a successful call, add the reason
-    if (!identityFailed && identityVerdict === 'inconclusive' && !manualReviewReasons.includes('identity_inconclusive')) {
-      manualReviewReasons.push('identity_inconclusive');
     }
 
     // ── Build Assessment ─────────────────────────────────────────────────

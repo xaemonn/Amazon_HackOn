@@ -103,6 +103,14 @@ export interface ResaleListing {
   fulfilment: TransferAllocation | null;
 
   keepOffer: KeepOffer | null;
+
+  /** How many times this listing's price has been marked down (Grade B). */
+  markdownCount: number;
+  /**
+   * True when the listing has been marked down and the seller should submit
+   * fresh photos so the item's current condition can be re-graded.
+   */
+  needsRegrade: boolean;
 }
 
 // ─── Domain errors ──────────────────────────────────────────────────────────
@@ -173,11 +181,17 @@ export function sellListing(
  *
  *   - Grade A (direct_transfer)      → return to warehouse
  *   - Grade C (refurbished)          → extend a keep-offer (gift card)
- *   - Grade B (returned_discounted)  → unchanged (no window)
+ *   - Grade B (returned_discounted)  → mark the price down, flag for re-grade,
+ *                                       and re-open the window (stays listed).
  */
 export function expireListing(
   listing: ResaleListing,
-  params: { now: Date; keepOfferGiftCardAmount: number },
+  params: {
+    now: Date;
+    keepOfferGiftCardAmount: number;
+    markdownPct: number;
+    markdownWindowDays: number;
+  },
 ): ResaleListing {
   if (listing.status !== 'active') return listing;
   if (listing.expiresAt === null || params.now < listing.expiresAt) return listing;
@@ -196,8 +210,56 @@ export function expireListing(
     };
   }
 
+  if (listing.listingType === 'returned_discounted') {
+    // Grade B didn't sell in time → drop the price further, flag for re-grade
+    // with fresh photos, and re-open the local-buyer window. Stays active.
+    const newPrice = Math.round(listing.listedPrice * (1 - params.markdownPct / 100));
+    return {
+      ...listing,
+      listedPrice: Math.max(1, newPrice),
+      markdownCount: listing.markdownCount + 1,
+      needsRegrade: true,
+      expiresAt: new Date(params.now.getTime() + params.markdownWindowDays * 24 * 60 * 60 * 1000),
+    };
+  }
+
   // Grade A direct transfer with no local buyer → ship back to warehouse.
   return { ...listing, status: 'returned_to_warehouse' };
+}
+
+/**
+ * Re-grade a listing after the seller submits fresh photos. Updates the
+ * grade-derived condition/price, clears the re-grade flag, and re-opens the
+ * local-buyer window so the refreshed listing gets another chance to sell.
+ */
+export function regradeListing(
+  listing: ResaleListing,
+  params: {
+    now: Date;
+    grade: Extract<ConditionGrade, 'A' | 'B' | 'C'>;
+    conditionLabel: string;
+    listingType: ListingType;
+    listedPrice: number;
+    conditionReasoning: string | null;
+    defects: Array<{ location: string; severity: string; description: string }>;
+    returnPhotoUrls: string[];
+    windowDays: number;
+  },
+): ResaleListing {
+  return {
+    ...listing,
+    grade: params.grade,
+    conditionLabel: params.conditionLabel,
+    listingType: params.listingType,
+    listedPrice: params.listedPrice,
+    conditionReasoning: params.conditionReasoning,
+    defects: params.defects,
+    returnPhotoUrls: params.returnPhotoUrls.length > 0 ? params.returnPhotoUrls : listing.returnPhotoUrls,
+    imageUrl: params.returnPhotoUrls[0] ?? listing.imageUrl,
+    status: 'active',
+    needsRegrade: false,
+    expiresAt: new Date(params.now.getTime() + params.windowDays * 24 * 60 * 60 * 1000),
+  };
 }
 
 /** Original owner accepts the gift-card keep-offer and keeps the item. */

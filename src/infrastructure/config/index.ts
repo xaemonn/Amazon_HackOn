@@ -125,6 +125,10 @@ export interface ResaleConfig {
   warehouseShipEtaHours: number;
   /** Default city assigned to the demo seller when no address is known. */
   defaultSellerCity: string;
+  /** Additional % discount applied when a Grade B listing doesn't sell in time. */
+  markdownPct: number;
+  /** Window (days) re-opened after a Grade B markdown before the next markdown. */
+  markdownWindowDays: number;
 }
 
 // ─── Return Abuse Guard ──────────────────────────────────────────────────────
@@ -214,6 +218,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     directTransferEtaHours: 4,
     warehouseShipEtaHours: 72,
     defaultSellerCity: 'Bengaluru',
+    markdownPct: 15,
+    markdownWindowDays: 4,
   },
   returnAbuse: {
     warnThreshold: 3,
@@ -385,6 +391,12 @@ export function loadConfig(): AppConfig {
       defaultSellerCity:
         process.env['ZTR_RESALE_DEFAULT_SELLER_CITY']
         ?? DEFAULT_CONFIG.resale.defaultSellerCity,
+      markdownPct:
+        envNumber('ZTR_RESALE_MARKDOWN_PCT')
+        ?? DEFAULT_CONFIG.resale.markdownPct,
+      markdownWindowDays:
+        envNumber('ZTR_RESALE_MARKDOWN_WINDOW_DAYS')
+        ?? DEFAULT_CONFIG.resale.markdownWindowDays,
     },
     returnAbuse: {
       warnThreshold:

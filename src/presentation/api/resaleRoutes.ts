@@ -93,6 +93,30 @@ export function createResaleRouter(resaleService: ResaleService): Router {
     }
   });
 
+  // ── Re-grade a marked-down listing with fresh photos ────────────────────
+  // Body: { media: MediaReference[] } — the new return photos the seller uploaded.
+  router.post('/listings/:id/regrade', async (req: Request, res: Response) => {
+    try {
+      const { media } = req.body as { media?: Array<Record<string, unknown>> };
+      if (!Array.isArray(media) || media.length === 0) {
+        res.status(400).json({ error: 'media must be a non-empty array of new return photos.' });
+        return;
+      }
+      const refs = media.map((m) => ({
+        id: String(m['id'] ?? ''),
+        type: m['type'] as never,
+        storageKey: String(m['storageKey'] ?? ''),
+        format: m['format'] as never,
+        sizeBytes: Number(m['sizeBytes'] ?? 0),
+        capturedAt: new Date(),
+      }));
+      const listing = await resaleService.regrade(req.params['id'] as string, refs);
+      res.json(listing);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
   // ── Demo: force the window to lapse now ─────────────────────────────────
   router.post('/listings/:id/force-expire', async (req: Request, res: Response) => {
     try {

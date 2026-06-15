@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -6,6 +6,7 @@ import {
   apiPurchaseResale,
   apiForceExpireResale,
   apiAcceptKeepOffer,
+  apiRegradeResale,
   type ResaleListing,
   type PurchaseResult,
 } from '../api/client';
@@ -123,8 +124,43 @@ export function MarketplacePage() {
     }
   };
 
+  // Re-grade flow: seller picks fresh photos for a marked-down listing.
+  const regradeInputRef = useRef<HTMLInputElement>(null);
+  const regradeTargetRef = useRef<ResaleListing | null>(null);
+
+  const triggerRegrade = (listing: ResaleListing) => {
+    regradeTargetRef.current = listing;
+    regradeInputRef.current?.click();
+  };
+
+  const handleRegradeFiles = async (files: FileList | null) => {
+    const listing = regradeTargetRef.current;
+    if (!listing || !files || files.length === 0) return;
+    setBusyId(listing.id);
+    setError(null);
+    try {
+      await apiRegradeResale(listing, Array.from(files));
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Re-grade failed.');
+    } finally {
+      setBusyId(null);
+      regradeTargetRef.current = null;
+      if (regradeInputRef.current) regradeInputRef.current.value = '';
+    }
+  };
+
   return (
     <section className="market" aria-labelledby="market-title">
+      {/* Hidden file input used by the per-card "Re-grade with new photos" action */}
+      <input
+        ref={regradeInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={(e) => void handleRegradeFiles(e.target.files)}
+      />
       <header className="market__header">
         <div>
           <h1 id="market-title" className="market__title">Returns Marketplace</h1>
@@ -243,6 +279,14 @@ export function MarketplacePage() {
                     {window && l.status === 'active' && <span className="mcard__chip">⏳ {window}</span>}
                   </div>
 
+                  {/* Marked-down + needs-regrade notice (Grade B that didn't sell) */}
+                  {l.status === 'active' && l.needsRegrade && (
+                    <div className="mcard__regrade-notice" role="note">
+                      📉 Price reduced after {l.markdownCount} markdown{l.markdownCount !== 1 ? 's' : ''}.
+                      Submit fresh photos to re-grade and refresh this listing.
+                    </div>
+                  )}
+
                   {/* Status-aware footer */}
                   {l.status === 'active' && (
                     <div className="mcard__actions">
@@ -253,6 +297,16 @@ export function MarketplacePage() {
                       >
                         {busyId === l.id ? 'Processing…' : `Buy ${sym(l.currency)}${l.listedPrice.toLocaleString('en-IN')}`}
                       </button>
+                      {l.needsRegrade && (
+                        <button
+                          className="mcard__ghost mcard__ghost--regrade"
+                          disabled={busyId === l.id}
+                          onClick={(e) => { e.stopPropagation(); triggerRegrade(l); }}
+                          title="Upload fresh photos to re-grade this item"
+                        >
+                          📸 Re-grade with new photos
+                        </button>
+                      )}
                       <button
                         className="mcard__ghost"
                         onClick={(e) => { e.stopPropagation(); navigate(`/marketplace/${l.id}`); }}

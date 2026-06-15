@@ -30,7 +30,7 @@ const GRADE_META: Record<
   { listingType: ListingType; label: string; hasWindow: boolean }
 > = {
   A: { listingType: 'direct_transfer', label: 'Like New', hasWindow: true },
-  B: { listingType: 'returned_discounted', label: 'Good (Returned)', hasWindow: false },
+  B: { listingType: 'returned_discounted', label: 'Good (Returned)', hasWindow: true },
   C: { listingType: 'refurbished_discounted', label: 'Refurbished', hasWindow: true },
 };
 

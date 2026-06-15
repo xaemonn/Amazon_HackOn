@@ -184,6 +184,7 @@ describe('GradingOrchestrator', () => {
         input.mediaReferences,
         input.productId,
         input.catalogImageRef,
+        input.reasonText ?? undefined,
       );
     });
 

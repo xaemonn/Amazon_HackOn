@@ -96,6 +96,14 @@ const arbRoutingContext: fc.Arbitrary<RoutingContext> = fc.record({
   returnHistory: fc.record({ count90Days: fc.nat({ max: 20 }) }),
 });
 
+/**
+ * wrong_item / not_as_described reasons are intercepted at priority 0 by
+ * WrongItemHandler, so the grade-based routing assertions below only hold for
+ * other reasons.
+ */
+const notWrongItemReason = (ctx: RoutingContext): boolean =>
+  ctx.returnReason !== 'wrong_item' && ctx.returnReason !== 'not_as_described';
+
 // ─── Expected Route Computation (oracle) ─────────────────────────────────────
 
 /**
@@ -103,8 +111,23 @@ const arbRoutingContext: fc.Arbitrary<RoutingContext> = fc.record({
  * using the same thresholds as the default configuration.
  */
 function expectedRoute(context: RoutingContext, config: AppConfig): DispositionRoute {
-  const { conditionAssessment, itemValue, nearbyDemand } = context;
+  const { conditionAssessment, nearbyDemand, returnReason } = context;
   const { fraud, dispositionThresholds } = config;
+
+  // Priority 0: WrongItemHandler — wrong_item / not_as_described short-circuit
+  // the chain (they never fall through to grade-based routing).
+  if (returnReason === 'wrong_item' || returnReason === 'not_as_described') {
+    let aiConfirms = false;
+    if (returnReason === 'wrong_item') {
+      aiConfirms =
+        conditionAssessment.grade === 'D' ||
+        conditionAssessment.identityVerdict === 'mismatch';
+    } else {
+      const status = conditionAssessment.reconciliation?.status;
+      aiConfirms = status === 'aligns' || status === 'partially_aligns';
+    }
+    return aiConfirms ? 'wrong_item_refund' : 'wrong_item_unverified';
+  }
 
   // Priority 1: ManualReviewFlagHandler
   if (conditionAssessment.requiresManualReview) {
@@ -135,24 +158,18 @@ function expectedRoute(context: RoutingContext, config: AppConfig): DispositionR
     return 'list_for_resale';
   }
 
-  // Priority 6: GradeBRefurbishmentHandler
+  // Priority 6: GradeBRefurbishmentHandler — Grade B is now relisted for resale.
   if (conditionAssessment.grade === 'B') {
-    return 'refurbishment';
+    return 'list_for_resale';
   }
 
-  // Priority 7: GradeCDLowValueHandler
-  if (
-    (conditionAssessment.grade === 'C' || conditionAssessment.grade === 'D') &&
-    itemValue < dispositionThresholds.returnlessRefundMaxValue
-  ) {
+  // Priority 7: GradeCDLowValueHandler — Grade C → refund + let keep/recycle.
+  if (conditionAssessment.grade === 'C') {
     return 'returnless_refund';
   }
 
-  // Priority 8: GradeCDHighValueHandler
-  if (
-    (conditionAssessment.grade === 'C' || conditionAssessment.grade === 'D') &&
-    itemValue >= dispositionThresholds.returnlessRefundMaxValue
-  ) {
+  // Priority 8: GradeCDHighValueHandler — Grade D → donate / recycle.
+  if (conditionAssessment.grade === 'D') {
     return 'donate_or_recycle';
   }
 
@@ -191,7 +208,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
   it('manual review flag always takes highest priority', () => {
     fc.assert(
       fc.property(
-        arbRoutingContext.filter((ctx) => ctx.conditionAssessment.requiresManualReview),
+        arbRoutingContext.filter((ctx) => notWrongItemReason(ctx) && ctx.conditionAssessment.requiresManualReview),
         (context) => {
           const result = evaluateDisposition(context, config);
           expect(result.route).toBe('manual_inspection');
@@ -207,6 +224,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore >= config.fraud.threshold,
         ),
@@ -224,6 +242,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence < config.dispositionThresholds.lowConfidenceThreshold,
@@ -243,6 +262,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
@@ -265,6 +285,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
@@ -282,11 +303,12 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
     );
   });
 
-  it('grade B routes to refurbishment when no higher priority matches', () => {
+  it('grade B routes to list_for_resale when no higher priority matches', () => {
     fc.assert(
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
@@ -294,24 +316,24 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
         ),
         (context) => {
           const result = evaluateDisposition(context, config);
-          expect(result.route).toBe('refurbishment');
-          expect(result.handlerName).toBe('GradeBRefurbishmentHandler');
+          expect(result.route).toBe('list_for_resale');
+          expect(result.handlerName).toBe('GradeBResaleHandler');
         },
       ),
       { numRuns: 200 },
     );
   });
 
-  it('grade C/D with low value routes to returnless_refund', () => {
+  it('grade C routes to returnless_refund (refund + keep/recycle)', () => {
     fc.assert(
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
-            (ctx.conditionAssessment.grade === 'C' || ctx.conditionAssessment.grade === 'D') &&
-            ctx.itemValue < config.dispositionThresholds.returnlessRefundMaxValue,
+            ctx.conditionAssessment.grade === 'C',
         ),
         (context) => {
           const result = evaluateDisposition(context, config);
@@ -323,16 +345,16 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
     );
   });
 
-  it('grade C/D with high value routes to donate_or_recycle', () => {
+  it('grade D routes to donate_or_recycle', () => {
     fc.assert(
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
-            (ctx.conditionAssessment.grade === 'C' || ctx.conditionAssessment.grade === 'D') &&
-            ctx.itemValue >= config.dispositionThresholds.returnlessRefundMaxValue,
+            ctx.conditionAssessment.grade === 'D',
         ),
         (context) => {
           const result = evaluateDisposition(context, config);
@@ -349,6 +371,7 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
       fc.property(
         arbRoutingContext.filter(
           (ctx) =>
+            notWrongItemReason(ctx) &&
             !ctx.conditionAssessment.requiresManualReview &&
             ctx.conditionAssessment.fraudScore < config.fraud.threshold &&
             ctx.conditionAssessment.confidence >= config.dispositionThresholds.lowConfidenceThreshold &&
@@ -384,9 +407,10 @@ describe('Property 11: Disposition Chain Produces Correct Route', () => {
         expect(result.refundEstimate).toBeDefined();
         expect(result.refundEstimate.amount).toBeGreaterThanOrEqual(0);
         expect(result.refundEstimate.currency).toBe('INR');
-        expect(['immediate', 'upon_sale', 'after_review']).toContain(
-          result.refundEstimate.condition,
-        );
+        expect([
+          'immediate', 'upon_sale', 'after_review',
+          'wrong_item_confirmed', 'wrong_item_unverified',
+        ]).toContain(result.refundEstimate.condition);
         expect(['original_payment', 'store_credit']).toContain(
           result.refundEstimate.method,
         );

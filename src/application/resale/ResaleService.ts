@@ -19,14 +19,18 @@ import type {
   TransferAllocation,
 } from '../../domain/resale/ResaleListing.js';
 import type { InMemorySellerBuyerMatchRepository } from '../../infrastructure/persistence/InMemorySellerBuyerMatchRepository.js';
+import type { IConditionGrader } from '../../domain/grading/IConditionGrader.js';
+import type { MediaReference } from '../../domain/shared/types.js';
 import {
   sellListing,
   expireListing,
   acceptKeepOffer,
+  regradeListing as regradeTransition,
 } from '../../domain/resale/ResaleListing.js';
 import {
   priceForGrade,
   keepOfferAmount,
+  isResaleGrade,
   type ResalePricingConfig,
 } from '../../domain/resale/ResalePricingPolicy.js';
 
@@ -67,6 +71,7 @@ export interface ExpirySweepResult {
   scanned: number;
   returnedToWarehouse: number;
   keepOffersExtended: number;
+  markedDown: number;
 }
 
 // A small pool of delivery partners for same-city direct transfers (demo).
@@ -85,8 +90,11 @@ export class ResaleService {
     private readonly config: ResalePricingConfig & {
       directTransferEtaHours: number;
       warehouseShipEtaHours: number;
+      markdownPct: number;
+      markdownWindowDays: number;
     },
     private readonly matchRepo?: InMemorySellerBuyerMatchRepository,
+    private readonly conditionGrader?: IConditionGrader,
   ) {}
 
   /**
@@ -130,6 +138,8 @@ export class ResaleService {
       soldAt: null,
       fulfilment: null,
       keepOffer: null,
+      markdownCount: 0,
+      needsRegrade: false,
     };
 
     await this.repo.save(listing);
@@ -204,19 +214,23 @@ export class ResaleService {
     const expirable = await this.repo.findExpirable(now);
     let returnedToWarehouse = 0;
     let keepOffersExtended = 0;
+    let markedDown = 0;
 
     for (const listing of expirable) {
       const resolved = expireListing(listing, {
         now,
         keepOfferGiftCardAmount: keepOfferAmount(listing.originalPrice, this.config),
+        markdownPct: this.config.markdownPct,
+        markdownWindowDays: this.config.markdownWindowDays,
       });
-      if (resolved.status === listing.status) continue;
+      if (resolved === listing) continue; // no change
       await this.repo.save(resolved);
       if (resolved.status === 'returned_to_warehouse') returnedToWarehouse += 1;
-      if (resolved.status === 'keep_offer_extended') keepOffersExtended += 1;
+      else if (resolved.status === 'keep_offer_extended') keepOffersExtended += 1;
+      else if (resolved.markdownCount > listing.markdownCount) markedDown += 1;
     }
 
-    return { scanned: expirable.length, returnedToWarehouse, keepOffersExtended };
+    return { scanned: expirable.length, returnedToWarehouse, keepOffersExtended, markedDown };
   }
 
   /** Force-resolve a single listing's window immediately (demo/ops helper). */
@@ -226,7 +240,12 @@ export class ResaleService {
     // Force the window to be already lapsed so expiry logic resolves it.
     const resolved = expireListing(
       { ...listing, expiresAt: new Date(now.getTime() - 1) },
-      { now, keepOfferGiftCardAmount: keepOfferAmount(listing.originalPrice, this.config) },
+      {
+        now,
+        keepOfferGiftCardAmount: keepOfferAmount(listing.originalPrice, this.config),
+        markdownPct: this.config.markdownPct,
+        markdownWindowDays: this.config.markdownWindowDays,
+      },
     );
     await this.repo.save(resolved);
     return resolved;
@@ -239,6 +258,60 @@ export class ResaleService {
     const kept = acceptKeepOffer(listing, now);
     await this.repo.save(kept);
     return kept;
+  }
+
+  /**
+   * Re-grade a marked-down listing using fresh photos the seller submitted.
+   * Re-runs the AI condition grader, then re-prices and re-opens the window.
+   * A D-grade result pulls the item to the warehouse instead of relisting.
+   */
+  async regrade(
+    listingId: string,
+    mediaReferences: MediaReference[],
+    now: Date = new Date(),
+  ): Promise<ResaleListing> {
+    const listing = await this.repo.findById(listingId);
+    if (!listing) throw new Error(`Resale listing '${listingId}' not found.`);
+    if (!this.conditionGrader) throw new Error('Re-grading is not available.');
+
+    const catalogImageRef = `catalog/${listing.productId}.jpg`;
+    const result = await this.conditionGrader.assessCondition(
+      mediaReferences,
+      listing.productId,
+      catalogImageRef,
+    );
+
+    const photoUrls = mediaReferences
+      .filter((m) => m.type !== 'video')
+      .map((m) => `/api/media/${m.storageKey}`);
+
+    // If the item no longer qualifies for resale (Grade D), pull it.
+    if (!isResaleGrade(result.grade)) {
+      const pulled: ResaleListing = {
+        ...listing,
+        status: 'returned_to_warehouse',
+        needsRegrade: false,
+        conditionReasoning: result.reasoning,
+        defects: result.defects,
+      };
+      await this.repo.save(pulled);
+      return pulled;
+    }
+
+    const pricing = priceForGrade(result.grade, listing.originalPrice, this.config);
+    const updated = regradeTransition(listing, {
+      now,
+      grade: result.grade,
+      conditionLabel: pricing.conditionLabel,
+      listingType: pricing.listingType,
+      listedPrice: pricing.listedPrice,
+      conditionReasoning: result.reasoning,
+      defects: result.defects,
+      returnPhotoUrls: photoUrls,
+      windowDays: this.config.transferWindowDays,
+    });
+    await this.repo.save(updated);
+    return updated;
   }
 
   clear(): void {

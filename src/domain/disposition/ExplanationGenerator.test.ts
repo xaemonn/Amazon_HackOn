@@ -84,12 +84,12 @@ describe('ExplanationGenerator', () => {
       expect(explanation.toLowerCase()).toMatch(/refund/);
     });
 
-    it('list_for_resale mentions condition and resale action', () => {
+    it('list_for_resale mentions the marketplace listing and resale action', () => {
       const context = makeContext({ route: 'list_for_resale' });
       const explanation = generator.generate('list_for_resale', context);
-      // Reason: great condition
-      expect(explanation.toLowerCase()).toMatch(/great condition|excellent/);
-      // Next step: resale / refund when sold
+      // Reason: item listed in the (returned) marketplace
+      expect(explanation.toLowerCase()).toMatch(/marketplace|listed/);
+      // Next step: refund when it sells / resale
       expect(explanation.toLowerCase()).toMatch(/resale|sells/);
     });
 

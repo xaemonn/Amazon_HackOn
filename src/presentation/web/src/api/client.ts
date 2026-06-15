@@ -224,6 +224,8 @@ export interface ResaleListing {
     extendedAt: string;
     acceptedAt: string | null;
   } | null;
+  markdownCount: number;
+  needsRegrade: boolean;
 }
 
 export interface PurchaseResult {
@@ -258,6 +260,41 @@ export async function apiForceExpireResale(id: string): Promise<ResaleListing> {
 
 export async function apiAcceptKeepOffer(id: string): Promise<ResaleListing> {
   return apiFetch(`/resale/listings/${id}/accept-keep-offer`, { method: 'POST' });
+}
+
+/**
+ * Re-grade a marked-down listing: uploads the seller's fresh photos, then asks
+ * the backend to re-run AI grading and re-price/re-open the listing.
+ */
+export async function apiRegradeResale(
+  listing: ResaleListing,
+  files: File[],
+): Promise<ResaleListing> {
+  const folder = listing.returnRequestId || listing.id;
+  const media = await Promise.all(
+    files.slice(0, 3).map(async (file, i) => {
+      const ext = file.type === 'image/png' ? 'png' : 'jpeg';
+      const filename = `regrade_${Date.now()}_${i}.${ext}`;
+      const res = await fetch(`/api/media/${folder}/${filename}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'image/jpeg' },
+        body: file,
+      });
+      if (!res.ok) throw new Error(`Failed to upload photo ${i + 1}`);
+      const { storageKey } = (await res.json()) as { storageKey: string };
+      return {
+        id: `regrade-${i}`,
+        type: i === 0 ? 'photo_front' : i === 1 ? 'photo_back' : 'photo_closeup',
+        storageKey,
+        format: ext,
+        sizeBytes: file.size,
+      };
+    }),
+  );
+  return apiFetch(`/resale/listings/${listing.id}/regrade`, {
+    method: 'POST',
+    body: JSON.stringify({ media }),
+  });
 }
 
 // ─── Return policy (abuse guard) ─────────────────────────────────────────────

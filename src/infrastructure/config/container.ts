@@ -382,7 +382,9 @@ export function createContainer(): Container {
     keepOfferGiftCardPct: config.resale.keepOfferGiftCardPct,
     directTransferEtaHours: config.resale.directTransferEtaHours,
     warehouseShipEtaHours: config.resale.warehouseShipEtaHours,
-  }, sellerBuyerMatchRepository);
+    markdownPct: config.resale.markdownPct,
+    markdownWindowDays: config.resale.markdownWindowDays,
+  }, sellerBuyerMatchRepository, container.getRequired('conditionGrader'));
   container.register('resaleService', resaleService);
 
   // Resolve the returner's registered city from MongoDB (falls back to default).
