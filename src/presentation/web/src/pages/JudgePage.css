@@ -1,0 +1,98 @@
+.judge {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.judge__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  color: #0f172a;
+}
+
+.judge__subtitle {
+  color: #475569;
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+}
+
+.judge__locked {
+  color: #475569;
+  line-height: 1.6;
+}
+
+.judge__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.judge__field { display: flex; flex-direction: column; gap: 0.4rem; }
+.judge__label { font-size: 0.85rem; font-weight: 600; color: #334155; }
+
+.judge__input {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1rem;
+  min-height: 44px;
+}
+
+.judge__file {
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+}
+
+.judge__previews {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.judge__preview {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.judge__error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.judge__btn {
+  min-height: 46px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 1rem;
+}
+.judge__btn--primary { background: #0f172a; color: #fff; }
+.judge__btn--primary:disabled { opacity: 0.6; cursor: default; }
+.judge__btn--ghost { background: transparent; border: 1px solid #cbd5e1; color: #334155; }
+
+.judge__success {
+  text-align: center;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 2rem 1.25rem;
+}
+.judge__success-icon { font-size: 2.5rem; }
+.judge__success-text { color: #166534; line-height: 1.6; margin: 0.5rem auto 1.25rem; max-width: 520px; }
+.judge__success-actions { display: flex; flex-direction: column; gap: 0.6rem; align-items: center; }
+@media (min-width: 560px) {
+  .judge__success-actions { flex-direction: row; justify-content: center; }
+}

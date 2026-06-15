@@ -58,7 +58,8 @@ export interface IConditionGrader {
   assessCondition(
     mediaReferences: MediaReference[],
     productId: string,
-    catalogImageRef: string
+    catalogImageRefs: string[],
+    returnReason?: string,
   ): Promise<ConditionGradeResult>;
 }
 

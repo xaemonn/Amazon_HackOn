@@ -160,6 +160,7 @@ export function createAuthRouter(): Router {
         phone: demoProfile.phone,
         address: demoProfile.address,
         sizeProfile: demoProfile.sizeProfile,
+        isJudge: true,
       },
     });
   });
@@ -181,6 +182,7 @@ export function createAuthRouter(): Router {
         phone: demoProfile.phone,
         address: demoProfile.address,
         sizeProfile: demoProfile.sizeProfile,
+        isJudge: true,
       });
       return;
     }

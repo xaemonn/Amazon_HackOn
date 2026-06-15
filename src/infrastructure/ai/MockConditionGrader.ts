@@ -164,7 +164,7 @@ export class MockConditionGrader implements IConditionGrader {
   async assessCondition(
     mediaReferences: MediaReference[],
     productId: string,
-    _catalogImageRef: string,
+    _catalogImageRefs: string[],
     returnReason?: string,
   ): Promise<ConditionGradeResult> {
     const seed = SEEDED_RESULTS[productId] ?? DEFAULT_RESULT;

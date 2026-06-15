@@ -15,7 +15,7 @@ import { MockConditionGrader } from './MockConditionGrader.js';
 
 describe('MockConditionGrader', () => {
   const grader = new MockConditionGrader();
-  const noCatalog = '';
+  const noCatalog: string[] = [];
 
   describe('seeded item grades', () => {
     it('should return grade A with confidence 0.95 for item-grade-a', async () => {

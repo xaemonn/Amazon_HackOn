@@ -307,6 +307,9 @@ export function Layout() {
               <li><Link to="/catalog" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>🛍️ Shop All</Link></li>
               <li><Link to="/marketplace" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>♻️ Returns Marketplace</Link></li>
               <li><Link to="/orders" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>📦 My Orders</Link></li>
+              {user?.isJudge && (
+                <li><Link to="/judge" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>🧑‍⚖️ Add product to test</Link></li>
+              )}
               <li><Link to="/cart" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>🛒 Cart {itemCount > 0 && `(${itemCount})`}</Link></li>
               {isAuthenticated ? (
                 <>
@@ -323,6 +326,17 @@ export function Layout() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ─── Judge floating CTA — always visible for the demo/judge login ─── */}
+      {user?.isJudge && location.pathname !== '/judge' && (
+        <Link to="/judge" className="judge-fab" aria-label="Add your own product to test returns">
+          <span className="judge-fab__icon" aria-hidden="true">🧑‍⚖️</span>
+          <span className="judge-fab__text">
+            <strong>Add your product to test</strong>
+            <span>Upload a product &amp; photos, then try a return →</span>
+          </span>
+        </Link>
       )}
 
       {/* ─── Main content ─── */}

@@ -162,17 +162,17 @@ export class BedrockConditionGrader implements IConditionGrader {
   async assessCondition(
     mediaReferences: MediaReference[],
     productId: string,
-    catalogImageRef: string,
+    catalogImageRefs: string[],
     returnReason?: string,
   ): Promise<ConditionGradeResult> {
     console.log('[BedrockConditionGrader] Grading started', {
       productId,
-      catalogImageRef,
+      catalogImageRefs,
       mediaCount: mediaReferences.length,
       returnReason,
       model: this.modelId,
     });
-    const contentBlocks = await this.buildContentBlocks(mediaReferences, catalogImageRef);
+    const contentBlocks = await this.buildContentBlocks(mediaReferences, catalogImageRefs);
     const systemPrompt = buildSystemPrompt(productId, returnReason);
 
     const userMessage: Message = {
@@ -229,33 +229,32 @@ export class BedrockConditionGrader implements IConditionGrader {
    */
   private async buildContentBlocks(
     mediaReferences: MediaReference[],
-    catalogImageRef: string,
+    catalogImageRefs: string[],
   ): Promise<ContentBlock[]> {
     const blocks: ContentBlock[] = [];
 
-    // ── 1. Catalog reference image ──────────────────────────────────────────
-    try {
-      const catalogBytes = await this.fetchMediaBytes(catalogImageRef);
-      if (catalogBytes.length > 0) {
-        // Infer format from the file extension; default to jpeg
-        const ext = catalogImageRef.split('.').pop()?.toLowerCase();
-        const catalogFormat: 'jpeg' | 'png' = ext === 'png' ? 'png' : 'jpeg';
-        const catalogBlock: ImageBlock = {
-          format: catalogFormat,
-          source: { bytes: catalogBytes },
-        };
-        blocks.push({ image: catalogBlock });
-        blocks.push({
-          text: '[CATALOG IMAGE — this is the product as it looked when brand new. Use this as your reference to verify identity and assess condition.]',
-        });
-      } else {
-        blocks.push({
-          text: '[No catalog image available — grade based on return photos only and lower your confidence accordingly.]',
-        });
+    // ── 1. Catalog reference images (one or more "as-new" shots) ────────────
+    let loadedCatalog = 0;
+    for (let i = 0; i < catalogImageRefs.length; i++) {
+      const ref = catalogImageRefs[i]!;
+      try {
+        const catalogBytes = await this.fetchMediaBytes(ref);
+        if (catalogBytes.length > 0) {
+          const ext = ref.split('.').pop()?.toLowerCase();
+          const catalogFormat: 'jpeg' | 'png' = ext === 'png' ? 'png' : 'jpeg';
+          blocks.push({ image: { format: catalogFormat, source: { bytes: catalogBytes } } as ImageBlock });
+          blocks.push({
+            text: `[CATALOG IMAGE ${i + 1} of ${catalogImageRefs.length} — the product as it looked when brand new. Use these as your reference to verify identity and assess condition.]`,
+          });
+          loadedCatalog += 1;
+        }
+      } catch {
+        // skip this reference image
       }
-    } catch {
+    }
+    if (loadedCatalog === 0) {
       blocks.push({
-        text: '[Catalog image could not be loaded — grade based on return photos only and lower your confidence accordingly.]',
+        text: '[No catalog image available — grade based on return photos only and lower your confidence accordingly.]',
       });
     }
 

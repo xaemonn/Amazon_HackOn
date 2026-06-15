@@ -234,3 +234,11 @@
 @media (max-width: 420px) {
   .login-card { padding: 1.5rem 1.25rem; }
 }
+
+.login-demo-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}

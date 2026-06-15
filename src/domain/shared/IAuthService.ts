@@ -28,6 +28,9 @@ export interface OrderItem {
    *  Used by the AI grader to compare the return against the original product.
    *  e.g. "catalog/item-grade-a.jpg" */
   catalogImageRef: string;
+  /** Multiple catalog "as-new" reference images (front/back/close-up).
+   *  Optional; the grader falls back to [catalogImageRef] when absent. */
+  catalogImageRefs?: string[];
 }
 
 export interface IAuthService {

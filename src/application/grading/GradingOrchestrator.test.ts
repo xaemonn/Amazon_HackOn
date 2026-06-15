@@ -106,7 +106,7 @@ function createDefaultInput(overrides?: Partial<GradingInput>): GradingInput {
       { id: 'm3', type: 'photo_closeup', storageKey: 'key3', format: 'jpeg', sizeBytes: 1000, capturedAt: new Date() },
       { id: 'm4', type: 'video', storageKey: 'key4', format: 'mp4', sizeBytes: 5000, capturedAt: new Date() },
     ],
-    catalogImageRef: 'catalog/prod-001.jpg',
+    catalogImageRefs: ['catalog/prod-001.jpg'],
     reasonText: 'The screen is cracked in the top-left corner',
     customerId: 'cust-001',
     returnHistoryCount90Days: 1,
@@ -169,7 +169,7 @@ describe('GradingOrchestrator', () => {
 
       expect(identityVerifier.verifyIdentity).toHaveBeenCalledWith(
         input.mediaReferences,
-        input.catalogImageRef,
+        input.catalogImageRefs[0],
         input.productId,
       );
     });
@@ -183,7 +183,7 @@ describe('GradingOrchestrator', () => {
       expect(conditionGrader.assessCondition).toHaveBeenCalledWith(
         input.mediaReferences,
         input.productId,
-        input.catalogImageRef,
+        input.catalogImageRefs,
         input.reasonText ?? undefined,
       );
     });

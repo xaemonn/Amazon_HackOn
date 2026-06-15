@@ -274,11 +274,11 @@ export class ResaleService {
     if (!listing) throw new Error(`Resale listing '${listingId}' not found.`);
     if (!this.conditionGrader) throw new Error('Re-grading is not available.');
 
-    const catalogImageRef = `catalog/${listing.productId}.jpg`;
+    const catalogImageRefs = [`catalog/${listing.productId}.jpg`];
     const result = await this.conditionGrader.assessCondition(
       mediaReferences,
       listing.productId,
-      catalogImageRef,
+      catalogImageRefs,
     );
 
     const photoUrls = mediaReferences

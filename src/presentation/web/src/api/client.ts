@@ -51,6 +51,37 @@ export interface AuthCustomer {
   phone?: string | null;
   address?: Address | null;
   sizeProfile?: SizeProfile | null;
+  /** True for the one-click Judge login — unlocks the product test harness. */
+  isJudge?: boolean;
+}
+
+export interface JudgeProductResult {
+  productId: string;
+  orderItemId: string;
+  orderId: string;
+  productName: string;
+  productImage: string;
+  catalogImageRefs: string[];
+  message: string;
+}
+
+/** Read a File as a data URL (base64) for the judge product upload. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Judge-only: add a product with up to 3 reference images; seeds an order for testing. */
+export async function apiAddJudgeProduct(name: string, files: File[]): Promise<JudgeProductResult> {
+  const images = await Promise.all(files.slice(0, 3).map(fileToDataUrl));
+  return apiFetch('/judge/products', {
+    method: 'POST',
+    body: JSON.stringify({ name, images }),
+  });
 }
 
 export async function apiSignup(name: string, email: string, password: string): Promise<{ token: string; customer: AuthCustomer }> {

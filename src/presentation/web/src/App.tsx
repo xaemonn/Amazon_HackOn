@@ -11,6 +11,7 @@ import { OrderHistoryPage } from './pages/OrderHistoryPage';
 import { AccountPage } from './pages/AccountPage';
 import { OrderDetail } from './pages/OrderDetail';
 import { MarketplacePage } from './pages/MarketplacePage';
+import { JudgePage } from './pages/JudgePage';
 import { MarketplaceListingDetailPage } from './pages/MarketplaceListingDetailPage';
 import { Eligibility } from './pages/returns/Eligibility';
 import { ReasonPicker } from './pages/returns/ReasonPicker';
@@ -31,6 +32,7 @@ function App() {
               <Route path="/catalog" element={<CatalogPage />} />
               <Route path="/catalog/:productId" element={<ProductDetailPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
+              <Route path="/judge" element={<JudgePage />} />
               <Route path="/marketplace/:id" element={<MarketplaceListingDetailPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders" element={<OrderHistoryPage />} />

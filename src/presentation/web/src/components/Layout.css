@@ -616,3 +616,58 @@
 @media (max-width: 400px) {
   .footer-links { grid-template-columns: 1fr; }
 }
+
+/* ── Judge floating CTA (popping side button for the demo/judge login) ── */
+.judge-fab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 240px;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 14px 0 0 14px;
+  box-shadow: -4px 4px 18px rgba(79, 70, 229, 0.45);
+  animation: judge-fab-pop 2.2s ease-in-out infinite;
+}
+.judge-fab:hover {
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%);
+}
+.judge-fab__icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+.judge-fab__text { display: flex; flex-direction: column; line-height: 1.25; }
+.judge-fab__text strong { font-size: 0.9rem; }
+.judge-fab__text span { font-size: 0.72rem; opacity: 0.92; }
+
+@keyframes judge-fab-pop {
+  0%, 100% { transform: translateY(-50%) translateX(0); box-shadow: -4px 4px 18px rgba(79, 70, 229, 0.45); }
+  50%      { transform: translateY(-50%) translateX(-6px); box-shadow: -8px 6px 26px rgba(79, 70, 229, 0.6); }
+}
+
+/* On small screens, dock it to the bottom as a full-width-ish pill */
+@media (max-width: 640px) {
+  .judge-fab {
+    top: auto;
+    bottom: 16px;
+    right: 12px;
+    transform: none;
+    border-radius: 14px;
+    max-width: calc(100% - 24px);
+    animation: judge-fab-pop-mobile 2.2s ease-in-out infinite;
+  }
+  @keyframes judge-fab-pop-mobile {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .judge-fab { animation: none; }
+}

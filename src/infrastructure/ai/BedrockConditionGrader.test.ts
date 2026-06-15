@@ -92,7 +92,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.grade).toBe('A');
       expect(result.reasoning).toBe('Item is in pristine condition, no visible defects.');
@@ -114,7 +114,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-456', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-456', []);
 
       expect(result.grade).toBe('C');
       expect(result.defects).toHaveLength(2);
@@ -135,7 +135,7 @@ describe('BedrockConditionGrader', () => {
       );
 
       const mediaWithVideo = [...samplePhotos, sampleVideoMedia];
-      const result = await grader.assessCondition(mediaWithVideo, 'product-789', '');
+      const result = await grader.assessCondition(mediaWithVideo, 'product-789', []);
 
       expect(result.grade).toBe('B');
       expect(result.confidence).toBe(0.88);
@@ -155,7 +155,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.reasoning.length).toBe(500);
     });
@@ -176,7 +176,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.defects.length).toBe(10);
     });
@@ -192,7 +192,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.confidence).toBe(1.0);
     });
@@ -208,7 +208,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.confidence).toBe(0.0);
     });
@@ -224,7 +224,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.grade).toBe('C');
     });
@@ -240,7 +240,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.defects[0].severity).toBe('minor');
     });
@@ -253,7 +253,7 @@ describe('BedrockConditionGrader', () => {
       timeoutError.name = 'AbortError';
       mockSend.mockRejectedValueOnce(timeoutError);
 
-      await expect(grader.assessCondition(samplePhotos, 'product-123', ''))
+      await expect(grader.assessCondition(samplePhotos, 'product-123', []))
         .rejects.toThrow('timed out after 10000ms');
     });
 
@@ -263,7 +263,7 @@ describe('BedrockConditionGrader', () => {
       throttleError.name = 'ThrottlingException';
       mockSend.mockRejectedValueOnce(throttleError);
 
-      await expect(grader.assessCondition(samplePhotos, 'product-123', ''))
+      await expect(grader.assessCondition(samplePhotos, 'product-123', []))
         .rejects.toThrow('throttled');
     });
 
@@ -273,7 +273,7 @@ describe('BedrockConditionGrader', () => {
         output: { message: { content: [] } },
       });
 
-      await expect(grader.assessCondition(samplePhotos, 'product-123', ''))
+      await expect(grader.assessCondition(samplePhotos, 'product-123', []))
         .rejects.toThrow('Empty response');
     });
 
@@ -287,7 +287,7 @@ describe('BedrockConditionGrader', () => {
         },
       });
 
-      await expect(grader.assessCondition(samplePhotos, 'product-123', ''))
+      await expect(grader.assessCondition(samplePhotos, 'product-123', []))
         .rejects.toThrow('Failed to parse model response');
     });
 
@@ -303,7 +303,7 @@ describe('BedrockConditionGrader', () => {
         })
       );
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.grade).toBe('B');
       expect(result.confidence).toBe(0.6);
@@ -325,7 +325,7 @@ describe('BedrockConditionGrader', () => {
         },
       });
 
-      const result = await grader.assessCondition(samplePhotos, 'product-123', '');
+      const result = await grader.assessCondition(samplePhotos, 'product-123', []);
 
       expect(result.grade).toBe('A');
       expect(result.confidence).toBe(0.95);

@@ -408,16 +408,21 @@ export class ReturnsFacade implements IReturnsFacade {
     // Persist the final state
     await this.returnRequestRepository.save(transitioned);
 
-    // Resolve the catalog image reference from the order item
+    // Resolve the catalog reference image(s) from the order item.
+    // Prefer an explicit multi-image set; fall back to the single ref or a
+    // conventional path so existing single-image products keep working.
     const orderItem = await this.authService.getOrderItem(transitioned.orderItemId);
-    const catalogImageRef = orderItem?.catalogImageRef ?? `catalog/${transitioned.productId}.jpg`;
+    const catalogImageRefs =
+      orderItem?.catalogImageRefs && orderItem.catalogImageRefs.length > 0
+        ? orderItem.catalogImageRefs
+        : [orderItem?.catalogImageRef ?? `catalog/${transitioned.productId}.jpg`];
 
     // Fire grading asynchronously (fire-and-forget)
     const gradingInput: GradingInput = {
       returnRequestId: transitioned.id,
       productId: transitioned.productId,
       mediaReferences: transitioned.media,
-      catalogImageRef,
+      catalogImageRefs,
       reasonText: transitioned.reasonDetails,
       customerId: transitioned.customerId,
       returnHistoryCount90Days: await this.returnRequestRepository.countByCustomerInDays(
@@ -427,7 +432,7 @@ export class ReturnsFacade implements IReturnsFacade {
     };
 
     // Fire and forget — don't await
-    console.log('[ReturnsFacade] Dispatching grading', { returnRequestId: transitioned.id, productId: transitioned.productId, catalogImageRef, mediaCount: transitioned.media.length });
+    console.log('[ReturnsFacade] Dispatching grading', { returnRequestId: transitioned.id, productId: transitioned.productId, catalogImageRefs, mediaCount: transitioned.media.length });
     void this.gradingOrchestrator.grade(gradingInput).then(async (assessment) => {
       // Persist the condition assessment
       await this.conditionAssessmentRepository.save(assessment);

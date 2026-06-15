@@ -63,9 +63,10 @@ export interface IConditionGrader {
    *
    * @param mediaReferences  - Photos captured during guided media capture.
    * @param productId        - Catalog product identifier for context / catalog lookup.
-   * @param catalogImageRef  - Storage key of the catalog reference image (item when new).
-   *                           Implementations should include this image in the AI prompt
-   *                           so the model can compare condition AND verify item identity.
+   * @param catalogImageRefs - Storage keys of the catalog reference images (item when new).
+   *                           One or more "as-new" reference shots; implementations include
+   *                           them in the AI prompt so the model can compare condition AND
+   *                           verify item identity against the catalog.
    * @param returnReason     - The reason the customer stated for the return (optional).
    *                           Used as an additional signal: the grader should attempt to
    *                           verify whether the stated reason is visually consistent with
@@ -75,7 +76,7 @@ export interface IConditionGrader {
   assessCondition(
     mediaReferences: MediaReference[],
     productId: string,
-    catalogImageRef: string,
+    catalogImageRefs: string[],
     returnReason?: string,
   ): Promise<ConditionGradeResult>;
 }

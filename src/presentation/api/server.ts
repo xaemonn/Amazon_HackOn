@@ -27,6 +27,7 @@ import { createCatalogRouter } from './catalogRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createOrdersRouter } from './ordersRoutes.js';
 import { createResaleRouter } from './resaleRoutes.js';
+import { createJudgeRouter } from './judgeRoutes.js';
 import { createProductsRouter } from './productsRoutes.js';
 import { createReviewRouter } from './reviewRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
@@ -45,8 +46,9 @@ export function createApp() {
 
   // ── Middleware ──────────────────────────────────────────────────────────────
 
-  // Parse JSON request bodies
-  app.use(express.json({ limit: '1mb' }));
+  // Parse JSON request bodies. Limit is generous because the judge test
+  // harness submits product images as base64 data URLs.
+  app.use(express.json({ limit: '25mb' }));
 
   // Enable CORS (configurable origin, defaults to all origins for dev/demo)
   const allowedOrigins = process.env['ZTR_CORS_ORIGINS']?.split(',') ?? ['*'];
@@ -101,6 +103,8 @@ export function createApp() {
   app.use('/api/auth', createAuthRouter());
   app.use('/api/orders', createOrdersRouter(orderRepo, container.getRequired('authService') as MockAuthService));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
+  // Judge test harness — add a product + images, then test the return flow.
+  app.use('/api/judge', createJudgeRouter(orderRepo, container.getRequired('authService') as MockAuthService));
 
   // Resale marketplace (relisting / circular commerce)
   const resaleService = container.getRequired('resaleService');

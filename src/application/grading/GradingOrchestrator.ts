@@ -33,7 +33,8 @@ export interface GradingInput {
   returnRequestId: string;
   productId: string;
   mediaReferences: MediaReference[];
-  catalogImageRef: string;
+  /** One or more catalog "as-new" reference images (front/back/close-up). */
+  catalogImageRefs: string[];
   reasonText: string | null;
   customerId: string;
   returnHistoryCount90Days: number;
@@ -71,7 +72,7 @@ export class GradingOrchestrator {
       this.callWithTimeoutAndRetry(
         () => this.identityVerifier.verifyIdentity(
           input.mediaReferences,
-          input.catalogImageRef,
+          input.catalogImageRefs[0] ?? `catalog/${input.productId}.jpg`,
           input.productId,
         ),
         gradingTimeouts.identityVerifierTimeoutMs,
@@ -82,7 +83,7 @@ export class GradingOrchestrator {
         () => this.conditionGrader.assessCondition(
           input.mediaReferences,
           input.productId,
-          input.catalogImageRef,
+          input.catalogImageRefs,
           input.reasonText ?? undefined,
         ),
         gradingTimeouts.conditionGraderTimeoutMs,

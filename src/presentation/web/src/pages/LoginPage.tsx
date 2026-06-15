@@ -119,15 +119,19 @@ export function LoginPage() {
           </button>
         </div>
 
-        {/* One-click demo sign-in */}
+        {/* One-click demo sign-in for judges (includes the product test harness) */}
         <button
           type="button"
           className="login-btn login-btn--demo"
           onClick={handleDemo}
           disabled={isLoading}
         >
-          ⚡ Try a demo account — sign in instantly
+          🧑‍⚖️ Judges — sign in here to test the app
         </button>
+        <p className="login-demo-hint">
+          One-click demo account. You'll be able to add your own product (with photos)
+          and test the full return &amp; AI-grading flow.
+        </p>
         <div className="login-divider"><span>or use your account</span></div>
 
         {/* Error / Success */}
