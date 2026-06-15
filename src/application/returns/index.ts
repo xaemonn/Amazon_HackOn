@@ -22,6 +22,8 @@ import {
   ReasonDetailsError,
   checkMediaCompleteness,
   MediaValidationError,
+  evaluateReturnPolicy,
+  type ReturnPolicyDecision,
 } from '../../domain/returns/index.js';
 import type { ReturnState } from '../../domain/returns/ReturnRequest.js';
 import type { EligibilityResult } from '../../domain/returns/ReturnEligibilityService.js';
@@ -134,6 +136,15 @@ export interface IReturnsFacade {
    * Retrieve a return request as a read-only projection.
    */
   getReturnById(returnRequestId: string): Promise<ReturnRequestProjection | null>;
+
+  /**
+   * Evaluate the return-abuse policy for a (customer, product value) pair.
+   * Used to surface "no returns available" warnings before purchase.
+   */
+  evaluateReturnPolicyFor(
+    customerId: string,
+    productValue: number,
+  ): Promise<ReturnPolicyDecision>;
 }
 
 // ─── ReturnsFacade ────────────────────────────────────────────────────────────
@@ -196,11 +207,29 @@ export class ReturnsFacade implements IReturnsFacade {
     };
 
     try {
-      return this.eligibilityService.checkEligibility(
+      const base = this.eligibilityService.checkEligibility(
         customerId,
         domainOrderItem,
         { returnWindowDays: this.returnWindowDays },
       );
+
+      // Layer the return-abuse policy on top of the window check.
+      const policy = await this.evaluateReturnPolicyFor(customerId, authOrderItem.price);
+      return {
+        ...base,
+        // A blocked customer cannot return this item even if within the window.
+        eligible: base.eligible && policy.returnsAllowed,
+        errorMessage:
+          base.eligible && !policy.returnsAllowed
+            ? policy.warning
+            : base.errorMessage,
+        returnPolicy: {
+          returnsAllowed: policy.returnsAllowed,
+          riskLevel: policy.riskLevel,
+          warning: policy.warning,
+          recentReturnCount: policy.recentReturnCount,
+        },
+      };
     } catch (err) {
       if (err instanceof OwnershipError) {
         return {
@@ -215,6 +244,26 @@ export class ReturnsFacade implements IReturnsFacade {
       }
       throw err;
     }
+  }
+
+  /**
+   * Evaluate the return-abuse policy for a (customer, product value) pair using
+   * the customer's recent return history. Exposed for the product page so the
+   * "no returns available" warning can be shown BEFORE purchase.
+   */
+  async evaluateReturnPolicyFor(
+    customerId: string,
+    productValue: number,
+  ): Promise<ReturnPolicyDecision> {
+    const recentReturnCount = await this.returnRequestRepository.countByCustomerInDays(
+      customerId,
+      this.config.fraud.historyWindowDays,
+    );
+    return evaluateReturnPolicy(
+      recentReturnCount,
+      productValue,
+      this.config.returnAbuse,
+    );
   }
 
   // ── initiateReturn ──────────────────────────────────────────────────────────

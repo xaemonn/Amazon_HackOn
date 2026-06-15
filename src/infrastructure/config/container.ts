@@ -21,7 +21,8 @@ import type { IReturnRequestRepository, IAuditLogRepository, IMediaStorage } fro
 import type { IConditionGrader, IIdentityVerifier, IFraudScoreCalculator } from '../../domain/grading/index.js';
 import type { IReasonParser } from '../../domain/grading/IReasonParser.js';
 import type { IDispositionDecisionRepository, IConditionAssessmentRepository } from '../../domain/disposition/index.js';
-import { InMemoryAuditLogRepository, InMemoryReturnRequestRepository, InMemoryConditionAssessmentRepository, InMemoryDispositionDecisionRepository } from '../persistence/index.js';
+import type { IResaleListingRepository } from '../../domain/resale/index.js';
+import { InMemoryAuditLogRepository, InMemoryReturnRequestRepository, InMemoryConditionAssessmentRepository, InMemoryDispositionDecisionRepository, InMemoryResaleListingRepository } from '../persistence/index.js';
 import { InProcessEventBus } from '../events/index.js';
 import { MockConditionGrader, MockIdentityVerifier, MockReasonParser, BedrockConditionGrader, BedrockIdentityVerifier, BedrockReasonParser } from '../ai/index.js';
 import { MockAuthService } from '../auth/index.js';
@@ -37,6 +38,7 @@ import {
   type IDemandSignalProvider,
   type IReturnHistoryProvider,
 } from '../../application/disposition/index.js';
+import { ResaleService, ResaleListingHandler } from '../../application/resale/index.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -60,6 +62,9 @@ export interface ContainerRegistry {
   returnsFacade: ReturnsFacade;
   gradingOrchestrator: GradingOrchestrator;
   dispositionOrchestrator: DispositionOrchestrator;
+  resaleListingRepository: IResaleListingRepository;
+  resaleService: ResaleService;
+  resaleListingHandler: ResaleListingHandler;
 }
 
 // ─── Container Class ─────────────────────────────────────────────────────────
@@ -352,6 +357,31 @@ export function createContainer(): Container {
     config,
   );
   container.register('dispositionOrchestrator', dispositionOrchestrator);
+
+  // ── Resale marketplace — relisting + circular-commerce ──────────────────────
+  const resaleListingRepository = new InMemoryResaleListingRepository();
+  container.register('resaleListingRepository', resaleListingRepository);
+
+  const resaleService = new ResaleService(resaleListingRepository, {
+    gradeDiscountPct: config.resale.gradeDiscountPct,
+    transferWindowDays: config.resale.transferWindowDays,
+    keepOfferGiftCardPct: config.resale.keepOfferGiftCardPct,
+    directTransferEtaHours: config.resale.directTransferEtaHours,
+    warehouseShipEtaHours: config.resale.warehouseShipEtaHours,
+  });
+  container.register('resaleService', resaleService);
+
+  const resaleListingHandler = new ResaleListingHandler({
+    eventBus: container.getRequired('eventBus'),
+    conditionAssessmentRepository: container.getRequired('conditionAssessmentRepository'),
+    returnRequestLookup,
+    authService: container.getRequired('authService'),
+    resaleService,
+    defaultSellerCity: config.resale.defaultSellerCity,
+  });
+  container.register('resaleListingHandler', resaleListingHandler);
+  // Subscribe to DispositionAssigned so graded returns get relisted.
+  resaleListingHandler.initialize();
 
   // NOTE: dispositionOrchestrator.initialize() is NOT called here.
   // It must be called AFTER GradingCompleteHandler subscribes to ItemGraded

@@ -64,6 +64,18 @@ export interface EligibilityResult {
    * Set when the check fails due to an ownership violation or other error.
    */
   errorMessage: string | null;
+
+  /**
+   * Return-abuse policy outcome for this (customer, product). Optional so the
+   * pure window check can run without it; populated by the facade which has
+   * access to return history and product value.
+   */
+  returnPolicy?: {
+    returnsAllowed: boolean;
+    riskLevel: 'none' | 'elevated' | 'high';
+    warning: string | null;
+    recentReturnCount: number;
+  };
 }
 
 // ─── Error classes ────────────────────────────────────────────────────────────

@@ -159,7 +159,13 @@ export function OrderHistoryPage() {
                     return (
                       <li key={item.id} className="order-item">
                         <div className="order-item__image" aria-hidden="true">
-                          {item.productImage}
+                          <img
+                            src={`/api/catalog/images/${item.productId}`}
+                            alt=""
+                            className="order-item__image-img"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                          <span className="order-item__image-fallback">📦</span>
                         </div>
                         <div className="order-item__details">
                           <p className="order-item__name">{item.productName}</p>

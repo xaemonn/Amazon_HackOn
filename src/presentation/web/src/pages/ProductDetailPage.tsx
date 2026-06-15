@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { apiGetProduct, type Product } from '../api/client';
+import { apiGetProduct, apiGetReturnPolicy, type Product, type ReturnPolicyDecision } from '../api/client';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import './ProductDetailPage.css';
 
 export function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { addItem, items } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [imgFailed, setImgFailed] = useState(false);
+  const [returnPolicy, setReturnPolicy] = useState<ReturnPolicyDecision | null>(null);
 
   const inCart = items.some((i) => i.product.id === productId);
 
@@ -28,6 +31,14 @@ export function ProductDetailPage() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load product.'))
       .finally(() => setIsLoading(false));
   }, [productId]);
+
+  // Pre-purchase return-availability check (abuse guard).
+  useEffect(() => {
+    if (!product || !user) { setReturnPolicy(null); return; }
+    apiGetReturnPolicy(user.id, product.price)
+      .then(setReturnPolicy)
+      .catch(() => setReturnPolicy(null));
+  }, [product, user]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -117,6 +128,8 @@ export function ProductDetailPage() {
                 className="pd-main-img"
                 onError={() => setImgFailed(true)}
               />
+            ) : product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} className="pd-image-img" />
             ) : (
               <span className="pd-emoji-fallback">{product.emoji}</span>
             )}
@@ -165,7 +178,18 @@ export function ProductDetailPage() {
             ))}
           </div>
 
-          <p className="pd-returns-note">♻️ Eligible for 30-day zero-touch returns</p>
+          {returnPolicy && !returnPolicy.returnsAllowed ? (
+            <p className="pd-returns-note pd-returns-note--blocked">
+              🚫 Returns are not available for this item on your account.
+              {returnPolicy.warning ? ` ${returnPolicy.warning}` : ''}
+            </p>
+          ) : returnPolicy && returnPolicy.riskLevel !== 'none' ? (
+            <p className="pd-returns-note pd-returns-note--warn">
+              ⚠️ {returnPolicy.warning}
+            </p>
+          ) : (
+            <p className="pd-returns-note">♻️ Eligible for 30-day zero-touch returns</p>
+          )}
         </div>
 
         {/* Right: buy box */}

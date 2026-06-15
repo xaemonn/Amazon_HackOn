@@ -38,6 +38,8 @@ function ProductCard({ product }: { product: Product }) {
               onError={() => setImgFailed(true)}
               loading="lazy"
             />
+          ) : product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} className="product-card__image-img" loading="lazy" />
           ) : (
             <span className="product-card__emoji">{product.emoji}</span>
           )}

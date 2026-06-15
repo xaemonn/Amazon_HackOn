@@ -20,6 +20,7 @@ export interface CatalogProduct {
   tags: string[];
   badge?: string;
   originalPrice?: number;
+  imageUrl?: string;
 }
 
 const U = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=80`;
@@ -322,6 +323,21 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
     reviewCount: 3890,
     inStock: true,
     tags: ['pressure-cooker', 'instant-pot', 'kitchen', '7-in-1', 'slow-cooker'],
+  },
+  {
+    id: 'item-earbuds',
+    name: 'Wireless Earbuds',
+    category: 'Electronics',
+    price: 2499,
+    currency: 'INR',
+    emoji: '🎧',
+    images: [],
+    description: 'True wireless earbuds with a compact charging case, active noise cancellation, and 24-hour total battery life.',
+    rating: 4.6,
+    reviewCount: 203,
+    inStock: true,
+    tags: ['audio', 'wireless', 'earbuds'],
+    imageUrl: '/api/catalog/images/item-earbuds',
   },
 ];
 

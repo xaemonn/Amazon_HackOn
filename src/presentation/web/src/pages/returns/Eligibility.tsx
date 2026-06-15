@@ -128,7 +128,8 @@ export function Eligibility() {
         <>
           <div className="eligibility-product-card">
             <div className="eligibility-product-image" aria-hidden="true">
-              {eligibility.productImage ? (
+              <span className="eligibility-product-image__fallback">📦</span>
+              {eligibility.productImage && (
                 <img
                   src={eligibility.productImage}
                   alt={eligibility.productName}
@@ -136,8 +137,6 @@ export function Eligibility() {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-              ) : (
-                <span>📦</span>
               )}
             </div>
             <div className="eligibility-product-info">

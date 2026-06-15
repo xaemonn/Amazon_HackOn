@@ -87,6 +87,12 @@ function makeMockReturnsFacade(
     submitMedia: vi.fn(),
     completeMediaCapture: vi.fn(),
     getReturnById: vi.fn(),
+    evaluateReturnPolicyFor: vi.fn().mockResolvedValue({
+      returnsAllowed: true,
+      riskLevel: 'none',
+      warning: null,
+      recentReturnCount: 0,
+    }),
     ...overrides,
   };
 }

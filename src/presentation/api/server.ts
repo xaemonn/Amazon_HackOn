@@ -26,6 +26,7 @@ import { createReturnsRouter } from './returnsRoutes.js';
 import { createCatalogRouter } from './catalogRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createOrdersRouter } from './ordersRoutes.js';
+import { createResaleRouter } from './resaleRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
 
@@ -95,6 +96,24 @@ export function createApp() {
   app.use('/api/auth', createAuthRouter());
   app.use('/api/orders', createOrdersRouter(orderRepo));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
+
+  // Resale marketplace (relisting / circular commerce)
+  const resaleService = container.getRequired('resaleService');
+  app.use('/api/resale', createResaleRouter(resaleService));
+
+  // Background sweeper: resolve lapsed local-buyer windows
+  // (Grade A → warehouse, Grade C → keep-offer). Runs every 60s.
+  const resaleSweeper = setInterval(() => {
+    void resaleService.expireDue().then((r) => {
+      if (r.returnedToWarehouse > 0 || r.keepOffersExtended > 0) {
+        console.log('[ResaleSweeper] resolved windows', r);
+      }
+    }).catch((err: unknown) => {
+      console.error('[ResaleSweeper] error', err);
+    });
+  }, 60_000);
+  // Don't keep the event loop alive solely for the sweeper.
+  if (typeof resaleSweeper.unref === 'function') resaleSweeper.unref();
 
   // ── Media upload: PUT /api/media/:returnId/:filename ───────────────────────
   // Accepts raw image/video bytes and saves them to ./uploads/{returnId}/{filename}

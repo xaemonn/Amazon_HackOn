@@ -243,9 +243,33 @@
 }
 
 @media (max-width: 640px) {
-  .pd-layout { grid-template-columns: 1fr; }
+  .pd-layout, .product-detail-skeleton { grid-template-columns: 1fr; }
+  .pd-buy-box { grid-column: auto; position: static; }
   .pd-image-col { position: static; }
   .pd-image { height: 280px; }
   .pd-name { font-size: 1.15rem; }
   .pd-price { font-size: 1.5rem; }
+}
+
+/* Real product image on the detail page */
+.pd-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Dynamic return-availability note (abuse guard) */
+.pd-returns-note--warn {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #854d0e;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+}
+.pd-returns-note--blocked {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
 }
