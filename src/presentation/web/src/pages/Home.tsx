@@ -5,18 +5,18 @@ import { ProductCard } from '../components/ProductCard';
 import './Home.css';
 
 const CATEGORIES = [
-  { label: 'Electronics', emoji: '💻', path: '/catalog?category=Electronics' },
-  { label: 'Fashion', emoji: '👗', path: '/catalog?category=Fashion' },
-  { label: 'Home & Kitchen', emoji: '🏠', path: '/catalog?category=Home+%26+Kitchen' },
-  { label: 'Accessories', emoji: '🎒', path: '/catalog?category=Accessories' },
-  { label: 'Books', emoji: '📚', path: '/catalog?category=Books' },
-  { label: 'Fitness', emoji: '💪', path: '/catalog?category=Fitness' },
+  { label: 'Electronics',     emoji: '💻', path: '/catalog?category=Electronics',           bg: 'linear-gradient(135deg,#1a1f2e,#2d3561)' },
+  { label: 'Fashion',         emoji: '👗', path: '/catalog?category=Fashion',               bg: 'linear-gradient(135deg,#2d1f3d,#6b3fa0)' },
+  { label: 'Home & Kitchen',  emoji: '🏠', path: '/catalog?category=Home+%26+Kitchen',      bg: 'linear-gradient(135deg,#1f2d1f,#2d6b3f)' },
+  { label: 'Fitness',         emoji: '💪', path: '/catalog?category=Fitness',               bg: 'linear-gradient(135deg,#2d1f1f,#a03f3f)' },
+  { label: 'Books',           emoji: '📚', path: '/catalog?category=Books',                 bg: 'linear-gradient(135deg,#1f271f,#3d6b45)' },
+  { label: 'Accessories',     emoji: '🎒', path: '/catalog?category=Accessories',           bg: 'linear-gradient(135deg,#27201a,#8b5e3c)' },
 ];
 
 export function Home() {
   const { isAuthenticated, user } = useAuth();
   const { products, isLoading } = useProducts();
-  const featured = products.slice(0, 4);
+  const featured = products.slice(0, 8);
 
   return (
     <div className="home-page">
@@ -24,20 +24,20 @@ export function Home() {
       {/* Hero banner */}
       <section className="home-hero" aria-label="Welcome banner">
         <div className="home-hero__text">
-          <p className="home-hero__eyebrow">Welcome to Second Life Commerce</p>
+          <p className="home-hero__eyebrow">Second Life Commerce</p>
           <h1 className="home-hero__title">
             {isAuthenticated
-              ? `Good to see you, ${user?.name?.split(' ')[0]}! 👋`
-              : 'Shop Smart. Return Easy. Live Sustainably.'}
+              ? `Welcome back, ${user?.name?.split(' ')[0]}! 👋`
+              : 'Shop Smart.\nReturn Easy.\nLive Sustainably.'}
           </h1>
           <p className="home-hero__sub">
-            AI-powered zero-touch returns. Every product gets a second life.
+            AI-powered zero-touch returns. Every product gets a second life — shop top brands, discover deals, and return effortlessly.
           </p>
           <div className="home-hero__actions">
-            <Link to="/catalog" className="hero-btn hero-btn--primary">Shop now</Link>
+            <Link to="/catalog" className="hero-btn hero-btn--primary">🛍️ Shop Now</Link>
             {isAuthenticated
-              ? <Link to="/orders" className="hero-btn hero-btn--outline">My Orders</Link>
-              : <Link to="/login" className="hero-btn hero-btn--outline">Sign in</Link>
+              ? <Link to="/orders" className="hero-btn hero-btn--outline">📦 My Orders</Link>
+              : <Link to="/login" className="hero-btn hero-btn--outline">Sign In</Link>
             }
           </div>
         </div>
@@ -47,6 +47,7 @@ export function Home() {
             <span>30-day returns</span>
             <span>Free delivery</span>
             <span>AI grading</span>
+            <span>Top brands</span>
           </div>
         </div>
       </section>
@@ -75,7 +76,7 @@ export function Home() {
         </div>
         {isLoading ? (
           <div className="catalog-grid">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="product-skeleton" aria-hidden="true" />
             ))}
           </div>
@@ -106,7 +107,7 @@ export function Home() {
 
       {/* Why us */}
       <section aria-labelledby="why-heading">
-        <h2 id="why-heading" className="home-section-title" style={{ marginBottom: '1rem' }}>Why Second Life Commerce?</h2>
+        <h2 id="why-heading" className="home-section-title" style={{ marginBottom: '1.25rem' }}>Why Second Life Commerce?</h2>
         <div className="home-why-grid">
           <div className="home-why-card">
             <span className="home-why-card__icon" aria-hidden="true">🚀</span>

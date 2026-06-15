@@ -74,6 +74,7 @@ export function GradingProgress() {
   const [isFailure, setIsFailure] = useState(false);
   const [isMismatch, setIsMismatch] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notifyRequested, setNotifyRequested] = useState(false);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastAdvanceRef = useRef<number>(Date.now());
@@ -198,6 +199,18 @@ export function GradingProgress() {
   const handleKeepWaiting = () => {
     setShowDelay(false);
     lastAdvanceRef.current = Date.now();
+  };
+
+  // Notify Me & Leave — save returnId to localStorage and go home.
+  // A global NotifyBanner picks this up and shows an alert when grading finishes.
+  const handleNotifyAndLeave = () => {
+    if (!returnId) return;
+    const pending = JSON.parse(localStorage.getItem('pendingGradeNotify') ?? '[]') as string[];
+    if (!pending.includes(returnId)) {
+      localStorage.setItem('pendingGradeNotify', JSON.stringify([...pending, returnId]));
+    }
+    setNotifyRequested(true);
+    setTimeout(() => navigate('/'), 1800);
   };
 
   // Item mismatch — send the shopper back to re-capture photos, carrying the
@@ -492,21 +505,22 @@ export function GradingProgress() {
       </ul>
 
       {/* Delay warning */}
-      {showDelay && (
+      {showDelay && !notifyRequested && (
         <div
           className="grading-progress__delay-message"
           role="alert"
           aria-live="assertive"
         >
+          <p className="grading-progress__delay-title">⏳ This is taking longer than usual</p>
           <p className="grading-progress__delay-text">
-            Taking a bit longer… you can retry or keep waiting
+            You don't have to wait here. We'll alert you the moment your item is verified.
           </p>
           <div className="grading-progress__delay-actions">
             <button
-              className="grading-progress__btn grading-progress__btn--primary"
-              onClick={handleRetry}
+              className="grading-progress__btn grading-progress__btn--notify"
+              onClick={handleNotifyAndLeave}
             >
-              Retry
+              🔔 Notify Me &amp; Leave
             </button>
             <button
               className="grading-progress__btn grading-progress__btn--secondary"
@@ -514,6 +528,23 @@ export function GradingProgress() {
             >
               Keep Waiting
             </button>
+            <button
+              className="grading-progress__btn grading-progress__btn--ghost"
+              onClick={handleRetry}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Notify confirmed toast */}
+      {notifyRequested && (
+        <div className="grading-progress__notify-toast" role="status" aria-live="polite">
+          <span className="grading-progress__notify-toast-icon">🔔</span>
+          <div>
+            <strong>We'll notify you!</strong>
+            <p>Your item is still being verified. Come back anytime — we'll show a banner when it's done.</p>
           </div>
         </div>
       )}

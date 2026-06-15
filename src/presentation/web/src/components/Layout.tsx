@@ -169,11 +169,16 @@ export function Layout() {
             const cat = params.get('category');
             const onCatalog = location.pathname === '/catalog';
             const items: Array<{ to: string; label: string; active: boolean }> = [
-              { to: '/catalog', label: 'Shop', active: onCatalog && !cat },
-              { to: '/marketplace', label: '♻️ Returns Marketplace', active: location.pathname === '/marketplace' },
+              { to: '/catalog', label: 'Shop All', active: onCatalog && !cat },
+              { to: '/marketplace', label: '♻️ Marketplace', active: location.pathname === '/marketplace' },
               { to: '/catalog?category=Electronics', label: 'Electronics', active: onCatalog && cat === 'Electronics' },
               { to: '/catalog?category=Fashion', label: 'Fashion', active: onCatalog && cat === 'Fashion' },
+              { to: '/catalog?category=Footwear', label: 'Footwear', active: onCatalog && cat === 'Footwear' },
               { to: '/catalog?category=Home+%26+Kitchen', label: 'Home & Kitchen', active: onCatalog && cat === 'Home & Kitchen' },
+              { to: '/catalog?category=Fitness', label: 'Fitness', active: onCatalog && cat === 'Fitness' },
+              { to: '/catalog?category=Books', label: 'Books', active: onCatalog && cat === 'Books' },
+              { to: '/catalog?category=Accessories', label: 'Accessories', active: onCatalog && cat === 'Accessories' },
+              { to: '/catalog?category=Beauty+%26+Personal+Care', label: 'Beauty', active: onCatalog && cat === 'Beauty & Personal Care' },
               { to: '/orders', label: 'Your Orders', active: location.pathname.startsWith('/orders') },
               ...(isAuthenticated
                 ? [{ to: '/account', label: 'Your Account', active: location.pathname === '/account' }]

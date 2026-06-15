@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
-  font-family: "Amazon Ember", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  font-family: 'Inter', "Amazon Ember", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -18,18 +20,18 @@
   --color-amazon-link:        #007185; /* Amazon teal */
   --color-amazon-link-hover:  #C7511F;
 
-  /* ── Semantic aliases (used across components) ── */
+  /* ── Semantic aliases ── */
   --color-primary:       #131921;
   --color-primary-hover: #37475A;
   --color-accent:        #FF9900;
   --color-accent-hover:  #E47911;
-  --color-cta:           #FFD814;  /* primary action buttons */
+  --color-cta:           #FFD814;
   --color-cta-hover:     #F7CA00;
   --color-link:          #007185;
   --color-link-hover:    #C7511F;
   --color-text:          #0F1111;
   --color-text-muted:    #565959;
-  --color-bg:            #EAEDED;  /* page background */
+  --color-bg:            #F0F2F2;
   --color-bg-white:      #FFFFFF;
   --color-border:        #D5D9D9;
   --color-success:       #067D62;
@@ -37,8 +39,16 @@
   --color-error:         #CC0C39;
   --focus-ring:          0 0 0 3px rgba(228, 121, 17, 0.5);
   --radius:              8px;
+  --radius-lg:           14px;
+  --radius-xl:           20px;
   --max-width:           1280px;
   --header-height:       60px;
+  --transition-fast:     0.15s ease;
+  --transition-med:      0.25s cubic-bezier(0.4,0,0.2,1);
+  --shadow-sm:           0 1px 4px rgba(0,0,0,0.07);
+  --shadow-md:           0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg:           0 8px 40px rgba(0,0,0,0.14);
+  --shadow-card:         0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
 }
 
 *,
