@@ -3,51 +3,66 @@
  * curated static fallback data (no API key required).
  *
  * Usage:
- *   npx tsx --env-file=.env src/infrastructure/db/seedProducts.ts
+ *   npm run seed
  *
- * Env vars (at least one Amazon scraper key, or leave empty for curated data):
- *   RAINFOREST_API_KEY   — https://rainforestapi.com  (free trial: 100 req)
- *   RAPIDAPI_KEY         — https://rapidapi.com  (Real-Time Amazon Data API)
- *   MONGODB_URI          — Atlas / local connection string
+ * Strategy (Rainforest API):
+ *   1. type=search  per keyword → finds real ASINs automatically
+ *   2. type=product per ASIN   → fetches full details + all images
+ *   Uses ~2 credits per product (30 total for 15 products).
  */
 
 import mongoose from 'mongoose';
 import { ProductModel, type IProduct } from './ProductModel.js';
 import { CATALOG_PRODUCTS } from '../../presentation/api/catalogRoutes.js';
 
-// ─── ASIN manifest (10-15 per category, 3 categories) ─────────────────────────
+// ─── Search query manifest ─────────────────────────────────────────────────────
 
-interface AsinEntry {
-  asin: string;
+interface SearchEntry {
+  query: string;
   category: string;
   emoji: string;
   tags: string[];
+  badge?: string;
 }
 
-const ASIN_LIST: AsinEntry[] = [
+const SEARCH_QUERIES: SearchEntry[] = [
   // ── Electronics (5) ──
-  { asin: 'B09G9BDV9Z', category: 'Electronics',          emoji: '🎧', tags: ['wireless', 'noise-cancellation', 'sony', 'premium'] },
-  { asin: 'B09JQMJHXY', category: 'Electronics',          emoji: '🔊', tags: ['jbl', 'portable', 'waterproof', 'ip67'] },
-  { asin: 'B0B9QW3JT5', category: 'Electronics',          emoji: '📱', tags: ['samsung', '5g', 'amoled', 'snapdragon'] },
-  { asin: 'B0BYYDRG4N', category: 'Electronics',          emoji: '⌚', tags: ['smartwatch', 'fitness', 'amoled', 'gps'] },
-  { asin: 'B0BDHX9Z7B', category: 'Electronics',          emoji: '🎵', tags: ['earbuds', 'boat', 'wireless', 'enc'] },
+  { query: 'Sony WH-1000XM5 wireless noise cancelling headphones', category: 'Electronics', emoji: '🎧', tags: ['wireless', 'noise-cancellation', 'sony', 'premium'], badge: 'Best Seller' },
+  { query: 'JBL Flip 6 portable bluetooth speaker waterproof',      category: 'Electronics', emoji: '🔊', tags: ['jbl', 'portable', 'waterproof', 'ip67'], badge: 'Amazon Choice' },
+  { query: 'Samsung Galaxy S24 5G smartphone',                      category: 'Electronics', emoji: '📱', tags: ['samsung', '5g', 'amoled', 'snapdragon'], badge: 'New Launch' },
+  { query: 'fitness smartwatch heart rate GPS',                     category: 'Electronics', emoji: '⌚', tags: ['smartwatch', 'fitness', 'gps', 'health-tracking'] },
+  { query: 'true wireless earbuds active noise cancellation',       category: 'Electronics', emoji: '🎵', tags: ['earbuds', 'wireless', 'enc', 'tws'] },
   // ── Food & Grocery (5) ──
-  { asin: 'B01M0RTXBH', category: 'Food & Grocery',       emoji: '🍫', tags: ['nutella', 'chocolate', 'hazelnut', 'spread'] },
-  { asin: 'B08DKVZ5JC', category: 'Food & Grocery',       emoji: '🥜', tags: ['peanut-butter', 'protein', 'no-sugar', 'crunchy'] },
-  { asin: 'B00HUU58QK', category: 'Food & Grocery',       emoji: '🥣', tags: ['oats', 'healthy', 'breakfast', 'quaker'] },
-  { asin: 'B07THHG2PR', category: 'Food & Grocery',       emoji: '🫐', tags: ['dry-fruits', 'organic', 'healthy'] },
-  { asin: 'B09B5HJXMB', category: 'Food & Grocery',       emoji: '🍵', tags: ['green-tea', 'immunity', 'antioxidant'] },
+  { query: 'Nutella hazelnut chocolate spread',                     category: 'Food & Grocery', emoji: '🍫', tags: ['nutella', 'chocolate', 'hazelnut', 'spread'], badge: 'Best Seller' },
+  { query: 'natural peanut butter no sugar added',                  category: 'Food & Grocery', emoji: '🥜', tags: ['peanut-butter', 'protein', 'no-sugar', 'healthy'], badge: 'Amazon Choice' },
+  { query: 'Quaker instant oats breakfast',                         category: 'Food & Grocery', emoji: '🥣', tags: ['oats', 'healthy', 'breakfast', 'quaker'] },
+  { query: 'organic green tea bags immunity',                       category: 'Food & Grocery', emoji: '🍵', tags: ['green-tea', 'immunity', 'antioxidant', 'organic'] },
+  { query: 'mixed nuts dry fruits healthy snack',                   category: 'Food & Grocery', emoji: '🫘', tags: ['dry-fruits', 'nuts', 'healthy', 'snack'] },
   // ── Beauty & Personal Care (5) ──
-  { asin: 'B07ZZWSGC6', category: 'Beauty & Personal Care', emoji: '🧴', tags: ['shampoo', 'anti-dandruff', 'head-shoulders'] },
-  { asin: 'B00CKZUNQA', category: 'Beauty & Personal Care', emoji: '🛁', tags: ['body-wash', 'dove', 'moisturising'] },
-  { asin: 'B071NV4ZF2', category: 'Beauty & Personal Care', emoji: '✨', tags: ['vitamin-c', 'serum', 'mamaearth', 'brightening'] },
-  { asin: 'B07K2W3N5R', category: 'Beauty & Personal Care', emoji: '💄', tags: ['lipstick', 'matte', 'long-lasting'] },
-  { asin: 'B07DPJZMSG', category: 'Beauty & Personal Care', emoji: '🧖', tags: ['apple-cider', 'shampoo', 'wow', 'hair-care'] },
+  { query: 'Head and Shoulders anti dandruff shampoo',              category: 'Beauty & Personal Care', emoji: '🧴', tags: ['shampoo', 'anti-dandruff', 'hair-care'] },
+  { query: 'Dove deep moisture body wash',                          category: 'Beauty & Personal Care', emoji: '🛁', tags: ['body-wash', 'dove', 'moisturising', 'skin-care'] },
+  { query: 'Vitamin C face serum brightening skin',                 category: 'Beauty & Personal Care', emoji: '✨', tags: ['vitamin-c', 'serum', 'brightening', 'anti-dark-spot'] },
+  { query: 'whey protein powder chocolate muscle building',         category: 'Health & Sports',       emoji: '💪', tags: ['whey-protein', 'bcaa', 'gym', 'chocolate'], badge: 'Best Seller' },
+  { query: 'Instant Pot electric pressure cooker 6 quart',         category: 'Home & Kitchen',        emoji: '🍲', tags: ['pressure-cooker', 'instant-pot', '7-in-1', 'kitchen'] },
 ];
 
-// ─── Rainforest API ────────────────────────────────────────────────────────────
+// ─── Rainforest API types ─────────────────────────────────────────────────────
 
-interface RainforestProduct {
+interface RFSearchResult {
+  asin: string;
+  title?: string;
+  image?: string;
+  price?: { value: number; currency: string };
+  rating?: number;
+  ratings_total?: number;
+}
+
+interface RFSearchResponse {
+  request_info?: { success: boolean; message?: string };
+  search_results?: RFSearchResult[];
+}
+
+interface RFProduct {
   asin: string;
   title?: string;
   main_image?: { link: string };
@@ -59,114 +74,98 @@ interface RainforestProduct {
   feature_bullets?: string[];
   description?: string;
   in_stock?: boolean;
-  categories?: Array<{ name: string }>;
 }
 
-interface RainforestResponse {
-  product?: RainforestProduct;
+interface RFProductResponse {
   request_info?: { success: boolean; message?: string };
+  product?: RFProduct;
 }
 
-async function fetchFromRainforest(asin: string, apiKey: string): Promise<RainforestProduct | null> {
+async function rfFetch<T>(params: Record<string, string>, apiKey: string): Promise<T> {
   const url = new URL('https://api.rainforestapi.com/request');
   url.searchParams.set('api_key', apiKey);
-  url.searchParams.set('type', 'product');
-  url.searchParams.set('asin', asin);
-  url.searchParams.set('amazon_domain', 'amazon.in');
-
-  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15_000) });
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`Rainforest HTTP ${res.status}`);
-  const body = await res.json() as RainforestResponse;
-  if (!body.request_info?.success) throw new Error(body.request_info?.message ?? 'Rainforest error');
-  return body.product ?? null;
+  return res.json() as Promise<T>;
 }
 
-// ─── RapidAPI Real-Time Amazon Data ───────────────────────────────────────────
+async function searchAndFetch(
+  entry: SearchEntry,
+  apiKey: string,
+): Promise<Omit<IProduct, keyof mongoose.Document> | null> {
+  // Step 1: search to find a real ASIN
+  const searchRes = await rfFetch<RFSearchResponse>({
+    type: 'search',
+    search_term: entry.query,
+    amazon_domain: 'amazon.com',
+    sort_by: 'featured',
+  }, apiKey);
 
-interface RapidProductData {
-  product_title?: string;
-  product_price?: string;
-  product_original_price?: string;
-  product_star_rating?: string;
-  product_num_ratings?: number;
-  product_photos?: string[];
-  product_description?: string;
-  is_available?: boolean;
-}
+  if (!searchRes.request_info?.success) {
+    throw new Error(searchRes.request_info?.message ?? 'Search failed');
+  }
 
-interface RapidResponse {
-  status?: string;
-  data?: RapidProductData;
-}
+  const results = (searchRes.search_results ?? []).filter(
+    (r) => r.asin && r.price?.value && r.price.value > 0,
+  );
 
-async function fetchFromRapidApi(asin: string, apiKey: string): Promise<RapidProductData | null> {
-  const url = new URL('https://real-time-amazon-data.p.rapidapi.com/product-details');
-  url.searchParams.set('asin', asin);
-  url.searchParams.set('country', 'IN');
+  if (results.length === 0) throw new Error('No priced results found');
+  const topResult = results[0]!;
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      'X-RapidAPI-Key': apiKey,
-      'X-RapidAPI-Host': 'real-time-amazon-data.p.rapidapi.com',
-    },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`RapidAPI HTTP ${res.status}`);
-  const body = await res.json() as RapidResponse;
-  if (body.status !== 'OK') throw new Error('RapidAPI returned non-OK status');
-  return body.data ?? null;
-}
+  await new Promise((r) => setTimeout(r, 1_000)); // rate-limit pause
 
-// ─── Price parser ──────────────────────────────────────────────────────────────
+  // Step 2: fetch full product details for images + feature bullets
+  const prodRes = await rfFetch<RFProductResponse>({
+    type: 'product',
+    asin: topResult.asin,
+    amazon_domain: 'amazon.com',
+  }, apiKey);
 
-function parsePrice(raw: string | undefined): number {
-  if (!raw) return 0;
-  return parseFloat(raw.replace(/[^0-9.]/g, '')) || 0;
-}
+  const p = prodRes.product;
+  if (!p) {
+    // Fall back to search-result data (fewer images but still works)
+    return {
+      asin:          topResult.asin,
+      title:         topResult.title ?? entry.query,
+      category:      entry.category,
+      price:         topResult.price?.value ?? 0,
+      currency:      topResult.price?.currency ?? 'USD',
+      rating:        topResult.rating ?? 0,
+      ratingsTotal:  topResult.ratings_total ?? 0,
+      images:        topResult.image ? [topResult.image] : [],
+      description:   '',
+      featureBullets:[],
+      inStock:       true,
+      badge:         entry.badge,
+      tags:          entry.tags,
+      emoji:         entry.emoji,
+      source:        'rainforest',
+    };
+  }
 
-// ─── Map API responses → IProduct shape ───────────────────────────────────────
-
-function fromRainforest(meta: AsinEntry, p: RainforestProduct): Omit<IProduct, keyof mongoose.Document> {
   const allImages = (p.images ?? []).map((i) => i.link).filter(Boolean);
   if (p.main_image?.link && !allImages.includes(p.main_image.link)) {
     allImages.unshift(p.main_image.link);
   }
+
   return {
     asin:          p.asin,
-    title:         p.title ?? meta.asin,
-    category:      meta.category,
-    price:         p.price?.value ?? 0,
+    title:         p.title ?? entry.query,
+    category:      entry.category,
+    price:         p.price?.value ?? topResult.price?.value ?? 0,
     originalPrice: p.rrp?.value,
-    currency:      p.price?.currency ?? 'INR',
-    rating:        p.rating ?? 0,
-    ratingsTotal:  p.ratings_total ?? 0,
-    images:        allImages.slice(0, 5),
-    description:   p.description ?? (p.feature_bullets ?? []).join(' '),
+    currency:      p.price?.currency ?? 'USD',
+    rating:        p.rating ?? topResult.rating ?? 0,
+    ratingsTotal:  p.ratings_total ?? topResult.ratings_total ?? 0,
+    images:        allImages.slice(0, 6),
+    description:   p.description ?? (p.feature_bullets ?? []).slice(0, 2).join(' '),
     featureBullets:p.feature_bullets ?? [],
     inStock:       p.in_stock ?? true,
-    tags:          meta.tags,
-    emoji:         meta.emoji,
+    badge:         entry.badge,
+    tags:          entry.tags,
+    emoji:         entry.emoji,
     source:        'rainforest',
-  };
-}
-
-function fromRapidApi(meta: AsinEntry, p: RapidProductData): Omit<IProduct, keyof mongoose.Document> {
-  return {
-    asin:          meta.asin,
-    title:         p.product_title ?? meta.asin,
-    category:      meta.category,
-    price:         parsePrice(p.product_price),
-    originalPrice: parsePrice(p.product_original_price) || undefined,
-    currency:      'INR',
-    rating:        parseFloat(p.product_star_rating ?? '0') || 0,
-    ratingsTotal:  p.product_num_ratings ?? 0,
-    images:        (p.product_photos ?? []).slice(0, 5),
-    description:   p.product_description ?? '',
-    featureBullets:[],
-    inStock:       p.is_available ?? true,
-    tags:          meta.tags,
-    emoji:         meta.emoji,
-    source:        'rapidapi',
   };
 }
 
@@ -196,56 +195,47 @@ function buildCuratedDocs(): Array<Omit<IProduct, keyof mongoose.Document>> {
 // ─── Main seeder ──────────────────────────────────────────────────────────────
 
 async function seed() {
-  const mongoUri = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/amazon2';
+  const mongoUri      = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/amazon2';
   const rainforestKey = process.env['RAINFOREST_API_KEY'];
-  const rapidApiKey   = process.env['RAPIDAPI_KEY'];
 
   console.log('[Seed] Connecting to MongoDB…');
   await mongoose.connect(mongoUri);
   console.log('[Seed] Connected.');
 
+  // Skip if already seeded with API data
+  const existing = await ProductModel.countDocuments({ source: { $in: ['rainforest', 'rapidapi'] } });
+  if (existing > 0 && rainforestKey) {
+    console.log(`[Seed] ${existing} API-sourced products already in MongoDB. Run with FORCE_RESEED=true to overwrite.`);
+    if (process.env['FORCE_RESEED'] !== 'true') { await mongoose.disconnect(); return; }
+  }
+
   let docs: Array<Omit<IProduct, keyof mongoose.Document>> = [];
 
   if (rainforestKey) {
-    console.log('[Seed] Using Rainforest API…');
-    for (const meta of ASIN_LIST) {
+    console.log(`[Seed] Using Rainforest API (search+product, ~2 credits each)…`);
+    for (const entry of SEARCH_QUERIES) {
       try {
-        const data = await fetchFromRainforest(meta.asin, rainforestKey);
-        if (data) {
-          docs.push(fromRainforest(meta, data));
-          console.log(`  ✓ ${meta.asin} – ${data.title?.slice(0, 50)}`);
+        const doc = await searchAndFetch(entry, rainforestKey);
+        if (doc) {
+          docs.push(doc);
+          console.log(`  ✓ [${entry.category}] ${doc.title?.slice(0, 55)}`);
         }
       } catch (err) {
-        console.warn(`  ✗ ${meta.asin}: ${(err as Error).message}`);
+        console.warn(`  ✗ "${entry.query}": ${(err as Error).message}`);
       }
-      await new Promise((r) => setTimeout(r, 800)); // respect rate limit
-    }
-  } else if (rapidApiKey) {
-    console.log('[Seed] Using RapidAPI Real-Time Amazon Data…');
-    for (const meta of ASIN_LIST) {
-      try {
-        const data = await fetchFromRapidApi(meta.asin, rapidApiKey);
-        if (data) {
-          docs.push(fromRapidApi(meta, data));
-          console.log(`  ✓ ${meta.asin} – ${data.product_title?.slice(0, 50)}`);
-        }
-      } catch (err) {
-        console.warn(`  ✗ ${meta.asin}: ${(err as Error).message}`);
-      }
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 1_200));
     }
   } else {
-    console.log('[Seed] No API key found — using curated static catalog data.');
+    console.log('[Seed] No RAINFOREST_API_KEY — using curated static catalog.');
     docs = buildCuratedDocs();
   }
 
   if (docs.length === 0) {
-    console.log('[Seed] No documents to insert. Exiting.');
+    console.log('[Seed] Nothing to insert. Check your API key or network.');
     await mongoose.disconnect();
     return;
   }
 
-  // Upsert by asin so re-running is safe
   const ops = docs.map((doc) => ({
     updateOne: {
       filter: { asin: doc.asin },
@@ -255,12 +245,11 @@ async function seed() {
   }));
 
   const result = await ProductModel.bulkWrite(ops);
-  console.log(`[Seed] Done. upserted=${result.upsertedCount} modified=${result.modifiedCount} total=${docs.length}`);
-
+  console.log(`\n[Seed] Done ✓  upserted=${result.upsertedCount}  modified=${result.modifiedCount}  total=${docs.length}`);
   await mongoose.disconnect();
 }
 
 seed().catch((err) => {
-  console.error('[Seed] Fatal error:', err);
+  console.error('[Seed] Fatal:', err);
   process.exit(1);
 });
