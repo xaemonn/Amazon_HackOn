@@ -1,14 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useProducts } from '../hooks/useProducts';
+import { ProductCard } from '../components/ProductCard';
 import './Home.css';
-
-const FEATURED = [
-  { id: 'prod-001', emoji: '🎧', name: 'Premium Wireless Headphones', price: 1299, category: 'Electronics' },
-  { id: 'prod-005', emoji: '⌨️', name: 'Mechanical Keyboard', price: 2499, category: 'Electronics' },
-  { id: 'prod-006', emoji: '🧴', name: 'Insulated Water Bottle', price: 799, category: 'Home & Kitchen' },
-  { id: 'prod-004', emoji: '📱', name: 'Smartphone Case', price: 299, category: 'Accessories' },
-];
 
 const CATEGORIES = [
   { label: 'Electronics', emoji: '💻', path: '/catalog?category=Electronics' },
@@ -21,13 +15,8 @@ const CATEGORIES = [
 
 export function Home() {
   const { isAuthenticated, user } = useAuth();
-  const { addItem, items } = useCart();
-  const navigate = useNavigate();
-
-  const handleAddToCart = (product: typeof FEATURED[0]) => {
-    addItem({ id: product.id, name: product.name, category: product.category, price: product.price, currency: 'INR', emoji: product.emoji, images: [], description: '', rating: 4.5, reviewCount: 100, inStock: true, tags: [] });
-    navigate('/cart');
-  };
+  const { products, isLoading } = useProducts();
+  const featured = products.slice(0, 4);
 
   return (
     <div className="home-page">
@@ -84,32 +73,17 @@ export function Home() {
           <h2 id="feat-heading" className="home-section-title">Featured Today</h2>
           <Link to="/catalog" className="home-see-all">View all →</Link>
         </div>
-        <div className="home-product-grid">
-          {FEATURED.map((p) => {
-            const inCart = items.some((i) => i.product.id === p.id);
-            return (
-              <article key={p.id} className="home-product-card">
-                <Link to={`/catalog/${p.id}`} className="home-product-card__img-link">
-                  <div className="home-product-card__img" aria-hidden="true">{p.emoji}</div>
-                </Link>
-                <div className="home-product-card__body">
-                  <p className="home-product-card__cat">{p.category}</p>
-                  <Link to={`/catalog/${p.id}`} className="home-product-card__name">{p.name}</Link>
-                  <p className="home-product-card__price">₹{p.price.toLocaleString('en-IN')}</p>
-                  <p className="home-product-card__delivery">FREE delivery by tomorrow</p>
-                  <button
-                    type="button"
-                    className={`home-add-cart${inCart ? ' home-add-cart--in' : ''}`}
-                    onClick={() => handleAddToCart(p)}
-                    aria-label={`Add ${p.name} to cart`}
-                  >
-                    {inCart ? '✓ Added — go to cart' : 'Add to cart'}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        {isLoading ? (
+          <div className="catalog-grid">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="product-skeleton" aria-hidden="true" />
+            ))}
+          </div>
+        ) : (
+          <div className="catalog-grid">
+            {featured.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        )}
       </section>
 
       {/* Returns promo */}

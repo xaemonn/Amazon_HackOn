@@ -2,6 +2,8 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import type { IOrderRepository, Order } from '../../domain/ordering/index.js';
 import type { OrderItem } from '../../domain/ordering/OrderItem.js';
+import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
+import { ensureStarterOrder } from '../../infrastructure/seed/demoUsers.js';
 import { CATALOG_PRODUCTS } from './catalogRoutes.js';
 import { verifyToken } from './authRoutes.js';
 
@@ -29,13 +31,27 @@ function requireAuth(req: Request, res: Response): boolean {
 
 // ─── Route Factory ────────────────────────────────────────────────────────────
 
-export function createOrdersRouter(orderRepo: IOrderRepository): Router {
+export function createOrdersRouter(
+  orderRepo: IOrderRepository,
+  authService?: MockAuthService,
+): Router {
   const router = Router();
 
   // GET /orders — all orders for the authenticated customer
   router.get('/', async (req: Request, res: Response) => {
     if (!requireAuth(req, res)) return;
     const customerId = getCustomerId(req);
+
+    // First-time users (incl. fresh signups) get a starter order history so the
+    // return → grading → resale flow is testable out of the box.
+    if (authService && customerId !== DEMO_CUSTOMER_ID) {
+      try {
+        await ensureStarterOrder(orderRepo, authService, customerId);
+      } catch (err) {
+        console.error('[Orders] starter-order seeding failed:', err instanceof Error ? err.message : err);
+      }
+    }
+
     const orders = await orderRepo.findByCustomerId(customerId);
     const sorted = orders.slice().sort(
       (a, b) => b.placedDate.getTime() - a.placedDate.getTime(),

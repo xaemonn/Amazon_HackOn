@@ -30,6 +30,8 @@ import { createResaleRouter } from './resaleRoutes.js';
 import { createProductsRouter } from './productsRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
+import { seedDemoUsersAndOrders } from '../../infrastructure/seed/demoUsers.js';
+import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
 
 // ─── App Factory ─────────────────────────────────────────────────────────────
 
@@ -96,7 +98,7 @@ export function createApp() {
   app.use('/api/products', createProductsRouter());
   app.use('/api/catalog', createCatalogRouter());
   app.use('/api/auth', createAuthRouter());
-  app.use('/api/orders', createOrdersRouter(orderRepo));
+  app.use('/api/orders', createOrdersRouter(orderRepo, container.getRequired('authService') as MockAuthService));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
 
   // Resale marketplace (relisting / circular commerce)
@@ -158,7 +160,8 @@ export function createApp() {
     res.status(500).json({ error: 'An internal error occurred. Please try again.' });
   });
 
-  return { app, container };
+  const authService = container.getRequired('authService') as MockAuthService;
+  return { app, container, orderRepo, authService };
 }
 
 // ─── Server Start ────────────────────────────────────────────────────────────
@@ -171,16 +174,24 @@ export async function startServer() {
   const port = parseInt(process.env['ZTR_API_PORT'] ?? '3001', 10);
   const mongoUri = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/amazon2';
 
-  // Connect to MongoDB before starting HTTP server
+  // Connect to MongoDB before starting HTTP server.
+  // Fast-fail (5s) so a missing/unreachable DB doesn't block startup for ~30s.
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5_000 });
     console.log(`[MongoDB] Connected to ${mongoUri}`);
   } catch (err) {
-    console.error('[MongoDB] Connection failed:', err);
+    console.error('[MongoDB] Connection failed:', err instanceof Error ? err.message : err);
     console.error('[MongoDB] Auth features will not work. Set MONGODB_URI in .env');
   }
 
-  const { app } = createApp();
+  const { app, orderRepo, authService } = createApp();
+
+  // Seed log-in-able demo users (Prince & Priya) each with their own orders.
+  try {
+    await seedDemoUsersAndOrders({ orderRepo, authService });
+  } catch (err) {
+    console.error('[Seed] Demo user seeding failed:', err instanceof Error ? err.message : err);
+  }
 
   const server = app.listen(port, () => {
     console.log(`[Zero-Touch Returns API] Server running on http://localhost:${port}`);

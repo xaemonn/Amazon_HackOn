@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import './Layout.css';
@@ -8,6 +8,7 @@ export function Layout() {
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const searchRef = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -122,10 +123,10 @@ export function Layout() {
           </div>
 
           {/* Returns & Orders */}
-          <NavLink to="/orders" className="header-orders" aria-label="Returns and Orders">
+          <Link to="/orders" className="header-orders" aria-label="Returns and Orders">
             <span className="header-orders__label">Returns</span>
             <span className="header-orders__label">&amp; Orders</span>
-          </NavLink>
+          </Link>
 
           {/* Cart */}
           <Link to="/cart" className="header-cart" aria-label={`Cart, ${itemCount} item${itemCount !== 1 ? 's' : ''}`}>
@@ -163,15 +164,32 @@ export function Layout() {
           <button type="button" className="nav-strip__all" onClick={() => setMenuOpen((v) => !v)}>
             ☰ All
           </button>
-          <NavLink to="/catalog" className="nav-strip__link">Shop</NavLink>
-          <NavLink to="/marketplace" className="nav-strip__link">♻️ Returns Marketplace</NavLink>
-          <NavLink to="/catalog?category=Electronics" className="nav-strip__link">Electronics</NavLink>
-          <NavLink to="/catalog?category=Fashion" className="nav-strip__link">Fashion</NavLink>
-          <NavLink to="/catalog?category=Home+%26+Kitchen" className="nav-strip__link">Home &amp; Kitchen</NavLink>
-          <NavLink to="/orders" className="nav-strip__link">Your Orders</NavLink>
-          {isAuthenticated && (
-            <NavLink to="/account" className="nav-strip__link">Your Account</NavLink>
-          )}
+          {(() => {
+            const params = new URLSearchParams(location.search);
+            const cat = params.get('category');
+            const onCatalog = location.pathname === '/catalog';
+            const items: Array<{ to: string; label: string; active: boolean }> = [
+              { to: '/catalog', label: 'Shop', active: onCatalog && !cat },
+              { to: '/marketplace', label: '♻️ Returns Marketplace', active: location.pathname === '/marketplace' },
+              { to: '/catalog?category=Electronics', label: 'Electronics', active: onCatalog && cat === 'Electronics' },
+              { to: '/catalog?category=Fashion', label: 'Fashion', active: onCatalog && cat === 'Fashion' },
+              { to: '/catalog?category=Home+%26+Kitchen', label: 'Home & Kitchen', active: onCatalog && cat === 'Home & Kitchen' },
+              { to: '/orders', label: 'Your Orders', active: location.pathname.startsWith('/orders') },
+              ...(isAuthenticated
+                ? [{ to: '/account', label: 'Your Account', active: location.pathname === '/account' }]
+                : []),
+            ];
+            return items.map((item) => (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={`nav-strip__link${item.active ? ' nav-strip__link--active' : ''}`}
+                aria-current={item.active ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            ));
+          })()}
         </div>
       </nav>
 
