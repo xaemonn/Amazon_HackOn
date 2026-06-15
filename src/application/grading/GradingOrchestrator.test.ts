@@ -183,6 +183,7 @@ describe('GradingOrchestrator', () => {
       expect(conditionGrader.assessCondition).toHaveBeenCalledWith(
         input.mediaReferences,
         input.productId,
+        input.catalogImageRef,
       );
     });
 

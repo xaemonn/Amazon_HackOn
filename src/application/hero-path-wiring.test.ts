@@ -327,7 +327,10 @@ describe('Hero Path Wiring — End-to-End', () => {
     // route (which IS what item-grade-c produces) transitions correctly.
     // We'll add a separate focused test for returnless_refund with a custom setup.
 
-    // Let's test the manual_inspection path with item-grade-c
+    // item-grade-c now returns grade C with a GENUINE identity verdict
+    // (MockIdentityVerifier seeds item-grade-c as genuine). With a low item
+    // value (< returnlessRefundMaxValue) this routes to returnless_refund and
+    // the return completes without a warehouse trip.
     itemValueOverride = 299;
     demandSignal = null;
 
@@ -336,10 +339,9 @@ describe('Hero Path Wiring — End-to-End', () => {
 
     const finalRequest = await returnRequestRepo.findById(returnRequestId);
     expect(finalRequest).not.toBeNull();
-    // Grade C with inconclusive identity → requiresManualReview → manual_inspection
-    expect(finalRequest!.state).toBe('ManualReview');
+    expect(finalRequest!.state).toBe('Completed');
     expect(finalRequest!.dispositionDecision).not.toBeNull();
-    expect(finalRequest!.dispositionDecision!.route).toBe('manual_inspection');
+    expect(finalRequest!.dispositionDecision!.route).toBe('returnless_refund');
   });
 
   it('transitions are persisted with condition assessment and disposition decision', async () => {

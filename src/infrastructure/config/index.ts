@@ -110,6 +110,34 @@ export interface OtpConfig {
   lockoutMinutes: number;
 }
 
+// ─── Resale Marketplace ──────────────────────────────────────────────────────
+
+export interface ResaleConfig {
+  /** Discount % off original price per grade (0–100). */
+  gradeDiscountPct: { A: number; B: number; C: number };
+  /** Local-buyer window in days for grades that support direct transfer (A & C). */
+  transferWindowDays: number;
+  /** Gift-card amount as % of original price for the Grade C keep-offer. */
+  keepOfferGiftCardPct: number;
+  /** ETA (hours) for a same-city direct transfer. */
+  directTransferEtaHours: number;
+  /** ETA (hours) for a warehouse-shipped resale order. */
+  warehouseShipEtaHours: number;
+  /** Default city assigned to the demo seller when no address is known. */
+  defaultSellerCity: string;
+}
+
+// ─── Return Abuse Guard ──────────────────────────────────────────────────────
+
+export interface ReturnAbuseConfig {
+  /** Recent-return count at which the customer starts seeing warnings. */
+  warnThreshold: number;
+  /** Recent-return count at which low-value returns are blocked. */
+  blockThreshold: number;
+  /** Products at or below this value are considered abuse-prone (cheap). */
+  abuseProneMaxValue: number;
+}
+
 // ─── Root Config ─────────────────────────────────────────────────────────────
 
 export interface AppConfig {
@@ -122,6 +150,8 @@ export interface AppConfig {
   mediaLimits: MediaLimitsConfig;
   manualReview: ManualReviewConfig;
   otp: OtpConfig;
+  resale: ResaleConfig;
+  returnAbuse: ReturnAbuseConfig;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -176,6 +206,19 @@ export const DEFAULT_CONFIG: AppConfig = {
     validityMinutes: 10,
     maxAttempts: 3,
     lockoutMinutes: 15,
+  },
+  resale: {
+    gradeDiscountPct: { A: 10, B: 25, C: 40 },
+    transferWindowDays: 4,
+    keepOfferGiftCardPct: 30,
+    directTransferEtaHours: 4,
+    warehouseShipEtaHours: 72,
+    defaultSellerCity: 'Bengaluru',
+  },
+  returnAbuse: {
+    warnThreshold: 3,
+    blockThreshold: 5,
+    abuseProneMaxValue: 500,
   },
 };
 
@@ -320,6 +363,39 @@ export function loadConfig(): AppConfig {
       lockoutMinutes:
         envNumber('ZTR_OTP_LOCKOUT_MINUTES')
         ?? DEFAULT_CONFIG.otp.lockoutMinutes,
+    },
+    resale: {
+      gradeDiscountPct: {
+        A: envNumber('ZTR_RESALE_DISCOUNT_A') ?? DEFAULT_CONFIG.resale.gradeDiscountPct.A,
+        B: envNumber('ZTR_RESALE_DISCOUNT_B') ?? DEFAULT_CONFIG.resale.gradeDiscountPct.B,
+        C: envNumber('ZTR_RESALE_DISCOUNT_C') ?? DEFAULT_CONFIG.resale.gradeDiscountPct.C,
+      },
+      transferWindowDays:
+        envNumber('ZTR_RESALE_TRANSFER_WINDOW_DAYS')
+        ?? DEFAULT_CONFIG.resale.transferWindowDays,
+      keepOfferGiftCardPct:
+        envNumber('ZTR_RESALE_KEEP_OFFER_GIFTCARD_PCT')
+        ?? DEFAULT_CONFIG.resale.keepOfferGiftCardPct,
+      directTransferEtaHours:
+        envNumber('ZTR_RESALE_DIRECT_TRANSFER_ETA_HOURS')
+        ?? DEFAULT_CONFIG.resale.directTransferEtaHours,
+      warehouseShipEtaHours:
+        envNumber('ZTR_RESALE_WAREHOUSE_SHIP_ETA_HOURS')
+        ?? DEFAULT_CONFIG.resale.warehouseShipEtaHours,
+      defaultSellerCity:
+        process.env['ZTR_RESALE_DEFAULT_SELLER_CITY']
+        ?? DEFAULT_CONFIG.resale.defaultSellerCity,
+    },
+    returnAbuse: {
+      warnThreshold:
+        envNumber('ZTR_RETURN_ABUSE_WARN_THRESHOLD')
+        ?? DEFAULT_CONFIG.returnAbuse.warnThreshold,
+      blockThreshold:
+        envNumber('ZTR_RETURN_ABUSE_BLOCK_THRESHOLD')
+        ?? DEFAULT_CONFIG.returnAbuse.blockThreshold,
+      abuseProneMaxValue:
+        envNumber('ZTR_RETURN_ABUSE_PRONE_MAX_VALUE')
+        ?? DEFAULT_CONFIG.returnAbuse.abuseProneMaxValue,
     },
   };
 }

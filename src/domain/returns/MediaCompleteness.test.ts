@@ -171,10 +171,10 @@ describe('checkMediaCompleteness', () => {
   });
 
   describe('empty set', () => {
-    it('reports all 4 slots as missing', () => {
+    it('reports all 3 photo slots as missing', () => {
       const result = checkMediaCompleteness([]);
       expect(result.complete).toBe(false);
-      expect(result.missingSlots).toHaveLength(4); // front, back, closeup, video
+      expect(result.missingSlots).toHaveLength(3); // front, back, closeup (video no longer required)
     });
   });
 
@@ -199,12 +199,12 @@ describe('checkMediaCompleteness', () => {
     });
   });
 
-  describe('missing video', () => {
-    it('reports missing video slot', () => {
+  describe('video is optional', () => {
+    it('is complete with only the 3 photos and no video', () => {
       const media = completeValidSet().filter((m) => m.type !== 'video');
       const result = checkMediaCompleteness(media);
-      expect(result.complete).toBe(false);
-      expect(result.missingSlots.some((s) => s.includes('Video'))).toBe(true);
+      expect(result.complete).toBe(true);
+      expect(result.missingSlots).toHaveLength(0);
     });
   });
 
@@ -219,11 +219,11 @@ describe('checkMediaCompleteness', () => {
       expect(result.missingSlots.some((s) => s.includes('Photo front') && s.includes('duplicate'))).toBe(true);
     });
 
-    it('reports duplicate video', () => {
+    it('ignores extra videos (video no longer a tracked slot)', () => {
       const media = [...completeValidSet(), makeVideo({ id: 'video-2' })];
       const result = checkMediaCompleteness(media);
-      expect(result.complete).toBe(false);
-      expect(result.missingSlots.some((s) => s.includes('Video') && s.includes('duplicate'))).toBe(true);
+      expect(result.complete).toBe(true);
+      expect(result.missingSlots).toHaveLength(0);
     });
   });
 

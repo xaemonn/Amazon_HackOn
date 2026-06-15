@@ -10,6 +10,7 @@ import { CartPage } from './pages/CartPage';
 import { OrderHistoryPage } from './pages/OrderHistoryPage';
 import { AccountPage } from './pages/AccountPage';
 import { OrderDetail } from './pages/OrderDetail';
+import { MarketplacePage } from './pages/MarketplacePage';
 import { Eligibility } from './pages/returns/Eligibility';
 import { ReasonPicker } from './pages/returns/ReasonPicker';
 import { MediaCapture } from './pages/returns/MediaCapture';
@@ -28,6 +29,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/catalog" element={<CatalogPage />} />
               <Route path="/catalog/:productId" element={<ProductDetailPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders" element={<OrderHistoryPage />} />
               <Route path="/orders/:orderId" element={<OrderDetail />} />

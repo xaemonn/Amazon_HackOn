@@ -18,10 +18,11 @@ describe('AppConfig', () => {
     });
 
     it('has correct grading timeouts', () => {
-      expect(DEFAULT_CONFIG.gradingTimeouts.conditionGraderTimeoutMs).toBe(10_000);
-      expect(DEFAULT_CONFIG.gradingTimeouts.identityVerifierTimeoutMs).toBe(5_000);
-      expect(DEFAULT_CONFIG.gradingTimeouts.retryDelayMs).toBe(2_000);
-      expect(DEFAULT_CONFIG.gradingTimeouts.maxRetries).toBe(1);
+      // Raised for live multimodal Bedrock calls (4 images ≈ 45s each).
+      expect(DEFAULT_CONFIG.gradingTimeouts.conditionGraderTimeoutMs).toBe(90_000);
+      expect(DEFAULT_CONFIG.gradingTimeouts.identityVerifierTimeoutMs).toBe(90_000);
+      expect(DEFAULT_CONFIG.gradingTimeouts.retryDelayMs).toBe(3_000);
+      expect(DEFAULT_CONFIG.gradingTimeouts.maxRetries).toBe(0);
     });
 
     it('has correct fraud defaults', () => {
@@ -113,8 +114,8 @@ describe('AppConfig', () => {
       const config = loadConfig();
 
       expect(config.gradingTimeouts.conditionGraderTimeoutMs).toBe(15_000);
-      expect(config.gradingTimeouts.identityVerifierTimeoutMs).toBe(5_000); // still default
-      expect(config.gradingTimeouts.retryDelayMs).toBe(2_000); // still default
+      expect(config.gradingTimeouts.identityVerifierTimeoutMs).toBe(90_000); // still default
+      expect(config.gradingTimeouts.retryDelayMs).toBe(3_000); // still default
     });
   });
 });

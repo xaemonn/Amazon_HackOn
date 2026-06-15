@@ -164,7 +164,31 @@ export function createReturnsRouter(returnsFacade: ReturnsFacade): Router {
           ? result.orderDate.toISOString().split('T')[0]
           : result.orderDate,
         errorMessage: result.errorMessage ?? null,
+        returnPolicy: result.returnPolicy ?? null,
       });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // ── GET /returns/policy — Pre-purchase return-abuse policy ──────────────
+  // Lets the product page warn that returns may be unavailable for a customer
+  // with high recent return activity, before they buy.
+  router.get('/policy', async (req: Request, res: Response) => {
+    try {
+      const customerId = req.query['customerId'] as string | undefined;
+      const productValueRaw = req.query['productValue'] as string | undefined;
+      if (!customerId) {
+        res.status(400).json({ error: 'customerId query parameter is required.' });
+        return;
+      }
+      const productValue = Number(productValueRaw);
+      if (Number.isNaN(productValue)) {
+        res.status(400).json({ error: 'productValue must be a number.' });
+        return;
+      }
+      const decision = await returnsFacade.evaluateReturnPolicyFor(customerId, productValue);
+      res.status(200).json(decision);
     } catch (error) {
       handleError(res, error);
     }

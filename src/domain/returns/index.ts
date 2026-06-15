@@ -28,6 +28,14 @@ export { RETURN_REASONS, isValidReturnReason, isFaultReason, isChoiceReason } fr
 // ReasonDetails
 export { validateReasonDetails, ReasonDetailsError, MAX_REASON_DETAILS_LENGTH } from './ReasonDetails.js';
 
+// ReturnAbusePolicy
+export type {
+  ReturnAbuseConfig,
+  ReturnRiskLevel,
+  ReturnPolicyDecision,
+} from './ReturnAbusePolicy.js';
+export { evaluateReturnPolicy } from './ReturnAbusePolicy.js';
+
 // MediaCompleteness
 export type { MediaCompletenessResult } from './MediaCompleteness.js';
 export {

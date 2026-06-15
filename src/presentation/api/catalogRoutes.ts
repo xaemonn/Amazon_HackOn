@@ -17,6 +17,8 @@ export interface CatalogProduct {
   reviewCount: number;
   inStock: boolean;
   tags: string[];
+  /** Optional real product image URL (served from the catalog images endpoint). */
+  imageUrl?: string;
 }
 
 export const CATALOG_PRODUCTS: CatalogProduct[] = [
@@ -175,6 +177,20 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
     reviewCount: 165,
     inStock: false,
     tags: ['battery', 'fast-charge', 'pd65w'],
+  },
+  {
+    id: 'item-earbuds',
+    name: 'Wireless Earbuds',
+    category: 'Electronics',
+    price: 2499,
+    currency: 'INR',
+    emoji: '🎧',
+    description: 'True wireless earbuds with a compact charging case, active noise cancellation, and 24-hour total battery life.',
+    rating: 4.6,
+    reviewCount: 203,
+    inStock: true,
+    tags: ['audio', 'wireless', 'earbuds'],
+    imageUrl: '/api/catalog/images/item-earbuds',
   },
 ];
 

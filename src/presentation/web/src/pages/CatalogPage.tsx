@@ -26,8 +26,17 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <Link to={`/catalog/${product.id}`} className="product-card__image-link">
-        <div className="product-card__image" aria-hidden="true">
-          {product.emoji}
+        <div className="product-card__image">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="product-card__image-img"
+              loading="lazy"
+            />
+          ) : (
+            <span aria-hidden="true">{product.emoji}</span>
+          )}
         </div>
       </Link>
 

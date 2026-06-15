@@ -87,6 +87,7 @@ export interface Product {
   reviewCount: number;
   inStock: boolean;
   tags: string[];
+  imageUrl?: string;
 }
 
 export async function apiGetCatalog(params?: {
@@ -148,4 +149,105 @@ export async function apiCheckout(
     method: 'POST',
     body: JSON.stringify({ items, paymentType }),
   });
+}
+
+// ─── Resale Marketplace ──────────────────────────────────────────────────────
+
+export type ResaleGrade = 'A' | 'B' | 'C';
+export type ResaleListingType =
+  | 'direct_transfer'
+  | 'returned_discounted'
+  | 'refurbished_discounted';
+export type ResaleListingStatus =
+  | 'active'
+  | 'sold'
+  | 'returned_to_warehouse'
+  | 'keep_offer_extended'
+  | 'kept_by_customer'
+  | 'cancelled';
+
+export interface ResaleListing {
+  id: string;
+  returnRequestId: string;
+  productId: string;
+  productName: string;
+  imageUrl: string | null;
+  grade: ResaleGrade;
+  conditionLabel: string;
+  listingType: ResaleListingType;
+  originalPrice: number;
+  listedPrice: number;
+  currency: string;
+  sellerCustomerId: string;
+  sellerCity: string;
+  status: ResaleListingStatus;
+  listedAt: string;
+  expiresAt: string | null;
+  buyerCustomerId: string | null;
+  buyerCity: string | null;
+  soldAt: string | null;
+  fulfilment: {
+    deliveryPartner: string;
+    mode: 'direct_transfer' | 'warehouse_ship';
+    etaHours: number;
+    fromCustomerId: string;
+    toCustomerId: string;
+  } | null;
+  keepOffer: {
+    giftCardAmount: number;
+    currency: string;
+    status: 'pending' | 'accepted';
+    extendedAt: string;
+    acceptedAt: string | null;
+  } | null;
+}
+
+export interface PurchaseResult {
+  listing: ResaleListing;
+  fulfilment: ResaleListing['fulfilment'];
+  directTransfer: boolean;
+}
+
+export async function apiGetResaleListings(city?: string): Promise<{ listings: ResaleListing[]; total: number }> {
+  const qs = city ? `?city=${encodeURIComponent(city)}` : '';
+  return apiFetch(`/resale/listings${qs}`);
+}
+
+export async function apiGetResaleListing(id: string): Promise<ResaleListing> {
+  return apiFetch(`/resale/listings/${id}`);
+}
+
+export async function apiPurchaseResale(
+  id: string,
+  buyerCustomerId: string,
+  buyerCity: string,
+): Promise<PurchaseResult> {
+  return apiFetch(`/resale/listings/${id}/purchase`, {
+    method: 'POST',
+    body: JSON.stringify({ buyerCustomerId, buyerCity }),
+  });
+}
+
+export async function apiForceExpireResale(id: string): Promise<ResaleListing> {
+  return apiFetch(`/resale/listings/${id}/force-expire`, { method: 'POST' });
+}
+
+export async function apiAcceptKeepOffer(id: string): Promise<ResaleListing> {
+  return apiFetch(`/resale/listings/${id}/accept-keep-offer`, { method: 'POST' });
+}
+
+// ─── Return policy (abuse guard) ─────────────────────────────────────────────
+
+export interface ReturnPolicyDecision {
+  returnsAllowed: boolean;
+  riskLevel: 'none' | 'elevated' | 'high';
+  warning: string | null;
+  recentReturnCount: number;
+}
+
+export async function apiGetReturnPolicy(
+  customerId: string,
+  productValue: number,
+): Promise<ReturnPolicyDecision> {
+  return apiFetch(`/returns/policy?customerId=${encodeURIComponent(customerId)}&productValue=${productValue}`);
 }

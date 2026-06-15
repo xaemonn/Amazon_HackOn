@@ -164,6 +164,7 @@ export function Layout() {
             ☰ All
           </button>
           <NavLink to="/catalog" className="nav-strip__link">Shop</NavLink>
+          <NavLink to="/marketplace" className="nav-strip__link">♻️ Returns Marketplace</NavLink>
           <NavLink to="/catalog?category=Electronics" className="nav-strip__link">Electronics</NavLink>
           <NavLink to="/catalog?category=Fashion" className="nav-strip__link">Fashion</NavLink>
           <NavLink to="/catalog?category=Home+%26+Kitchen" className="nav-strip__link">Home &amp; Kitchen</NavLink>
@@ -186,6 +187,7 @@ export function Layout() {
             </div>
             <ul className="mobile-menu__list" role="list">
               <li><Link to="/catalog" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>🛍️ Shop All</Link></li>
+              <li><Link to="/marketplace" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>♻️ Returns Marketplace</Link></li>
               <li><Link to="/orders" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>📦 My Orders</Link></li>
               <li><Link to="/cart" className="mobile-menu__item" onClick={() => setMenuOpen(false)}>🛒 Cart {itemCount > 0 && `(${itemCount})`}</Link></li>
               {isAuthenticated ? (
