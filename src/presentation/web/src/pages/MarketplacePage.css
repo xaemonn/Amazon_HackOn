@@ -197,6 +197,20 @@
   cursor: pointer;
 }
 .mcard__buy:disabled { opacity: 0.6; cursor: default; }
+.mcard__own-listing {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 .mcard__buy:not(:disabled):hover { background: #1e293b; }
 
 .mcard__ghost {

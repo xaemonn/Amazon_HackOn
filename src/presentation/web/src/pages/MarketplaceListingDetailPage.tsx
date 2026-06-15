@@ -142,17 +142,23 @@ export function MarketplaceListingDetailPage() {
 
           {/* Buy action */}
           {listing.status === 'active' && !purchased && (
-            <button
-              className="mld__buy-btn"
-              disabled={buying || !user}
-              onClick={handleBuy}
-            >
-              {buying
-                ? 'Processing…'
-                : user
-                  ? `Buy Now — ${sym(listing.currency)}${listing.listedPrice.toLocaleString('en-IN')}`
-                  : 'Log in to purchase'}
-            </button>
+            user && listing.sellerCustomerId === user.id ? (
+              <div className="mld__own-listing" role="note">
+                🏷️ This is your listing — you can't buy your own item.
+              </div>
+            ) : (
+              <button
+                className="mld__buy-btn"
+                disabled={buying || !user}
+                onClick={handleBuy}
+              >
+                {buying
+                  ? 'Processing…'
+                  : user
+                    ? `Buy Now — ${sym(listing.currency)}${listing.listedPrice.toLocaleString('en-IN')}`
+                    : 'Log in to purchase'}
+              </button>
+            )
           )}
 
           {purchased && (

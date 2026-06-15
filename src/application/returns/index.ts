@@ -472,6 +472,28 @@ export class ReturnsFacade implements IReturnsFacade {
     return this.toProjection(returnRequest, conditionAssessment, dispositionDecision);
   }
 
+  /**
+   * Abandon a return so the same order item can be returned again from scratch.
+   * Used when the AI verdict is an item mismatch / unverified wrong-item claim and
+   * the customer chooses to restart the entire flow (re-pick reason, re-capture).
+   * Also removes any grading/disposition records tied to the return.
+   */
+  async abandonReturn(returnRequestId: string): Promise<{ deleted: boolean }> {
+    const deleted = await this.returnRequestRepository.delete(returnRequestId);
+
+    // Best-effort cleanup of related records (no-op if the repo lacks delete).
+    const tryDelete = (repo: unknown): void => {
+      const r = repo as { deleteByReturnRequestId?: (id: string) => unknown };
+      if (r && typeof r.deleteByReturnRequestId === 'function') {
+        void r.deleteByReturnRequestId(returnRequestId);
+      }
+    };
+    tryDelete(this.conditionAssessmentRepository);
+    tryDelete(this.dispositionDecisionRepository);
+
+    return { deleted };
+  }
+
   // ── Dev helpers (testing only) ──────────────────────────────────────────────
 
   /**

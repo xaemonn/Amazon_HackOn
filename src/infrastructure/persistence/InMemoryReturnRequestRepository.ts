@@ -30,6 +30,13 @@ export class InMemoryReturnRequestRepository implements IReturnRequestRepository
   }
 
   /**
+   * Permanently remove a ReturnRequest so its order item can be returned again.
+   */
+  async delete(id: string): Promise<boolean> {
+    return this.store.delete(id);
+  }
+
+  /**
    * Retrieve all ReturnRequests belonging to a customer, ordered by
    * createdAt descending (most recent first).
    */

@@ -66,6 +66,7 @@ function createMockReturnRequestRepository(): IReturnRequestRepository & { store
       return null;
     }),
     countByCustomerInDays: vi.fn().mockResolvedValue(1),
+    delete: vi.fn().mockImplementation(async (id: string) => store.delete(id)),
   };
 }
 

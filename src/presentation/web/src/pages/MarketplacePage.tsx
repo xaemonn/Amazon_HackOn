@@ -290,13 +290,19 @@ export function MarketplacePage() {
                   {/* Status-aware footer */}
                   {l.status === 'active' && (
                     <div className="mcard__actions">
-                      <button
-                        className="mcard__buy"
-                        disabled={busyId === l.id}
-                        onClick={(e) => { e.stopPropagation(); void handleBuy(l); }}
-                      >
-                        {busyId === l.id ? 'Processing…' : `Buy ${sym(l.currency)}${l.listedPrice.toLocaleString('en-IN')}`}
-                      </button>
+                      {l.sellerCustomerId === buyerId ? (
+                        <div className="mcard__own-listing" role="note">
+                          🏷️ Your listing — you can't buy your own item.
+                        </div>
+                      ) : (
+                        <button
+                          className="mcard__buy"
+                          disabled={busyId === l.id}
+                          onClick={(e) => { e.stopPropagation(); void handleBuy(l); }}
+                        >
+                          {busyId === l.id ? 'Processing…' : `Buy ${sym(l.currency)}${l.listedPrice.toLocaleString('en-IN')}`}
+                        </button>
+                      )}
                       {l.needsRegrade && (
                         <button
                           className="mcard__ghost mcard__ghost--regrade"

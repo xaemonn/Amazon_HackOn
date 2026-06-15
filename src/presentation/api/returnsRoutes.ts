@@ -344,6 +344,20 @@ export function createReturnsRouter(returnsFacade: ReturnsFacade): Router {
     }
   });
 
+  // ── DELETE /returns/:id — Abandon a return so the item can be returned again ─
+  // Used when the AI verdict is an item mismatch and the customer restarts the
+  // entire flow (re-pick reason, re-capture photos).
+  router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+      const id = getIdParam(req);
+      const result = await returnsFacade.abandonReturn(id);
+      gradingStartTimes.delete(id);
+      res.status(200).json({ message: 'Return abandoned.', ...result });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
   // ── GET /returns/:id/progress — Grading progress ─────────────────────────
 
   router.get('/:id/progress', async (req: Request, res: Response) => {

@@ -226,15 +226,22 @@ export function GradingProgress() {
     setTimeout(() => navigate('/'), 1800);
   };
 
-  // Item mismatch — send the shopper back to re-capture photos, carrying the
-  // original return context plus the AI's reasoning.
-  const handleRetakePhotos = () => {
-    navigate('/returns/media', {
+  // Item mismatch — abandon this return entirely and restart the whole flow
+  // (re-pick reason, re-capture photos). Deleting the old return frees the order
+  // item so a fresh return request can be initiated without the "already exists"
+  // error.
+  const handleRetakePhotos = async () => {
+    if (returnId) {
+      try {
+        await fetch(`/api/returns/${returnId}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('[GradingProgress] Failed to abandon return:', err);
+      }
+    }
+    navigate('/returns/reason', {
       state: {
         customerId: state?.customerId,
         orderItemId: state?.orderItemId,
-        reason: state?.reason,
-        reasonDetails: state?.reasonDetails,
       },
     });
   };

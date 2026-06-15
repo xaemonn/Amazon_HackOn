@@ -63,4 +63,13 @@ export interface IReturnRequestRepository {
    * @returns          The count of return requests initiated in that window.
    */
   countByCustomerInDays(customerId: string, days: number): Promise<number>;
+
+  /**
+   * Permanently remove a ReturnRequest. Used when a customer abandons a return
+   * (e.g. after an item-mismatch verdict) and restarts the flow from scratch.
+   *
+   * @param id - The ReturnRequest's UUID.
+   * @returns  `true` if a record was removed, `false` if none existed.
+   */
+  delete(id: string): Promise<boolean>;
 }

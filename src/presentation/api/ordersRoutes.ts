@@ -59,6 +59,16 @@ export function createOrdersRouter(
     res.json({ orders: sorted });
   });
 
+  // DELETE /orders/dev/reset — wipe the authenticated customer's order history.
+  // Next GET /orders re-seeds the starter order, returning them to a clean slate.
+  router.delete('/dev/reset', async (req: Request, res: Response) => {
+    if (!requireAuth(req, res)) return;
+    const customerId = getCustomerId(req);
+    const deleted = await orderRepo.deleteByCustomerId(customerId);
+    console.log(`[Orders] reset order history for ${customerId} — ${deleted} order(s) removed.`);
+    res.json({ message: 'Order history reset.', customerId, deleted });
+  });
+
   // GET /orders/:id — single order (ownership-checked)
   router.get('/:id', async (req: Request, res: Response) => {
     if (!requireAuth(req, res)) return;

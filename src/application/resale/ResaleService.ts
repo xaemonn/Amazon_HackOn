@@ -180,6 +180,20 @@ export class ResaleService {
 
     const fulfilment = sold.fulfilment!;
 
+    // Demo-visible terminal log: the buyer↔seller P2P mapping for this sale.
+    console.log(
+      '\n┌─── 🔗 P2P MATCH: buyer ↔ seller mapped ───────────────────────────\n' +
+      `│  Product   : ${listing.productName} (${listing.productId})\n` +
+      `│  Listing   : ${listing.id}  ·  Grade ${listing.grade}\n` +
+      `│  Price     : ${listing.currency} ${listing.listedPrice}\n` +
+      `│  SELLER    : ${listing.sellerCustomerId}  (${listing.sellerCity})\n` +
+      `│  BUYER     : ${input.buyerCustomerId}  (${input.buyerCity})\n` +
+      `│  Fulfilment: ${fulfilment.mode}` +
+        `${fulfilment.deliveryPartner ? ` via ${fulfilment.deliveryPartner}` : ''}` +
+        ` · ETA ${fulfilment.etaHours}h\n` +
+      '└───────────────────────────────────────────────────────────────────\n',
+    );
+
     // Record the internal P2P seller↔buyer mapping for delivery routing.
     // This is intentionally NOT returned to the caller — it's ops-only.
     if (this.matchRepo) {

@@ -8,4 +8,6 @@ export interface IOrderRepository {
   findByCustomerId(customerId: string): Promise<Order[]>;
   findOrderItemById(id: string): Promise<{ order: Order; item: OrderItem } | null>;
   updateOrderItemRefundStatus(orderItemId: string, refundStatus: RefundStatus): Promise<void>;
+  /** Remove all orders belonging to a customer. Returns the number deleted. */
+  deleteByCustomerId(customerId: string): Promise<number>;
 }

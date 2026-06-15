@@ -24,6 +24,17 @@ export class InMemoryOrderRepository implements IOrderRepository {
     );
   }
 
+  async deleteByCustomerId(customerId: string): Promise<number> {
+    let deleted = 0;
+    for (const [id, order] of this.store) {
+      if (order.customerId === customerId) {
+        this.store.delete(id);
+        deleted++;
+      }
+    }
+    return deleted;
+  }
+
   async findOrderItemById(
     id: string,
   ): Promise<{ order: Order; item: OrderItem } | null> {
