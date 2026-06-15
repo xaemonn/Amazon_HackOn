@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../api/client';
 import { ReviewModal } from './ReviewModal';
 import './ReturnPage.css';
 import './GradingProgress.css';
@@ -107,7 +108,7 @@ export function GradingProgress() {
     if (!returnId) return;
 
     try {
-      const res = await fetch(`/api/returns/${returnId}/progress`);
+      const res = await fetch(`${API_BASE}/api/returns/${returnId}/progress`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
@@ -233,7 +234,7 @@ export function GradingProgress() {
   const handleRetakePhotos = async () => {
     if (returnId) {
       try {
-        await fetch(`/api/returns/${returnId}`, { method: 'DELETE' });
+        await fetch(`${API_BASE}/api/returns/${returnId}`, { method: 'DELETE' });
       } catch (err) {
         console.error('[GradingProgress] Failed to abandon return:', err);
       }

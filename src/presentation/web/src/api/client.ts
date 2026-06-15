@@ -12,6 +12,10 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+export { API_BASE };
+
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -20,7 +24,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     ...(options.headers as Record<string, string> | undefined ?? {}),
   };
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as Record<string, unknown>;
@@ -306,7 +310,7 @@ export async function apiRegradeResale(
     files.slice(0, 3).map(async (file, i) => {
       const ext = file.type === 'image/png' ? 'png' : 'jpeg';
       const filename = `regrade_${Date.now()}_${i}.${ext}`;
-      const res = await fetch(`/api/media/${folder}/${filename}`, {
+      const res = await fetch(`${API_BASE}/api/media/${folder}/${filename}`, {
         method: 'PUT',
         headers: { 'Content-Type': file.type || 'image/jpeg' },
         body: file,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { API_BASE } from '../api/client';
 import type { Product } from '../api/client';
 
 async function fetchProducts(params?: { search?: string; category?: string }) {
@@ -6,7 +7,7 @@ async function fetchProducts(params?: { search?: string; category?: string }) {
   if (params?.search)   query.set('search',   params.search);
   if (params?.category) query.set('category', params.category);
   const qs = query.toString();
-  const res = await fetch(`/api/products${qs ? `?${qs}` : ''}`, {
+  const res = await fetch(`${API_BASE}/api/products${qs ? `?${qs}` : ''}`, {
     headers: { 'Content-Type': 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -14,7 +15,7 @@ async function fetchProducts(params?: { search?: string; category?: string }) {
 }
 
 async function fetchProduct(id: string) {
-  const res = await fetch(`/api/products/${encodeURIComponent(id)}`, {
+  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
     headers: { 'Content-Type': 'application/json' },
   });
   if (!res.ok) throw new Error(res.status === 404 ? 'Product not found.' : `HTTP ${res.status}`);

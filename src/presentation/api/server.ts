@@ -208,7 +208,7 @@ export function createApp() {
  * Only runs when this file is the entry point (not when imported for testing).
  */
 export async function startServer() {
-  const port = parseInt(process.env['ZTR_API_PORT'] ?? '3001', 10);
+  const port = parseInt(process.env['PORT'] ?? process.env['ZTR_API_PORT'] ?? '3001', 10);
   const mongoUri = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/amazon2';
 
   // Connect to MongoDB before starting HTTP server.

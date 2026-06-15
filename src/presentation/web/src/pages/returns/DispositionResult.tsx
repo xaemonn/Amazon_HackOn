@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../api/client';
 import './ReturnPage.css';
 import './DispositionResult.css';
 
@@ -95,7 +96,7 @@ async function fetchReturnResult(returnId: string): Promise<ResultState> {
     throw new Error('Return ID is required');
   }
 
-  const res = await fetch(`/api/returns/${returnId}`);
+  const res = await fetch(`${API_BASE}/api/returns/${returnId}`);
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error || `Failed to load return data (${res.status})`);

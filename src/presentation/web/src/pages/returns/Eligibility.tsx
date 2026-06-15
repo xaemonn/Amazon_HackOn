@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../api/client';
 import './Eligibility.css';
 
 interface EligibilityResult {
@@ -23,7 +24,7 @@ async function fetchEligibility(
   orderItemId: string
 ): Promise<EligibilityResult> {
   const params = new URLSearchParams({ customerId, orderItemId });
-  const response = await fetch(`/api/returns/eligibility?${params.toString()}`);
+  const response = await fetch(`${API_BASE}/api/returns/eligibility?${params.toString()}`);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);

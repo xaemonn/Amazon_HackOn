@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../api/client';
 import './NotifyBanner.css';
 
 interface GradeResult {
@@ -23,7 +24,7 @@ export function NotifyBanner() {
 
     for (const returnId of ids) {
       try {
-        const res = await fetch(`/api/returns/${returnId}/progress`);
+        const res = await fetch(`${API_BASE}/api/returns/${returnId}/progress`);
         if (!res.ok) continue;
         const data = await res.json();
         if (data.complete && data.result) {

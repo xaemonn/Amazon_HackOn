@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: second-life-api
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: MONGODB_URI
+        sync: false
+      - key: ZTR_BEDROCK_ENABLED
+        value: "true"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: "us-east-1"
+      - key: JWT_SECRET
+        sync: false
+      - key: ZTR_CORS_ORIGINS
+        sync: false

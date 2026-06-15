@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../api/client';
 import './ReturnPage.css';
 import './MediaCapture.css';
 
@@ -448,7 +449,7 @@ export function MediaCapture() {
     setIsSubmitting(true);
 
     try {
-      const initiateRes = await fetch('/api/returns', {
+      const initiateRes = await fetch(`${API_BASE}/api/returns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -479,7 +480,7 @@ export function MediaCapture() {
 
         if (captured?.file) {
           const contentType = captured.file.type || (slot.isVideo ? 'video/mp4' : 'image/jpeg');
-          await fetch(`/api/media/${returnId}/${filename}`, {
+          await fetch(`${API_BASE}/api/media/${returnId}/${filename}`, {
             method: 'PUT',
             headers: { 'Content-Type': contentType },
             body: captured.file,
@@ -496,7 +497,7 @@ export function MediaCapture() {
         };
       }));
 
-      const mediaRes = await fetch(`/api/returns/${returnId}/media`, {
+      const mediaRes = await fetch(`${API_BASE}/api/returns/${returnId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ media: mediaRefs }),
@@ -506,7 +507,7 @@ export function MediaCapture() {
         throw new Error(e.error || `Failed to submit media (${mediaRes.status})`);
       }
 
-      const completeRes = await fetch(`/api/returns/${returnId}/complete-capture`, {
+      const completeRes = await fetch(`${API_BASE}/api/returns/${returnId}/complete-capture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
