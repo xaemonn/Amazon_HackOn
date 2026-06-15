@@ -148,11 +148,14 @@ export async function seedDemoUsersAndOrders(deps: SeedDemoUsersDeps): Promise<v
   }
 
   for (const u of DEMO_USERS) {
-    let user = await User.findOne({ email: u.email });
-    if (!user) {
-      const passwordHash = await bcrypt.hash(u.password, 12);
-      user = await User.create({ name: u.name, email: u.email, passwordHash });
-    }
+    // Always upsert so the password is guaranteed to match the spec on every
+    // restart — prevents "invalid password" if the hash drifted between runs.
+    const passwordHash = await bcrypt.hash(u.password, 12);
+    const user = await User.findOneAndUpdate(
+      { email: u.email },
+      { $set: { name: u.name, passwordHash } },
+      { upsert: true, new: true },
+    );
     const customerId = user._id.toString();
     await seedOrderForCustomer(deps.orderRepo, deps.authService, customerId, u.name.toLowerCase(), u.items);
     console.log(`[Seed] Demo user ${u.name} <${u.email}> → ${customerId}`);

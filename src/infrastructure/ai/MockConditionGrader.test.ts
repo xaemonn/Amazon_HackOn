@@ -43,11 +43,11 @@ describe('MockConditionGrader', () => {
       expect(result.defects[1].severity).toBe('moderate');
     });
 
-    it('should return grade D with confidence 0.80 for item-grade-d', async () => {
+    it('should return grade D (product mismatch) with confidence 0.82 for item-grade-d', async () => {
       const result = await grader.assessCondition([], 'item-grade-d', noCatalog);
       expect(result.grade).toBe('D');
-      expect(result.confidence).toBe(0.80);
-      expect(result.defects).toHaveLength(3);
+      expect(result.confidence).toBe(0.82);
+      expect(result.defects.length).toBeGreaterThanOrEqual(1);
       expect(result.defects.some((d) => d.severity === 'severe')).toBe(true);
     });
   });

@@ -175,6 +175,36 @@
 .login-btn--primary { background: #FFD814; border-color: #FCD200; color: #0f1111; }
 .login-btn--primary:hover:not(:disabled) { background: #F7CA00; }
 
+.login-btn--demo {
+  background: #131921;
+  border-color: #131921;
+  color: #fff;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+.login-btn--demo:hover:not(:disabled) { background: #2b3645; }
+
+/* Divider */
+.login-divider {
+  position: relative;
+  text-align: center;
+  margin: 1rem 0;
+}
+.login-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+.login-divider span {
+  position: relative;
+  background: #fff;
+  padding: 0 0.6rem;
+  font-size: 0.75rem;
+  color: #6c6c6c;
+}
+
 /* Helper text */
 .login-switch-hint {
   font-size: 0.82rem;

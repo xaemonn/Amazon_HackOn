@@ -1,0 +1,13 @@
+{
+  "folders": [
+	{
+		"name": "hackonKiro",
+		"path": "."
+	},
+	{
+		"name": "uploads",
+		"path": "../../Downloads/uploads"
+	}
+],
+  "settings": {}
+}

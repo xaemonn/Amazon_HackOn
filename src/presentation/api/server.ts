@@ -30,7 +30,7 @@ import { createResaleRouter } from './resaleRoutes.js';
 import { createProductsRouter } from './productsRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
-import { seedDemoUsersAndOrders } from '../../infrastructure/seed/demoUsers.js';
+import { seedDemoUsersAndOrders, seedOrderForCustomer, DEMO_USERS } from '../../infrastructure/seed/demoUsers.js';
 import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
 
 // ─── App Factory ─────────────────────────────────────────────────────────────
@@ -186,7 +186,17 @@ export async function startServer() {
 
   const { app, orderRepo, authService } = createApp();
 
-  // Seed log-in-able demo users (Prince & Priya) each with their own orders.
+  // Always seed in-memory orders for named demo accounts under their stable IDs.
+  // This guarantees prince@gmail.com / priya@gmail.com can use the return flow
+  // even when MongoDB is unreachable (login falls back to in-memory credentials).
+  const STABLE_IDS = ['seed-prince', 'seed-priya'];
+  for (let i = 0; i < DEMO_USERS.length; i++) {
+    const u = DEMO_USERS[i]!;
+    const stableId = STABLE_IDS[i]!;
+    await seedOrderForCustomer(orderRepo, authService as MockAuthService, stableId, u.name.toLowerCase(), u.items);
+  }
+
+  // Also seed into MongoDB (upserts the real Mongo-ID records for full auth).
   try {
     await seedDemoUsersAndOrders({ orderRepo, authService });
   } catch (err) {

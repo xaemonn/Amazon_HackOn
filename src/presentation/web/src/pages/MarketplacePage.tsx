@@ -33,7 +33,10 @@ function daysLeft(expiresAt: string | null): string | null {
 
 export function MarketplacePage() {
   const { user } = useAuth();
-  const [city, setCity] = useState('Bengaluru');
+  // Default to the user's registered city so they only see their city's listings.
+  // Falls back to first CITIES entry if no address is saved.
+  const userCity = (user as { address?: { city?: string } } | null)?.address?.city;
+  const [city, setCity] = useState(userCity ?? CITIES[0] ?? 'Bengaluru');
   const [listings, setListings] = useState<ResaleListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +113,10 @@ export function MarketplacePage() {
         <label className="market__city">
           <span>Your city</span>
           <select value={city} onChange={(e) => setCity(e.target.value)}>
+            {/* Show user's city even if not in the preset list */}
+            {userCity && !CITIES.includes(userCity) && (
+              <option value={userCity}>{userCity}</option>
+            )}
             {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
@@ -121,8 +128,9 @@ export function MarketplacePage() {
         <p className="market__empty">Loading listings…</p>
       ) : listings.length === 0 ? (
         <p className="market__empty">
-          No relisted items yet. Complete a return and grade an item (A/B/C) to
-          see it appear here.
+          No relisted items in <strong>{city}</strong> yet. Returns from sellers
+          in your city appear here. Complete a return and grade an item (A/B/C)
+          to see it appear — only buyers in the same city can see it.
         </p>
       ) : (
         <div className="market__grid">

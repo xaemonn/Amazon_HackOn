@@ -78,27 +78,17 @@ const SEEDED_RESULTS: Record<string, SeededResult> = {
 
   'item-grade-d': {
     grade: 'D',
-    confidence: 0.80,
+    confidence: 0.82,
     reasoning:
-      'Item has significant damage and heavy signs of use. ' +
-      'Cracked casing on the rear, deep scratches on the front panel, and a ' +
-      'loose component inside. Functional testing is recommended before resale. ' +
-      'Suitable for parts recovery or refurbishment only.',
+      'The item in the photos does not appear to match the ordered product. ' +
+      'The shape, colour, and branding differ from the catalogue reference for this order — ' +
+      'the photographed item looks like a different model or product entirely. ' +
+      'We could not grade its condition because the identity could not be confirmed.',
     defects: [
       {
-        location: 'rear casing',
+        location: 'overall',
         severity: 'severe',
-        description: 'Cracked casing spanning the full width of the rear panel.',
-      },
-      {
-        location: 'front panel',
-        severity: 'moderate',
-        description: 'Deep scratches across the display area, visible from normal viewing distance.',
-      },
-      {
-        location: 'internal',
-        severity: 'severe',
-        description: 'Audible loose component when shaken; likely detached internal bracket.',
+        description: 'Photographed item does not match the ordered product (different model/colour/branding).',
       },
     ],
   },

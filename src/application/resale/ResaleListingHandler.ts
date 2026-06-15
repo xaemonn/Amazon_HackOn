@@ -25,6 +25,8 @@ export interface ResaleListingHandlerDeps {
   returnRequestLookup: IReturnRequestLookup;
   authService: IAuthService;
   resaleService: ResaleService;
+  /** Look up the returner's registered city by their customer ID. Falls back to defaultSellerCity. */
+  getCustomerCity: (customerId: string) => Promise<string | null>;
   /** City assigned to the seller when no per-customer address is available. */
   defaultSellerCity: string;
 }
@@ -62,6 +64,10 @@ export class ResaleListingHandler {
       const originalPrice = orderItem?.price ?? returnData.itemValue;
       const currency = orderItem?.currency ?? returnData.currency;
 
+      const sellerCity =
+        (await this.deps.getCustomerCity(returnData.customerId)) ??
+        this.deps.defaultSellerCity;
+
       const listing = await this.deps.resaleService.createListingFromReturn({
         returnRequestId,
         grade: assessment.grade,
@@ -71,7 +77,7 @@ export class ResaleListingHandler {
         originalPrice,
         currency,
         sellerCustomerId: returnData.customerId,
-        sellerCity: this.deps.defaultSellerCity,
+        sellerCity,
       });
 
       console.log('[ResaleListingHandler] Relisted graded return', {

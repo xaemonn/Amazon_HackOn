@@ -55,7 +55,7 @@ export function CartPage() {
       <div className="cart-layout">
         {/* Item list */}
         <section className="cart-items" aria-label="Cart items">
-          {items.map(({ product, quantity }) => (
+          {items.map(({ product, quantity, size }) => (
             <article key={product.id} className="cart-item">
               <div className="cart-item__image" aria-hidden="true">{product.emoji}</div>
 
@@ -64,6 +64,7 @@ export function CartPage() {
                   {product.name}
                 </Link>
                 <p className="cart-item__category">{product.category}</p>
+                {size && <p className="cart-item__size">Size: <strong>{size}</strong></p>}
                 <p className="cart-item__unit-price">₹{product.price.toLocaleString('en-IN')} each</p>
               </div>
 

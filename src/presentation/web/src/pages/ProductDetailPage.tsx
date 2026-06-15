@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiGetReturnPolicy, type ReturnPolicyDecision } from '../api/client';
 import { useProduct } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useSizeProfile } from '../hooks/useSizeProfile';
+import { formatSize, getSizeRecommendation } from '../utils/sizing';
 import './ProductDetailPage.css';
 
 export function ProductDetailPage() {
@@ -12,17 +14,35 @@ export function ProductDetailPage() {
   const { addItem, items } = useCart();
   const { user } = useAuth();
   const { product, isLoading, error } = useProduct(productId);
+  const { profile } = useSizeProfile();
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [imgFailed, setImgFailed] = useState(false);
   const [returnPolicy, setReturnPolicy] = useState<ReturnPolicyDecision | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [sizePrompt, setSizePrompt] = useState(false);
 
   const inCart = items.some((i) => i.product.id === productId);
+
+  // Size & fit advisor (return-prevention)
+  const sizeRec = useMemo(
+    () => (product ? getSizeRecommendation(product, profile) : null),
+    [product, profile],
+  );
 
   useEffect(() => {
     setSelectedIndex(0);
     setImgFailed(false);
+    setSelectedSize(null);
+    setSizePrompt(false);
   }, [productId]);
+
+  // Pre-select the recommended size once it's known
+  useEffect(() => {
+    if (sizeRec?.sizeable && sizeRec.recommendedSize != null && !selectedSize) {
+      setSelectedSize(formatSize(sizeRec.kind, sizeRec.recommendedSize));
+    }
+  }, [sizeRec, selectedSize]);
 
   // Pre-purchase return-availability check (abuse guard).
   useEffect(() => {
@@ -32,16 +52,20 @@ export function ProductDetailPage() {
       .catch(() => setReturnPolicy(null));
   }, [product, user]);
 
+  const requiresSize = !!sizeRec?.sizeable;
+
   const handleAddToCart = () => {
     if (!product) return;
-    addItem(product);
+    if (requiresSize && !selectedSize) { setSizePrompt(true); return; }
+    addItem(product, selectedSize ?? undefined);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   };
 
   const handleBuyNow = () => {
     if (!product) return;
-    addItem(product);
+    if (requiresSize && !selectedSize) { setSizePrompt(true); return; }
+    addItem(product, selectedSize ?? undefined);
     navigate('/cart');
   };
 
@@ -169,6 +193,67 @@ export function ProductDetailPage() {
               <span key={tag} className="pd-tag">{tag}</span>
             ))}
           </div>
+
+          {/* ── Size & fit advisor (return-prevention) ── */}
+          {sizeRec?.sizeable && (
+            <div className="pd-size">
+              <div className="pd-size__header">
+                <span className="pd-size__title">
+                  Select {sizeRec.kind === 'shoe' ? 'Shoe Size' : 'Size'}
+                </span>
+                {!sizeRec.needsProfile && (
+                  <Link to="/account" className="pd-size__edit">Change your size profile</Link>
+                )}
+              </div>
+
+              <div className="pd-size__options" role="radiogroup" aria-label="Available sizes">
+                {sizeRec.options.map((opt) => {
+                  const label = formatSize(sizeRec.kind, opt);
+                  const isRec = sizeRec.recommendedSize != null
+                    && formatSize(sizeRec.kind, sizeRec.recommendedSize) === label;
+                  const isSelected = selectedSize === label;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      className={`pd-size__chip${isSelected ? ' pd-size__chip--selected' : ''}${isRec ? ' pd-size__chip--recommended' : ''}`}
+                      onClick={() => { setSelectedSize(label); setSizePrompt(false); }}
+                    >
+                      {sizeRec.kind === 'shoe' ? opt : label}
+                      {isRec && <span className="pd-size__rec-tag">Recommended</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Fit guidance */}
+              {sizeRec.needsProfile ? (
+                <div className="pd-size__advice pd-size__advice--info">
+                  <span aria-hidden="true">📏</span>
+                  <span>
+                    {sizeRec.message}{' '}
+                    <Link to="/account" className="pd-size__link">Set your size profile →</Link>
+                  </span>
+                </div>
+              ) : sizeRec.adjusted ? (
+                <div className="pd-size__advice pd-size__advice--warn">
+                  <span aria-hidden="true">👟</span>
+                  <span><strong>Fit tip:</strong> {sizeRec.message}</span>
+                </div>
+              ) : (
+                <div className="pd-size__advice pd-size__advice--ok">
+                  <span aria-hidden="true">✓</span>
+                  <span>{sizeRec.message}</span>
+                </div>
+              )}
+
+              {sizePrompt && (
+                <p className="pd-size__error" role="alert">Please select a size to continue.</p>
+              )}
+            </div>
+          )}
 
           {returnPolicy && !returnPolicy.returnsAllowed ? (
             <p className="pd-returns-note pd-returns-note--blocked">

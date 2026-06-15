@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSizeProfile } from '../hooks/useSizeProfile';
+import { SHOE_SIZES, APPAREL_SIZES } from '../utils/sizing';
 import './AccountPage.css';
 
-type Panel = 'overview' | 'profile' | 'address';
+type Panel = 'overview' | 'profile' | 'address' | 'sizes';
 
 export function AccountPage() {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
+  const { profile: sizeProfile, save: saveSizeProfile } = useSizeProfile();
   const navigate = useNavigate();
   const [panel, setPanel] = useState<Panel>('overview');
+  const [sizeSavedMsg, setSizeSavedMsg] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [saveErr, setSaveErr] = useState<string | null>(null);
@@ -91,6 +95,9 @@ export function AccountPage() {
           <button type="button" className={`account-nav-item${panel === 'address' ? ' active' : ''}`} onClick={() => { setPanel('address'); setSaveMsg(null); setSaveErr(null); }}>
             📍 Manage Address
           </button>
+          <button type="button" className={`account-nav-item${panel === 'sizes' ? ' active' : ''}`} onClick={() => { setPanel('sizes'); setSizeSavedMsg(false); }}>
+            📏 Size Profile
+          </button>
           <Link to="/orders" className="account-nav-item">📦 Your Orders</Link>
           <button type="button" className="account-nav-item account-nav-item--logout" onClick={handleLogout}>
             🚪 Sign Out
@@ -127,6 +134,17 @@ export function AccountPage() {
                   <p>Track, return, or buy again</p>
                 </div>
               </Link>
+              <button type="button" className="account-card" onClick={() => setPanel('sizes')}>
+                <span className="account-card__icon" aria-hidden="true">📏</span>
+                <div>
+                  <h2>Size Profile</h2>
+                  <p>
+                    {sizeProfile.shoeSize || sizeProfile.apparelSize
+                      ? `Shoe: ${sizeProfile.shoeSize ? `UK ${sizeProfile.shoeSize}` : '—'} · Clothing: ${sizeProfile.apparelSize ?? '—'}`
+                      : 'Set sizes for smart fit recommendations'}
+                  </p>
+                </div>
+              </button>
               <Link to="/orders" className="account-card">
                 <span className="account-card__icon" aria-hidden="true">♻️</span>
                 <div>
@@ -134,6 +152,59 @@ export function AccountPage() {
                   <p>Start a zero-touch return</p>
                 </div>
               </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Size profile */}
+        {panel === 'sizes' && (
+          <section aria-labelledby="sizes-heading">
+            <h1 id="sizes-heading" className="account-section-title">Size Profile</h1>
+            <div className="account-form-card">
+              <p className="account-field-note" style={{ marginBottom: '1.25rem' }}>
+                Tell us your usual sizes. We'll recommend the right fit per brand at checkout —
+                helping you avoid size-related returns. 🎯
+              </p>
+
+              <div className="account-field">
+                <label className="account-label">Usual shoe size (UK)</label>
+                <div className="size-chip-row" role="radiogroup" aria-label="Usual shoe size">
+                  {SHOE_SIZES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      role="radio"
+                      aria-checked={sizeProfile.shoeSize === s}
+                      className={`size-chip${sizeProfile.shoeSize === s ? ' size-chip--selected' : ''}`}
+                      onClick={() => { saveSizeProfile({ ...sizeProfile, shoeSize: sizeProfile.shoeSize === s ? undefined : s }); setSizeSavedMsg(true); }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="account-field">
+                <label className="account-label">Usual clothing size</label>
+                <div className="size-chip-row" role="radiogroup" aria-label="Usual clothing size">
+                  {APPAREL_SIZES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      role="radio"
+                      aria-checked={sizeProfile.apparelSize === s}
+                      className={`size-chip${sizeProfile.apparelSize === s ? ' size-chip--selected' : ''}`}
+                      onClick={() => { saveSizeProfile({ ...sizeProfile, apparelSize: sizeProfile.apparelSize === s ? undefined : s }); setSizeSavedMsg(true); }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {sizeSavedMsg && (
+                <p className="account-save-success" role="status">✓ Size profile saved — recommendations are now personalised.</p>
+              )}
             </div>
           </section>
         )}

@@ -61,6 +61,10 @@ export async function apiLogin(email: string, password: string): Promise<{ token
   });
 }
 
+export async function apiDemoLogin(): Promise<{ token: string; customer: AuthCustomer }> {
+  return apiFetch('/auth/demo', { method: 'POST' });
+}
+
 export async function apiMe(): Promise<AuthCustomer> {
   return apiFetch('/auth/me');
 }

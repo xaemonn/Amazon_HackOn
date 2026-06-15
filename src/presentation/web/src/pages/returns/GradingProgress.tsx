@@ -72,6 +72,7 @@ export function GradingProgress() {
   const [result, setResult] = useState<ProgressResponse['result']>(null);
   const [showDelay, setShowDelay] = useState(false);
   const [isFailure, setIsFailure] = useState(false);
+  const [isMismatch, setIsMismatch] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -130,13 +131,20 @@ export function GradingProgress() {
         setIsComplete(true);
         setResult(data.result);
 
-        // Failure only when condition grading truly failed (grade is null)
         const assessment = data.result.conditionAssessment;
+        // Grading outcomes:
+        //  • grade null            → AI couldn't grade → manual review
+        //  • grade D / mismatch    → item doesn't match the order → ask to retake photos
+        //  • grade A / B / C       → quality grade, complete normally
         if (!assessment || assessment.grade === null) {
           setIsFailure(true);
           setAnnouncement('Grading could not be completed. Your return has been submitted for manual review.');
+        } else if (assessment.grade === 'D' || assessment.identityVerdict === 'mismatch') {
+          setIsMismatch(true);
+          setAnnouncement('The photographed item does not appear to match your ordered product. Please retake your photos.');
         } else {
           setIsFailure(false);
+          setIsMismatch(false);
           setAnnouncement(
             `Grading complete. Condition grade: ${assessment.grade}. Refund estimate available.`
           );
@@ -185,6 +193,26 @@ export function GradingProgress() {
     setError(null);
   };
 
+  // Keep waiting — snooze the delay prompt for another full interval so it
+  // doesn't immediately re-appear on the next tick.
+  const handleKeepWaiting = () => {
+    setShowDelay(false);
+    lastAdvanceRef.current = Date.now();
+  };
+
+  // Item mismatch — send the shopper back to re-capture photos, carrying the
+  // original return context plus the AI's reasoning.
+  const handleRetakePhotos = () => {
+    navigate('/returns/media', {
+      state: {
+        customerId: state?.customerId,
+        orderItemId: state?.orderItemId,
+        reason: state?.reason,
+        reasonDetails: state?.reasonDetails,
+      },
+    });
+  };
+
   // Navigate to result
   const handleViewResult = () => {
     navigate('/returns/result', {
@@ -211,6 +239,56 @@ export function GradingProgress() {
         <p className="return-page-note">
           No return ID found. Please start the return flow from your orders.
         </p>
+      </section>
+    );
+  }
+
+  // ─── Render: Item mismatch (grade D / identity mismatch) ───────────────────
+
+  if (isComplete && isMismatch) {
+    const assessment = result?.conditionAssessment;
+    return (
+      <section className="grading-progress" aria-labelledby="grading-title">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {announcement}
+        </div>
+        <div className="grading-progress__mismatch">
+          <div className="grading-progress__mismatch-icon" aria-hidden="true">🔍</div>
+          <h2 className="grading-progress__mismatch-title">
+            This doesn't look like your ordered product
+          </h2>
+          <p className="grading-progress__mismatch-text">
+            Our AI couldn't confirm that the item in your photos matches the product
+            on this order, so we haven't graded it yet.
+          </p>
+
+          {assessment?.reasoning && (
+            <div className="grading-progress__reasoning grading-progress__reasoning--mismatch">
+              <strong>What our AI saw:</strong>
+              <p>{assessment.reasoning}</p>
+            </div>
+          )}
+
+          <p className="grading-progress__mismatch-help">
+            Please make sure you're photographing the <strong>correct item</strong> from
+            this order, in good lighting and from clear angles, then try again.
+          </p>
+
+          <div className="grading-progress__mismatch-actions">
+            <button
+              className="grading-progress__btn grading-progress__btn--primary"
+              onClick={handleRetakePhotos}
+            >
+              📷 Retake Photos
+            </button>
+            <button
+              className="grading-progress__btn grading-progress__btn--secondary"
+              onClick={handleNavigateAway}
+            >
+              Cancel Return
+            </button>
+          </div>
+        </div>
       </section>
     );
   }
@@ -432,7 +510,7 @@ export function GradingProgress() {
             </button>
             <button
               className="grading-progress__btn grading-progress__btn--secondary"
-              onClick={() => setShowDelay(false)}
+              onClick={handleKeepWaiting}
             >
               Keep Waiting
             </button>

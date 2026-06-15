@@ -14,6 +14,8 @@ const CART_KEY = 'slc_cart';
 export interface CartItem {
   product: Product;
   quantity: number;
+  /** Selected size for sizeable items (e.g. "UK 10" or "L"). */
+  size?: string;
 }
 
 interface CartState {
@@ -21,7 +23,7 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: 'ADD'; product: Product }
+  | { type: 'ADD'; product: Product; size?: string }
   | { type: 'REMOVE'; productId: string }
   | { type: 'SET_QTY'; productId: string; quantity: number }
   | { type: 'CLEAR' }
@@ -40,12 +42,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return {
           items: state.items.map((i) =>
             i.product.id === action.product.id
-              ? { ...i, quantity: i.quantity + 1 }
+              ? { ...i, quantity: i.quantity + 1, size: action.size ?? i.size }
               : i,
           ),
         };
       }
-      return { items: [...state.items, { product: action.product, quantity: 1 }] };
+      return { items: [...state.items, { product: action.product, quantity: 1, size: action.size }] };
     }
 
     case 'REMOVE':
@@ -75,7 +77,7 @@ interface CartContextValue {
   items: CartItem[];
   itemCount: number;
   total: number;
-  addItem: (product: Product) => void;
+  addItem: (product: Product, size?: string) => void;
   removeItem: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -104,8 +106,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(CART_KEY, JSON.stringify(state.items));
   }, [state.items]);
 
-  const addItem = useCallback((product: Product) => {
-    dispatch({ type: 'ADD', product });
+  const addItem = useCallback((product: Product, size?: string) => {
+    dispatch({ type: 'ADD', product, size });
   }, []);
 
   const removeItem = useCallback((productId: string) => {

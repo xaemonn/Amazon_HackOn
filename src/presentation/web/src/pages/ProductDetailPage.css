@@ -273,3 +273,76 @@
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
 }
+
+/* ── Size & fit advisor ── */
+.pd-size {
+  border-top: 1px solid var(--color-border, #D5D9D9);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.pd-size__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.625rem;
+  flex-wrap: wrap;
+}
+.pd-size__title { font-size: 0.95rem; font-weight: 700; color: #0F1111; }
+.pd-size__edit { font-size: 0.78rem; color: #007185; text-decoration: none; }
+.pd-size__edit:hover { color: #C7511F; text-decoration: underline; }
+
+.pd-size__options { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.875rem; }
+
+.pd-size__chip {
+  position: relative;
+  min-width: 52px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #888C8C;
+  border-radius: 8px;
+  background: #fff;
+  color: #0F1111;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+.pd-size__chip:hover { border-color: #0F1111; }
+.pd-size__chip--selected {
+  border-color: #E47911;
+  background: #FFF8EE;
+  box-shadow: 0 0 0 2px rgba(228,121,17,0.45);
+}
+.pd-size__chip--recommended { border-color: #067D62; }
+.pd-size__rec-tag {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #067D62;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.pd-size__advice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+}
+.pd-size__advice--warn { background: #FFF8EE; border: 1px solid #FFD814; color: #5c4400; }
+.pd-size__advice--ok   { background: #F0FBF6; border: 1px solid #067D62; color: #084c3c; }
+.pd-size__advice--info { background: #F0F7FF; border: 1px solid #B3D4FC; color: #0b3d66; }
+.pd-size__link { color: #007185; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.pd-size__link:hover { text-decoration: underline; color: #C7511F; }
+
+.pd-size__error { color: #CC0C39; font-size: 0.82rem; font-weight: 600; margin: 0.5rem 0 0; }

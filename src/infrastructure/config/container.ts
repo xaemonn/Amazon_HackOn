@@ -39,6 +39,7 @@ import {
   type IReturnHistoryProvider,
 } from '../../application/disposition/index.js';
 import { ResaleService, ResaleListingHandler } from '../../application/resale/index.js';
+import { User } from '../auth/MongoUser.js';
 
 // ─── Registry Keys ───────────────────────────────────────────────────────────
 
@@ -371,12 +372,23 @@ export function createContainer(): Container {
   });
   container.register('resaleService', resaleService);
 
+  // Resolve the returner's registered city from MongoDB (falls back to default).
+  const getCustomerCity = async (customerId: string): Promise<string | null> => {
+    try {
+      const doc = await User.findById(customerId).select('address.city').lean();
+      return (doc?.address as { city?: string } | undefined)?.city ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   const resaleListingHandler = new ResaleListingHandler({
     eventBus: container.getRequired('eventBus'),
     conditionAssessmentRepository: container.getRequired('conditionAssessmentRepository'),
     returnRequestLookup,
     authService: container.getRequired('authService'),
     resaleService,
+    getCustomerCity,
     defaultSellerCity: config.resale.defaultSellerCity,
   });
   container.register('resaleListingHandler', resaleListingHandler);

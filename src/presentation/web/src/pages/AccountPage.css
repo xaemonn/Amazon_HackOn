@@ -183,3 +183,25 @@
   .account-cards { grid-template-columns: 1fr; }
   .account-field-row { grid-template-columns: 1fr; }
 }
+
+/* Size profile chips */
+.size-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+.size-chip {
+  min-width: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #888C8C;
+  border-radius: 8px;
+  background: #fff;
+  color: #0F1111;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+  font-family: inherit;
+}
+.size-chip:hover { border-color: #0F1111; }
+.size-chip--selected {
+  border-color: #E47911;
+  background: #FFF8EE;
+  box-shadow: 0 0 0 2px rgba(228,121,17,0.45);
+}

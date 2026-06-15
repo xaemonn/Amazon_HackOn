@@ -28,21 +28,18 @@ export class InMemoryResaleListingRepository implements IResaleListingRepository
   }
 
   async findActive(city?: string): Promise<ResaleListing[]> {
-    const active = Array.from(this.store.values()).filter(
+    let active = Array.from(this.store.values()).filter(
       (l) => l.status === 'active',
     );
 
-    // Most-recent first; if a city is given, surface same-city listings first
-    // (these are the ones eligible for instant direct transfer).
-    active.sort((a, b) => b.listedAt.getTime() - a.listedAt.getTime());
+    // When a city is provided, only show listings from that city.
+    // Without a city filter every shopper would see every city's returns.
     if (city) {
       const target = normalizeCity(city);
-      active.sort((a, b) => {
-        const aSame = normalizeCity(a.sellerCity) === target ? 0 : 1;
-        const bSame = normalizeCity(b.sellerCity) === target ? 0 : 1;
-        return aSame - bSame;
-      });
+      active = active.filter((l) => normalizeCity(l.sellerCity) === target);
     }
+
+    active.sort((a, b) => b.listedAt.getTime() - a.listedAt.getTime());
     return active;
   }
 

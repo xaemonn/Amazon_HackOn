@@ -6,7 +6,7 @@ import './LoginPage.css';
 type Tab = 'login' | 'signup';
 
 export function LoginPage() {
-  const { login, signup, isAuthenticated } = useAuth();
+  const { login, signup, demoLogin, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/catalog';
@@ -52,6 +52,19 @@ export function LoginPage() {
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemo = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await demoLogin();
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Demo sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -105,6 +118,17 @@ export function LoginPage() {
             Create Account
           </button>
         </div>
+
+        {/* One-click demo sign-in */}
+        <button
+          type="button"
+          className="login-btn login-btn--demo"
+          onClick={handleDemo}
+          disabled={isLoading}
+        >
+          ⚡ Try a demo account — sign in instantly
+        </button>
+        <div className="login-divider"><span>or use your account</span></div>
 
         {/* Error / Success */}
         {error && <p className="login-error" role="alert">{error}</p>}

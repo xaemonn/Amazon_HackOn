@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
+  apiDemoLogin,
   apiLogin,
   apiLogout,
   apiMe,
@@ -18,6 +19,7 @@ interface AuthState {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  demoLogin: () => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: { name?: string; phone?: string; address?: Address }) => Promise<void>;
 }
@@ -49,6 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(customer);
   }, []);
 
+  const demoLogin = useCallback(async () => {
+    const { token, customer } = await apiDemoLogin();
+    setToken(token);
+    setUser(customer);
+  }, []);
+
   const logout = useCallback(async () => {
     await apiLogout().catch(() => {});
     clearToken();
@@ -61,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, demoLogin, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
