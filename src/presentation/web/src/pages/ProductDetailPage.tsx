@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { apiGetProduct, apiGetReturnPolicy, type Product, type ReturnPolicyDecision } from '../api/client';
+import { apiGetReturnPolicy, type ReturnPolicyDecision } from '../api/client';
+import { useProduct } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './ProductDetailPage.css';
@@ -10,9 +11,7 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { addItem, items } = useCart();
   const { user } = useAuth();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { product, isLoading, error } = useProduct(productId);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [imgFailed, setImgFailed] = useState(false);
@@ -21,15 +20,8 @@ export function ProductDetailPage() {
   const inCart = items.some((i) => i.product.id === productId);
 
   useEffect(() => {
-    if (!productId) return;
-    setIsLoading(true);
-    setError(null);
     setSelectedIndex(0);
     setImgFailed(false);
-    apiGetProduct(productId)
-      .then(setProduct)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load product.'))
-      .finally(() => setIsLoading(false));
   }, [productId]);
 
   // Pre-purchase return-availability check (abuse guard).

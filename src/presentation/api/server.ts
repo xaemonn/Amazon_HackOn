@@ -27,6 +27,7 @@ import { createCatalogRouter } from './catalogRoutes.js';
 import { createAuthRouter } from './authRoutes.js';
 import { createOrdersRouter } from './ordersRoutes.js';
 import { createResaleRouter } from './resaleRoutes.js';
+import { createProductsRouter } from './productsRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
 
@@ -92,6 +93,7 @@ export function createApp() {
     });
   });
 
+  app.use('/api/products', createProductsRouter());
   app.use('/api/catalog', createCatalogRouter());
   app.use('/api/auth', createAuthRouter());
   app.use('/api/orders', createOrdersRouter(orderRepo));

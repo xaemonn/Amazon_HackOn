@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { apiGetCatalog, type Product } from '../api/client';
+import type { Product } from '../api/client';
+import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import './CatalogPage.css';
 
@@ -83,29 +84,13 @@ function ProductCard({ product }: { product: Product }) {
 
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const search = searchParams.get('search') ?? '';
+  const search   = searchParams.get('search')   ?? '';
   const category = searchParams.get('category') ?? '';
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await apiGetCatalog({ search, category });
-      setProducts(data.products);
-      setCategories(['All', ...data.categories]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, category]);
-
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const { products, categories, isLoading, error, reload: fetchProducts } = useProducts(
+    { search: search || undefined, category: category || undefined },
+  );
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
