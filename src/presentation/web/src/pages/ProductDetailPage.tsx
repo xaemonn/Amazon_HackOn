@@ -12,6 +12,8 @@ export function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [imgFailed, setImgFailed] = useState(false);
 
   const inCart = items.some((i) => i.product.id === productId);
 
@@ -19,6 +21,8 @@ export function ProductDetailPage() {
     if (!productId) return;
     setIsLoading(true);
     setError(null);
+    setSelectedIndex(0);
+    setImgFailed(false);
     apiGetProduct(productId)
       .then(setProduct)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load product.'))
@@ -63,14 +67,19 @@ export function ProductDetailPage() {
 
   const fullStars = Math.floor(product.rating);
   const halfStar = product.rating - fullStars >= 0.5;
+  const discount = product.originalPrice
+    ? Math.round((1 - product.price / product.originalPrice) * 100)
+    : 0;
 
   const deliveryDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 
+  const images = product.images?.length ? product.images : [];
+  const currentImage = images[selectedIndex];
+
   return (
     <div className="product-detail">
-      {/* Breadcrumb */}
       <nav className="pd-breadcrumb" aria-label="Breadcrumb">
         <Link to="/catalog">Shop</Link>
         <span aria-hidden="true"> › </span>
@@ -80,13 +89,38 @@ export function ProductDetailPage() {
       </nav>
 
       <div className="pd-layout">
-        {/* Left: image */}
+        {/* Left: image gallery */}
         <div className="pd-image-col">
-          <div className="pd-image" aria-hidden="true">{product.emoji}</div>
-          <div className="pd-image-thumbs" aria-hidden="true">
-            {[product.emoji, product.emoji, product.emoji].map((e, i) => (
-              <div key={i} className="pd-image-thumb">{e}</div>
-            ))}
+          {/* Thumbnails on the left side */}
+          {images.length > 1 && (
+            <div className="pd-image-thumbs" aria-label="Product images">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`pd-image-thumb ${i === selectedIndex ? 'pd-image-thumb--active' : ''}`}
+                  onClick={() => { setSelectedIndex(i); setImgFailed(false); }}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <img src={img} alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Main image */}
+          <div className="pd-image" aria-label={product.name}>
+            {currentImage && !imgFailed ? (
+              <img
+                src={currentImage}
+                alt={product.name}
+                className="pd-main-img"
+                onError={() => setImgFailed(true)}
+              />
+            ) : (
+              <span className="pd-emoji-fallback">{product.emoji}</span>
+            )}
+            {product.badge && <span className="pd-image-badge">{product.badge}</span>}
           </div>
         </div>
 
@@ -101,19 +135,29 @@ export function ProductDetailPage() {
                 <span key={i} className={i < fullStars ? 'star star--full' : halfStar && i === fullStars ? 'star star--half' : 'star star--empty'}>★</span>
               ))}
             </span>
-            <span className="pd-rating-text">{product.rating} · {product.reviewCount.toLocaleString()} ratings</span>
+            <span className="pd-rating-text">{product.rating} · {product.reviewCount.toLocaleString('en-IN')} ratings</span>
           </div>
 
           <div className="pd-price-row">
-            <p className="pd-price">₹{product.price.toLocaleString('en-IN')}</p>
+            <div className="pd-price-group">
+              <p className="pd-price">₹{product.price.toLocaleString('en-IN')}</p>
+              {product.originalPrice && (
+                <div className="pd-price-meta">
+                  <span className="pd-original-price">M.R.P: <s>₹{product.originalPrice.toLocaleString('en-IN')}</s></span>
+                  {discount > 0 && <span className="pd-discount-badge">Save {discount}%</span>}
+                </div>
+              )}
+            </div>
             <p className="pd-price-label">Inclusive of all taxes</p>
           </div>
 
           <p className={`pd-stock ${product.inStock ? 'pd-stock--in' : 'pd-stock--out'}`}>
-            {product.inStock ? 'In Stock' : 'Currently unavailable'}
+            {product.inStock ? '✓ In Stock' : '✗ Currently unavailable'}
           </p>
 
-          <p className="pd-description">{product.description}</p>
+          <div className="pd-description-section">
+            <p className="pd-description">{product.description}</p>
+          </div>
 
           <div className="pd-tags">
             {product.tags.map((tag) => (
@@ -127,11 +171,16 @@ export function ProductDetailPage() {
         {/* Right: buy box */}
         <div className="pd-buy-box">
           <p className="pd-buy-price">₹{product.price.toLocaleString('en-IN')}</p>
+          {product.originalPrice && (
+            <p className="pd-buy-savings">
+              You save: ₹{(product.originalPrice - product.price).toLocaleString('en-IN')} ({discount}%)
+            </p>
+          )}
           <p className="pd-buy-delivery">
             FREE delivery <strong>{deliveryDate}</strong>
           </p>
-          <p className={`pd-stock ${product.inStock ? 'pd-stock--in' : 'pd-stock--out'}`} style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>
-            {product.inStock ? 'In Stock' : 'Currently unavailable'}
+          <p className={`pd-stock ${product.inStock ? 'pd-stock--in' : 'pd-stock--out'}`} style={{ marginBottom: '1rem', fontSize: '1.05rem' }}>
+            {product.inStock ? '✓ In Stock' : '✗ Currently unavailable'}
           </p>
 
           {product.inStock && (
@@ -157,8 +206,11 @@ export function ProductDetailPage() {
             </div>
           )}
 
-          <p className="pd-secure">🔒 Secure transaction · Ships from Second Life Commerce</p>
-          <p className="pd-returns-note">♻️ 30-day zero-touch return policy</p>
+          <div className="pd-trust-badges">
+            <p className="pd-secure">🔒 Secure transaction</p>
+            <p className="pd-ships-from">📦 Ships from Second Life Commerce</p>
+            <p className="pd-returns-note">♻️ 30-day zero-touch return policy</p>
+          </div>
         </div>
       </div>
     </div>

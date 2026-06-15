@@ -3,27 +3,52 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
+type Tab = 'login' | 'signup';
+
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/catalog';
 
-  const [email, setEmail] = useState('');
+  const [tab, setTab] = useState<Tab>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Login fields
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPw, setShowLoginPw] = useState(false);
+
+  // Signup fields
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirm, setSignupConfirm] = useState('');
+  const [showSignupPw, setShowSignupPw] = useState(false);
 
   if (isAuthenticated) {
     navigate(from, { replace: true });
     return null;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const switchTab = (t: Tab) => {
+    setTab(t);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!loginEmail.trim() || !loginPassword) {
+      setError('Please enter your email and password.');
+      return;
+    }
     setIsLoading(true);
     try {
-      await login(email.trim());
+      await login(loginEmail.trim(), loginPassword);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
@@ -32,15 +57,19 @@ export function LoginPage() {
     }
   };
 
-  const handleDemo = async () => {
-    setEmail('priya@example.com');
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
+    if (!signupName.trim()) { setError('Please enter your full name.'); return; }
+    if (!signupEmail.trim()) { setError('Please enter your email.'); return; }
+    if (signupPassword.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (signupPassword !== signupConfirm) { setError('Passwords do not match.'); return; }
     setIsLoading(true);
     try {
-      await login('priya@example.com');
+      await signup(signupName.trim(), signupEmail.trim(), signupPassword);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
+      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -49,55 +78,198 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo" aria-hidden="true">♻️</div>
-        <h1 className="login-title">Sign in</h1>
-        <p className="login-subtitle">Second Life Commerce</p>
+        {/* Logo */}
+        <div className="login-brand">
+          <span className="login-logo" aria-hidden="true">♻️</span>
+          <span className="login-subtitle">Second Life Commerce</span>
+        </div>
 
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          <div className="login-field">
-            <label htmlFor="email-input" className="login-label">Email address</label>
-            <input
-              id="email-input"
-              type="email"
-              className="login-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              autoComplete="email"
-              aria-describedby={error ? 'login-error' : undefined}
-            />
-          </div>
-
-          {error && (
-            <p id="login-error" className="login-error" role="alert">
-              {error}
-            </p>
-          )}
-
+        {/* Tabs */}
+        <div className="login-tabs" role="tablist">
           <button
-            type="submit"
-            className="login-btn login-btn--primary"
-            disabled={isLoading || !email.trim()}
+            type="button"
+            role="tab"
+            aria-selected={tab === 'login'}
+            className={`login-tab ${tab === 'login' ? 'login-tab--active' : ''}`}
+            onClick={() => switchTab('login')}
           >
-            {isLoading ? 'Signing in…' : 'Continue'}
+            Sign In
           </button>
-        </form>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'signup'}
+            className={`login-tab ${tab === 'signup' ? 'login-tab--active' : ''}`}
+            onClick={() => switchTab('signup')}
+          >
+            Create Account
+          </button>
+        </div>
 
-        <div className="login-divider" aria-hidden="true"><span>or</span></div>
+        {/* Error / Success */}
+        {error && <p className="login-error" role="alert">{error}</p>}
+        {success && <p className="login-success" role="status">{success}</p>}
 
-        <button
-          type="button"
-          className="login-btn login-btn--demo"
-          onClick={handleDemo}
-          disabled={isLoading}
-        >
-          ✨ Use demo account
-        </button>
+        {/* ── Login Form ── */}
+        {tab === 'login' && (
+          <form onSubmit={handleLogin} className="login-form" noValidate>
+            <div className="login-field">
+              <label htmlFor="login-email" className="login-label">Email address</label>
+              <input
+                id="login-email"
+                type="email"
+                className="login-input"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </div>
 
-        <p className="login-hint">
-          Demo: <strong>priya@example.com</strong> — any password works
-        </p>
+            <div className="login-field">
+              <label htmlFor="login-password" className="login-label">Password</label>
+              <div className="login-input-wrap">
+                <input
+                  id="login-password"
+                  type={showLoginPw ? 'text' : 'password'}
+                  className="login-input"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-pw-toggle"
+                  onClick={() => setShowLoginPw((v) => !v)}
+                  aria-label={showLoginPw ? 'Hide password' : 'Show password'}
+                >
+                  {showLoginPw ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="login-btn login-btn--primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in…' : 'Sign In'}
+            </button>
+
+            <p className="login-switch-hint">
+              New here?{' '}
+              <button type="button" className="login-link" onClick={() => switchTab('signup')}>
+                Create an account
+              </button>
+            </p>
+          </form>
+        )}
+
+        {/* ── Signup Form ── */}
+        {tab === 'signup' && (
+          <form onSubmit={handleSignup} className="login-form" noValidate>
+            <div className="login-field">
+              <label htmlFor="signup-name" className="login-label">Full name</label>
+              <input
+                id="signup-name"
+                type="text"
+                className="login-input"
+                value={signupName}
+                onChange={(e) => setSignupName(e.target.value)}
+                placeholder="Priya Sharma"
+                autoComplete="name"
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label htmlFor="signup-email" className="login-label">Email address</label>
+              <input
+                id="signup-email"
+                type="email"
+                className="login-input"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label htmlFor="signup-password" className="login-label">
+                Password <span className="login-label-hint">(min. 6 characters)</span>
+              </label>
+              <div className="login-input-wrap">
+                <input
+                  id="signup-password"
+                  type={showSignupPw ? 'text' : 'password'}
+                  className="login-input"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  placeholder="Create a password"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-pw-toggle"
+                  onClick={() => setShowSignupPw((v) => !v)}
+                  aria-label={showSignupPw ? 'Hide password' : 'Show password'}
+                >
+                  {showSignupPw ? '🙈' : '👁️'}
+                </button>
+              </div>
+              {signupPassword.length > 0 && (
+                <div className="login-pw-strength">
+                  <div className={`login-pw-bar ${signupPassword.length >= 8 ? 'strong' : signupPassword.length >= 6 ? 'medium' : 'weak'}`} />
+                  <span>{signupPassword.length >= 8 ? 'Strong' : signupPassword.length >= 6 ? 'Medium' : 'Weak'}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="login-field">
+              <label htmlFor="signup-confirm" className="login-label">Confirm password</label>
+              <input
+                id="signup-confirm"
+                type={showSignupPw ? 'text' : 'password'}
+                className={`login-input ${signupConfirm && signupPassword !== signupConfirm ? 'login-input--error' : ''}`}
+                value={signupConfirm}
+                onChange={(e) => setSignupConfirm(e.target.value)}
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                required
+              />
+              {signupConfirm && signupPassword !== signupConfirm && (
+                <span className="login-field-error">Passwords do not match</span>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="login-btn login-btn--primary"
+              disabled={isLoading || (!!signupConfirm && signupPassword !== signupConfirm)}
+            >
+              {isLoading ? 'Creating account…' : 'Create Account'}
+            </button>
+
+            <p className="login-terms">
+              By creating an account, you agree to our{' '}
+              <span className="login-link">Conditions of Use</span> and{' '}
+              <span className="login-link">Privacy Notice</span>.
+            </p>
+
+            <p className="login-switch-hint">
+              Already have an account?{' '}
+              <button type="button" className="login-link" onClick={() => switchTab('login')}>
+                Sign in
+              </button>
+            </p>
+          </form>
+        )}
       </div>
     </div>
   );

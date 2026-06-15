@@ -25,7 +25,7 @@ export function Home() {
   const navigate = useNavigate();
 
   const handleAddToCart = (product: typeof FEATURED[0]) => {
-    addItem({ id: product.id, name: product.name, category: product.category, price: product.price, currency: 'INR', emoji: product.emoji, description: '', rating: 4.5, reviewCount: 100, inStock: true, tags: [] });
+    addItem({ id: product.id, name: product.name, category: product.category, price: product.price, currency: 'INR', emoji: product.emoji, images: [], description: '', rating: 4.5, reviewCount: 100, inStock: true, tags: [] });
     navigate('/cart');
   };
 

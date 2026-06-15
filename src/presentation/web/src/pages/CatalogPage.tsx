@@ -10,9 +10,7 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <span className="star-rating" aria-label={`${rating} out of 5 stars`}>
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < full ? 'star star--full' : half && i === full ? 'star star--half' : 'star star--empty'}>
-          ★
-        </span>
+        <span key={i} className={i < full ? 'star star--full' : half && i === full ? 'star star--half' : 'star star--empty'}>★</span>
       ))}
       <span className="star-count">({rating})</span>
     </span>
@@ -22,12 +20,29 @@ function StarRating({ rating }: { rating: number }) {
 function ProductCard({ product }: { product: Product }) {
   const { addItem, items } = useCart();
   const inCart = items.some((i) => i.product.id === product.id);
+  const [imgFailed, setImgFailed] = useState(false);
+  const mainImage = product.images?.[0];
+  const discount = product.originalPrice
+    ? Math.round((1 - product.price / product.originalPrice) * 100)
+    : 0;
 
   return (
     <article className="product-card">
       <Link to={`/catalog/${product.id}`} className="product-card__image-link">
-        <div className="product-card__image" aria-hidden="true">
-          {product.emoji}
+        <div className="product-card__image">
+          {mainImage && !imgFailed ? (
+            <img
+              src={mainImage}
+              alt={product.name}
+              className="product-card__img"
+              onError={() => setImgFailed(true)}
+              loading="lazy"
+            />
+          ) : (
+            <span className="product-card__emoji">{product.emoji}</span>
+          )}
+          {product.badge && <span className="product-card__badge">{product.badge}</span>}
+          {discount > 0 && <span className="product-card__discount">-{discount}%</span>}
         </div>
       </Link>
 
@@ -37,12 +52,15 @@ function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Link>
         <StarRating rating={product.rating} />
-        <p className="product-card__reviews">{product.reviewCount} reviews</p>
+        <p className="product-card__reviews">{product.reviewCount.toLocaleString('en-IN')} ratings</p>
 
         <div className="product-card__footer">
-          <p className="product-card__price">
-            ₹{product.price.toLocaleString('en-IN')}
-          </p>
+          <div className="product-card__price-group">
+            <p className="product-card__price">₹{product.price.toLocaleString('en-IN')}</p>
+            {product.originalPrice && (
+              <p className="product-card__original-price">₹{product.originalPrice.toLocaleString('en-IN')}</p>
+            )}
+          </div>
           {product.inStock ? (
             <button
               type="button"
@@ -116,14 +134,13 @@ export function CatalogPage() {
             defaultValue={search}
             aria-label="Search products"
           />
-          <button type="submit" className="catalog-search__btn">Search</button>
+          <button type="submit" className="catalog-search__btn">🔍 Search</button>
         </form>
       </div>
 
       <div className="catalog-layout">
-        {/* Sidebar: categories */}
         <aside className="catalog-sidebar" aria-label="Filter by category">
-          <p className="catalog-sidebar__label">Category</p>
+          <p className="catalog-sidebar__label">Department</p>
           <ul className="catalog-sidebar__list" role="list">
             {categories.map((cat) => (
               <li key={cat}>
@@ -139,7 +156,6 @@ export function CatalogPage() {
           </ul>
         </aside>
 
-        {/* Product grid */}
         <section className="catalog-grid-section" aria-live="polite">
           {isLoading && (
             <div className="catalog-loading" role="status">
@@ -167,7 +183,7 @@ export function CatalogPage() {
 
           {!isLoading && !error && products.length > 0 && (
             <>
-              <p className="catalog-count">{products.length} product{products.length !== 1 ? 's' : ''}</p>
+              <p className="catalog-count">{products.length} result{products.length !== 1 ? 's' : ''}{search ? ` for "${search}"` : ''}{category && category !== 'All' ? ` in ${category}` : ''}</p>
               <div className="catalog-grid">
                 {products.map((p) => <ProductCard key={p.id} product={p} />)}
               </div>

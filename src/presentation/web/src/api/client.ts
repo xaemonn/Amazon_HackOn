@@ -47,10 +47,17 @@ export interface AuthCustomer {
   address?: Address | null;
 }
 
-export async function apiLogin(email: string): Promise<{ token: string; customer: AuthCustomer }> {
+export async function apiSignup(name: string, email: string, password: string): Promise<{ token: string; customer: AuthCustomer }> {
+  return apiFetch('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
+  });
+}
+
+export async function apiLogin(email: string, password: string): Promise<{ token: string; customer: AuthCustomer }> {
   return apiFetch('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, password }),
   });
 }
 
@@ -82,11 +89,14 @@ export interface Product {
   price: number;
   currency: string;
   emoji: string;
+  images: string[];
   description: string;
   rating: number;
   reviewCount: number;
   inStock: boolean;
   tags: string[];
+  badge?: string;
+  originalPrice?: number;
 }
 
 export async function apiGetCatalog(params?: {

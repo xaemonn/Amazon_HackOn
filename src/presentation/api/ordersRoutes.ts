@@ -3,15 +3,18 @@ import { randomUUID } from 'crypto';
 import type { IOrderRepository, Order } from '../../domain/ordering/index.js';
 import type { OrderItem } from '../../domain/ordering/OrderItem.js';
 import { CATALOG_PRODUCTS } from './catalogRoutes.js';
+import { verifyToken } from './authRoutes.js';
 
 // ─── Auth middleware helper ────────────────────────────────────────────────────
 
 const DEMO_CUSTOMER_ID = 'customer-001';
 
-function getCustomerId(_req: Request): string {
-  // In demo mode all authenticated requests resolve to the demo customer.
-  // A real implementation would decode the JWT here.
-  return DEMO_CUSTOMER_ID;
+function getCustomerId(req: Request): string {
+  const h = req.headers.authorization;
+  const token = h?.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return DEMO_CUSTOMER_ID;
+  const payload = verifyToken(token);
+  return payload?.userId ?? DEMO_CUSTOMER_ID;
 }
 
 function requireAuth(req: Request, res: Response): boolean {

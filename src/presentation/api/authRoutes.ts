@@ -1,126 +1,166 @@
 import { Router, type Request, type Response } from 'express';
-import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { User } from '../../infrastructure/auth/MongoUser.js';
 
-// ─── Demo credentials ─────────────────────────────────────────────────────────
+const JWT_SECRET = process.env['JWT_SECRET'] ?? 'dev-secret-please-change';
 
-const DEMO_EMAIL = 'priya@example.com';
-const DEMO_NAME = 'Priya Sharma';
-const DEMO_CUSTOMER_ID = 'customer-001';
-
-// Simple in-memory session store: token → customerId
-const activeSessions = new Map<string, string>();
-
-// In-memory profile overrides (demo)
-interface ProfileOverride {
-  name?: string;
-  phone?: string;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    pincode: string;
-  };
+export interface JwtPayload {
+  userId: string;
+  email: string;
 }
-const profileOverrides = new Map<string, ProfileOverride>();
 
-function generateToken(email: string): string {
-  return `slc_${Buffer.from(email).toString('base64')}_${Date.now()}`;
+export function signToken(userId: string, email: string): string {
+  return jwt.sign({ userId, email } as JwtPayload, JWT_SECRET, { expiresIn: '30d' });
+}
+
+export function verifyToken(token: string): JwtPayload | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function extractToken(req: Request): string | null {
+  const h = req.headers.authorization;
+  if (!h?.startsWith('Bearer ')) return null;
+  return h.slice(7).trim() || null;
 }
 
 // ─── Route Factory ────────────────────────────────────────────────────────────
 
-export function createAuthRouter(authService: MockAuthService): Router {
+export function createAuthRouter(): Router {
   const router = Router();
 
-  // POST /auth/login — accepts any email for demo; returns demo user
-  router.post('/login', async (req: Request, res: Response) => {
-    const { email, password: _password } = req.body;
+  // POST /auth/signup
+  router.post('/signup', async (req: Request, res: Response) => {
+    const { name, email, password } = req.body as Record<string, string>;
 
-    if (!email || typeof email !== 'string') {
-      res.status(400).json({ error: 'email is required.' });
-      return;
-    }
+    if (!name?.trim())     { res.status(400).json({ error: 'Name is required.' }); return; }
+    if (!email?.trim())    { res.status(400).json({ error: 'Email is required.' }); return; }
+    if (!password)         { res.status(400).json({ error: 'Password is required.' }); return; }
+    if (password.length < 6) { res.status(400).json({ error: 'Password must be at least 6 characters.' }); return; }
 
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed.includes('@')) {
+    const normalEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail)) {
       res.status(400).json({ error: 'Please enter a valid email address.' });
       return;
     }
 
-    // In demo mode every email maps to the seeded customer
-    const token = generateToken(trimmed);
-    activeSessions.set(token, DEMO_CUSTOMER_ID);
-
-    res.json({
-      token,
-      customer: {
-        id: DEMO_CUSTOMER_ID,
-        name: DEMO_NAME,
-        email: DEMO_EMAIL,
-      },
-    });
-  });
-
-  // GET /auth/me — validate token and return current user
-  router.get('/me', async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-    if (!token) {
-      res.status(401).json({ error: 'Not authenticated.' });
-      return;
-    }
-
-    const customerId = activeSessions.get(token);
-    if (!customerId) {
-      // Also accept the legacy demo-session-token from seed data
-      if (token !== 'demo-session-token') {
-        res.status(401).json({ error: 'Session expired. Please log in again.' });
+    try {
+      const existing = await User.findOne({ email: normalEmail });
+      if (existing) {
+        res.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
         return;
       }
-    }
 
-    const overrides = profileOverrides.get(DEMO_CUSTOMER_ID) ?? {};
-    res.json({
-      id: DEMO_CUSTOMER_ID,
-      name: overrides.name ?? DEMO_NAME,
-      email: DEMO_EMAIL,
-      phone: overrides.phone ?? null,
-      address: overrides.address ?? null,
-    });
+      const passwordHash = await bcrypt.hash(password, 12);
+      const user = await User.create({ name: name.trim(), email: normalEmail, passwordHash });
+
+      const token = signToken(user._id.toString(), user.email);
+      res.status(201).json({
+        token,
+        customer: { id: user._id.toString(), name: user.name, email: user.email },
+      });
+    } catch (err) {
+      console.error('[Auth] Signup error:', err);
+      res.status(500).json({ error: 'Failed to create account. Please try again.' });
+    }
   });
 
-  // PATCH /auth/profile — update name, phone, address
-  router.patch('/profile', (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-    if (!token || (!activeSessions.has(token) && token !== 'demo-session-token')) {
-      res.status(401).json({ error: 'Not authenticated.' });
+  // POST /auth/login
+  router.post('/login', async (req: Request, res: Response) => {
+    const { email, password } = req.body as Record<string, string>;
+
+    if (!email?.trim() || !password) {
+      res.status(400).json({ error: 'Email and password are required.' });
       return;
     }
-    const { name, phone, address } = req.body as ProfileOverride & { name?: string };
-    const customerId = DEMO_CUSTOMER_ID;
-    const existing = profileOverrides.get(customerId) ?? {};
-    const updated: ProfileOverride = { ...existing };
-    if (name !== undefined) updated.name = String(name).trim();
-    if (phone !== undefined) updated.phone = String(phone).trim();
-    if (address !== undefined) updated.address = address;
-    profileOverrides.set(customerId, updated);
 
-    res.json({
-      id: customerId,
-      name: updated.name ?? DEMO_NAME,
-      email: DEMO_EMAIL,
-      phone: updated.phone ?? null,
-      address: updated.address ?? null,
-    });
+    try {
+      const user = await User.findOne({ email: email.trim().toLowerCase() });
+      if (!user) {
+        res.status(401).json({ error: 'Invalid email or password.' });
+        return;
+      }
+
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        res.status(401).json({ error: 'Invalid email or password.' });
+        return;
+      }
+
+      const token = signToken(user._id.toString(), user.email);
+      res.json({
+        token,
+        customer: { id: user._id.toString(), name: user.name, email: user.email },
+      });
+    } catch (err) {
+      console.error('[Auth] Login error:', err);
+      res.status(500).json({ error: 'Login failed. Please try again.' });
+    }
   });
 
-  // POST /auth/logout
-  router.post('/logout', (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-    if (token) activeSessions.delete(token);
+  // GET /auth/me
+  router.get('/me', async (req: Request, res: Response) => {
+    const token = extractToken(req);
+    if (!token) { res.status(401).json({ error: 'Not authenticated.' }); return; }
+
+    const payload = verifyToken(token);
+    if (!payload) { res.status(401).json({ error: 'Session expired. Please log in again.' }); return; }
+
+    try {
+      const user = await User.findById(payload.userId).select('-passwordHash');
+      if (!user) { res.status(401).json({ error: 'User not found.' }); return; }
+      res.json({
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? null,
+        address: user.address ?? null,
+      });
+    } catch {
+      res.status(500).json({ error: 'Failed to fetch user.' });
+    }
+  });
+
+  // PATCH /auth/profile
+  router.patch('/profile', async (req: Request, res: Response) => {
+    const token = extractToken(req);
+    if (!token) { res.status(401).json({ error: 'Not authenticated.' }); return; }
+
+    const payload = verifyToken(token);
+    if (!payload) { res.status(401).json({ error: 'Session expired.' }); return; }
+
+    try {
+      const { name, phone, address } = req.body as Record<string, unknown>;
+      const updates: Record<string, unknown> = {};
+      if (name !== undefined)    updates['name']    = String(name).trim();
+      if (phone !== undefined)   updates['phone']   = String(phone).trim();
+      if (address !== undefined) updates['address'] = address;
+
+      const user = await User.findByIdAndUpdate(
+        payload.userId,
+        { $set: updates },
+        { new: true, select: '-passwordHash' },
+      );
+      if (!user) { res.status(404).json({ error: 'User not found.' }); return; }
+
+      res.json({
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? null,
+        address: user.address ?? null,
+      });
+    } catch {
+      res.status(500).json({ error: 'Failed to update profile.' });
+    }
+  });
+
+  // POST /auth/logout — JWT is stateless; client deletes the token
+  router.post('/logout', (_req: Request, res: Response) => {
     res.json({ message: 'Logged out.' });
   });
 

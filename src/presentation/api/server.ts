@@ -19,6 +19,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import mongoose from 'mongoose';
 import { createContainer } from '../../infrastructure/config/container.js';
 import { initializeHeroPathWiring } from '../../application/hero-path-wiring.js';
 import { createReturnsRouter } from './returnsRoutes.js';
@@ -27,7 +28,6 @@ import { createAuthRouter } from './authRoutes.js';
 import { createOrdersRouter } from './ordersRoutes.js';
 import { InMemoryOrderRepository } from '../../infrastructure/persistence/InMemoryOrderRepository.js';
 import { demoPrepaidOrder, demoCodOrder } from '../../infrastructure/seed/index.js';
-import type { MockAuthService } from '../../infrastructure/auth/MockAuthService.js';
 
 // ─── App Factory ─────────────────────────────────────────────────────────────
 
@@ -79,7 +79,6 @@ export function createApp() {
   // ── Shell services (order repo, auth) ──────────────────────────────────────
 
   const orderRepo = new InMemoryOrderRepository([demoPrepaidOrder, demoCodOrder]);
-  const authService = container.getRequired('authService') as MockAuthService;
 
   // ── Routes ─────────────────────────────────────────────────────────────────
 
@@ -93,7 +92,7 @@ export function createApp() {
   });
 
   app.use('/api/catalog', createCatalogRouter());
-  app.use('/api/auth', createAuthRouter(authService));
+  app.use('/api/auth', createAuthRouter());
   app.use('/api/orders', createOrdersRouter(orderRepo));
   app.use('/api/returns', createReturnsRouter(returnsFacade));
 
@@ -147,8 +146,19 @@ export function createApp() {
  * Start the Express server on the configured port.
  * Only runs when this file is the entry point (not when imported for testing).
  */
-export function startServer() {
+export async function startServer() {
   const port = parseInt(process.env['ZTR_API_PORT'] ?? '3001', 10);
+  const mongoUri = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/amazon2';
+
+  // Connect to MongoDB before starting HTTP server
+  try {
+    await mongoose.connect(mongoUri);
+    console.log(`[MongoDB] Connected to ${mongoUri}`);
+  } catch (err) {
+    console.error('[MongoDB] Connection failed:', err);
+    console.error('[MongoDB] Auth features will not work. Set MONGODB_URI in .env');
+  }
+
   const { app } = createApp();
 
   const server = app.listen(port, () => {

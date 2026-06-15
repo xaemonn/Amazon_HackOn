@@ -3,6 +3,7 @@ import {
   apiLogin,
   apiLogout,
   apiMe,
+  apiSignup,
   apiUpdateProfile,
   clearToken,
   getToken,
@@ -15,7 +16,8 @@ interface AuthState {
   user: AuthCustomer | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: { name?: string; phone?: string; address?: Address }) => Promise<void>;
 }
@@ -28,21 +30,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = getToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
+    if (!token) { setIsLoading(false); return; }
     apiMe()
       .then((customer) => setUser(customer))
-      .catch(() => {
-        clearToken();
-        setUser(null);
-      })
+      .catch(() => { clearToken(); setUser(null); })
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string) => {
-    const { token, customer } = await apiLogin(email);
+  const login = useCallback(async (email: string, password: string) => {
+    const { token, customer } = await apiLogin(email, password);
+    setToken(token);
+    setUser(customer);
+  }, []);
+
+  const signup = useCallback(async (name: string, email: string, password: string) => {
+    const { token, customer } = await apiSignup(name, email, password);
     setToken(token);
     setUser(customer);
   }, []);
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
