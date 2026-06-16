@@ -1,6 +1,6 @@
 # Second Life Commerce — Zero-Touch Returns Platform
 
-> Amazon HackOn submission · branch `spec2`
+> Amazon HackOn submission · branch `main`
 > Repository: https://github.com/xaemonn/Amazon_HackOn
 
 An AI-driven returns platform that grades a returned item from photos, routes it to the best next destination (resell, refurbish, peer-to-peer match, returnless refund, donate, or manual review), and re-lists resale-grade items on an in-app marketplace.
@@ -239,7 +239,7 @@ Prerequisites: Node.js ≥ 18. MongoDB is optional — auth falls back to in-mem
 ```bash
 git clone https://github.com/xaemonn/Amazon_HackOn.git
 cd Amazon_HackOn
-git checkout spec2
+git checkout main
 
 # Backend
 npm install
